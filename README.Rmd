@@ -1,0 +1,48 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# dfx
+
+<!-- badges: start -->
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![CRAN status](https://www.r-pkg.org/badges/version/dfx)](https://CRAN.R-project.org/package=dfx)
+<!-- badges: end -->
+
+dfx is a data.frame transformation package with a tidy-like interface but written in base-R without non-standard evaluation. 
+Designed as a lightweight and stable dependency for R package development.
+
+## Installation
+
+You can install the development version of dfx like so:
+
+``` r
+# install.packages('remotes')
+remotes::install_github("selkamand/dfx")
+```
+
+## Quick Start
+
+```{r paged.print=TRUE}
+library(dfx)
+
+# Select columns
+mtcars |>
+  bselect(c("mpg", "hp"))
+
+# Rename Columns
+mtcars |>
+  brename(c("miles_per_gallon" = "mpg", "horsepower" = "hp"))
+```
+
