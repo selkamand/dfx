@@ -9,3 +9,8 @@ pick_correct_na_to_match_type <- function(x){
   else if(is.numeric(x)) NA_real_
   else NA
 }
+
+
+is_vector_like <-function(x){
+  (is.atomic(x) || is.list(x)) && is.null(dim(x))
+}
