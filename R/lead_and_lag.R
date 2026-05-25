@@ -38,7 +38,8 @@ lag <- function(x, n = 1L, default = NULL){
   # Assertions
   if (inherits(x, "ts")) stop("`x` must be a vector, not a <ts>, do you want `stats::lag()`?")
   if (!is.vector(x) && !is.factor(x) && !inherits(x, "Date") && !inherits(x, "POSIXct") || is.matrix(x)) stop("`x` must be a vector, not an object of class: [", toString(class(x)), "]")
-  if(!is.numeric(n) && length(n) == 1) stop("`n` must be an integer value, not of class: ", toString(class(n)))
+  if(!is.numeric(n)) stop("`n` must be an integer, not an object of class [", toString(class(n)), "]")
+  if(length(n) != 1) stop("`n` must be a single number (supplied value had length of ", length(n), ")")
   if (is.list(x)) return(lag_list(x=x, n=n, default = default))
 
   # Process Default
@@ -81,7 +82,8 @@ lead <- function(x, n = 1L, default = NULL){
 
   # Assertions
   if (!is.vector(x) && !is.factor(x) && !inherits(x, "Date") && !inherits(x, "POSIXct") || is.matrix(x)) stop("`x` must be a vector, not an object of class: [", toString(class(x)), "]")
-  if(!is.numeric(n) && length(n) == 1) stop("`n` must be an integer value, not of class: ", toString(class(n)))
+  if(!is.numeric(n)) stop("`n` must be an integer, not an object of class [", toString(class(n)), "]")
+  if(length(n) != 1) stop("`n` must be a single number (supplied value had length of ", length(n), ")")
   if (is.list(x)) return(lead_list(x=x, n=n, default = default))
 
   # Process Default
