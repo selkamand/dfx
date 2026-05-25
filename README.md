@@ -9,6 +9,15 @@
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 [![CRAN
 status](https://www.r-pkg.org/badges/version/dfx)](https://CRAN.R-project.org/package=dfx)
+[![R-CMD-check](https://github.com/selkamand/dfx/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/selkamand/dfx/actions/workflows/R-CMD-check.yaml)
+[![Codecov test
+coverage](https://codecov.io/gh/selkamand/dfx/graph/badge.svg)](https://app.codecov.io/gh/selkamand/dfx)
+![GitHub Issues or Pull
+Requests](https://img.shields.io/github/issues-closed/selkamand/dfx)
+[![code
+size](https://img.shields.io/github/languages/code-size/selkamand/dfx.svg)](https://github.com/selkamand/dfx)
+![GitHub last
+commit](https://img.shields.io/github/last-commit/selkamand/dfx)
 <!-- badges: end -->
 
 dfx is a data.frame transformation package with a tidy-like interface
@@ -28,6 +37,11 @@ remotes::install_github("selkamand/dfx")
 
 ``` r
 library(dfx)
+#> 
+#> Attaching package: 'dfx'
+#> The following object is masked from 'package:stats':
+#> 
+#>     lag
 
 # Select columns
 mtcars |>
