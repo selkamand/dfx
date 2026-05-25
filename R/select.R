@@ -118,6 +118,8 @@ select <- function(.data, columns) {
 #'
 #' Please use the [select()] function instead
 #'
+#' @inherit select
+#'
 #' @export
 bselect <- function(.data, columns){
   warning("`bselect` has now been renamed to `select` and will be removed from this package in an upcoming release")
@@ -128,10 +130,12 @@ bselect <- function(.data, columns){
 #'
 #' Please use the [rename()] function instead
 #'
+#' @inherit rename
+#'
 #' @export
 brename <- function(.data, namemap){
   warning("`brename` has now been renamed to `rename` and will be removed from this package in an upcoming release")
-  brename(.data, columns)
+  brename(.data, namemap)
 }
 
 # Function returns only the named elements of a vector

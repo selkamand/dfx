@@ -6,6 +6,33 @@
 \usage{
 brename(.data, namemap)
 }
+\arguments{
+\item{.data}{A data frame whose columns will be renamed.}
+
+\item{namemap}{A named vector or list, where the names represent the new column
+names and the values represent the current column names in the data frame.}
+}
+\value{
+The data frame with renamed columns.
+}
 \description{
 Please use the \code{\link[=rename]{rename()}} function instead
+}
+\details{
+The function checks if all the values (current column names) in the
+\code{namemap} are present in the data frame. If any expected column names are missing,
+the function stops with an error. If all expected names are present, the corresponding
+columns are renamed according to the names provided in \code{namemap}.
+}
+\examples{
+# Create a sample data frame
+df <- data.frame(
+  old_name1 = 1:5,
+  old_name2 = letters[1:5]
+)
+
+# Rename columns
+df_renamed <- rename(df, c(new_name1 = "old_name1", new_name2 = "old_name2"))
+print(df_renamed)
+
 }
