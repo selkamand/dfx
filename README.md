@@ -44,8 +44,7 @@ library(dfx)
 #>     lag
 
 # Select columns
-mtcars |>
-  bselect(c("mpg", "hp"))
+select(mtcars, c("mpg", "hp"))
 #>                      mpg  hp
 #> Mazda RX4           21.0 110
 #> Mazda RX4 Wag       21.0 110
@@ -81,8 +80,7 @@ mtcars |>
 #> Volvo 142E          21.4 109
 
 # Rename Columns
-mtcars |>
-  brename(c("miles_per_gallon" = "mpg", "horsepower" = "hp"))
+rename(mtcars, c("miles_per_gallon" = "mpg", "horsepower" = "hp"))
 #>                     miles_per_gallon cyl  disp horsepower drat    wt  qsec vs
 #> Mazda RX4                       21.0   6 160.0        110 3.90 2.620 16.46  0
 #> Mazda RX4 Wag                   21.0   6 160.0        110 3.90 2.875 17.02  0
@@ -149,4 +147,8 @@ mtcars |>
 #> Ferrari Dino         1    5    6
 #> Maserati Bora        1    5    8
 #> Volvo 142E           1    4    2
+
+# Count unique observations
+n_distinct(mtcars)
+#> [1] 32
 ```

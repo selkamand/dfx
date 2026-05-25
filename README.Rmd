@@ -43,11 +43,12 @@ remotes::install_github("selkamand/dfx")
 library(dfx)
 
 # Select columns
-mtcars |>
-  bselect(c("mpg", "hp"))
+select(mtcars, c("mpg", "hp"))
 
 # Rename Columns
-mtcars |>
-  brename(c("miles_per_gallon" = "mpg", "horsepower" = "hp"))
+rename(mtcars, c("miles_per_gallon" = "mpg", "horsepower" = "hp"))
+
+# Count unique observations
+n_distinct(mtcars)
 ```
 
