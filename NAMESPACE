@@ -2,3 +2,5 @@
 
 export(brename)
 export(bselect)
+export(lag)
+export(lead)
