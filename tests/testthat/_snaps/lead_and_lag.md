@@ -11,8 +11,8 @@
     Code
       lead(1:5, n = 1:2)
     Condition
-      Error in `if (n < 0) ...`:
-      ! the condition has length > 1
+      Error in `lead()`:
+      ! `n` must be a single number (supplied value had length of 2)
     Code
       lead(1:5, -1)
     Condition
@@ -24,8 +24,8 @@
     Code
       lag(1:5, n = 1:2)
     Condition
-      Error in `if (n < 0) ...`:
-      ! the condition has length > 1
+      Error in `lag()`:
+      ! `n` must be a single number (supplied value had length of 2)
     Code
       lag(1:5, -1)
     Condition
