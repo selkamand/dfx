@@ -7,8 +7,7 @@
 
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![CRAN
-status](https://www.r-pkg.org/badges/version/dfx)](https://CRAN.R-project.org/package=dfx)
+[![](https://www.r-pkg.org/badges/version/dfx)](https://cran.r-project.org/package=dfx)
 [![R-CMD-check](https://github.com/selkamand/dfx/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/selkamand/dfx/actions/workflows/R-CMD-check.yaml)
 [![Codecov test
 coverage](https://codecov.io/gh/selkamand/dfx/graph/badge.svg)](https://app.codecov.io/gh/selkamand/dfx)
