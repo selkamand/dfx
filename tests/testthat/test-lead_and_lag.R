@@ -53,6 +53,15 @@ test_that("`lead()` / `lag()` validate `n`", {
   })
 })
 
+test_that("`lead()` / `lag()` reject non-numeric `n`", {
+  expect_snapshot(error = TRUE, {
+    lead(1:5, n = "1")
+  })
+  expect_snapshot(error = TRUE, {
+    lag(1:5, n = "1")
+  })
+})
+
 test_that("`lead()` / `lag()` check for empty dots", {
   expect_snapshot(error = TRUE, {
     lead(1:5, deault = 1)
@@ -148,7 +157,28 @@ test_that("`n` is validated", {
   })
 })
 
+test_that("`lead()` / `lag()` require scalar `default`", {
+  expect_snapshot(error = TRUE, {
+    lead(1:5, default = 1:2)
+  })
+  expect_snapshot(error = TRUE, {
+    lag(1:5, default = 1:2)
+  })
+})
 
+
+test_that("`default = NA` is typed to match `x`", {
+  expect_identical(typeof(lag(1L, default = NA)), "integer")
+  expect_identical(typeof(lead(1L, default = NA)), "integer")
+
+  # Check NAs are typed numeric when x is numeric not integer
+  expect_true(is.numeric(lag(c(1, 2))))
+  expect_true(is.numeric(lead(c(1, 2))))
+
+  x_date <- as.Date("2020-01-01") + 0:2
+  expect_s3_class(lag(x_date, default = NA), "Date")
+  expect_s3_class(lead(x_date, default = NA), "Date")
+})
 
 # List Inputs -------------------------------------------------------------
 
