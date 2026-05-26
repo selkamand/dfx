@@ -53,6 +53,15 @@ test_that("`lead()` / `lag()` validate `n`", {
   })
 })
 
+test_that("`lead()` / `lag()` reject non-numeric `n`", {
+  expect_snapshot(error = TRUE, {
+    lead(1:5, n = "1")
+  })
+  expect_snapshot(error = TRUE, {
+    lag(1:5, n = "1")
+  })
+})
+
 test_that("`lead()` / `lag()` check for empty dots", {
   expect_snapshot(error = TRUE, {
     lead(1:5, deault = 1)
@@ -131,6 +140,25 @@ test_that("`default` is cast to the type of `x`", {
   expect_snapshot(error = TRUE, {
     lead(1L, default = 1.5)
   })
+})
+
+test_that("`lead()` / `lag()` require scalar `default`", {
+  expect_snapshot(error = TRUE, {
+    lead(1:5, default = 1:2)
+  })
+  expect_snapshot(error = TRUE, {
+    lag(1:5, default = 1:2)
+  })
+})
+
+
+test_that("`default = NA` is typed to match `x`", {
+  expect_identical(typeof(lag(1L, default = NA)), "integer")
+  expect_identical(typeof(lead(1L, default = NA)), "integer")
+
+  x_date <- as.Date("2020-01-01") + 0:2
+  expect_s3_class(lag(x_date, default = NA), "Date")
+  expect_s3_class(lead(x_date, default = NA), "Date")
 })
 
 test_that("`default` must be size 1 (#5641)", {
