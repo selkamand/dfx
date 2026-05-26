@@ -32,6 +32,22 @@
       Error in `lag()`:
       ! `n` must positive
 
+# `lead()` / `lag()` reject non-numeric `n`
+
+    Code
+      lead(1:5, n = "1")
+    Condition
+      Error in `lead()`:
+      ! `n` must be an integer, not an object of class [character]
+
+---
+
+    Code
+      lag(1:5, n = "1")
+    Condition
+      Error in `lag()`:
+      ! `n` must be an integer, not an object of class [character]
+
 # `lead()` / `lag()` check for empty dots
 
     Code

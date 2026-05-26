@@ -53,6 +53,15 @@ test_that("`lead()` / `lag()` validate `n`", {
   })
 })
 
+test_that("`lead()` / `lag()` reject non-numeric `n`", {
+  expect_snapshot(error = TRUE, {
+    lead(1:5, n = "1")
+  })
+  expect_snapshot(error = TRUE, {
+    lag(1:5, n = "1")
+  })
+})
+
 test_that("`lead()` / `lag()` check for empty dots", {
   expect_snapshot(error = TRUE, {
     lead(1:5, deault = 1)
