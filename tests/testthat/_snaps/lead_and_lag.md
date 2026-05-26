@@ -152,3 +152,19 @@
       Error in `shift()`:
       ! could not find function "shift"
 
+# `lead()` / `lag()` require scalar `default`
+
+    Code
+      lead(1:5, default = 1:2)
+    Condition
+      Error in `lead()`:
+      ! `default` must be NULL or a scalar value, not a vector of length: 2
+
+---
+
+    Code
+      lag(1:5, default = 1:2)
+    Condition
+      Error in `lag()`:
+      ! `default` must be NULL or a scalar value, not a vector of length: 2
+
