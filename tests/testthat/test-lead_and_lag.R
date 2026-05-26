@@ -171,6 +171,10 @@ test_that("`default = NA` is typed to match `x`", {
   expect_identical(typeof(lag(1L, default = NA)), "integer")
   expect_identical(typeof(lead(1L, default = NA)), "integer")
 
+  # Check NAs are typed numeric when x is numeric not integer
+  expect_true(is.numeric(lag(c(1, 2))))
+  expect_true(is.numeric(lead(c(1, 2))))
+
   x_date <- as.Date("2020-01-01") + 0:2
   expect_s3_class(lag(x_date, default = NA), "Date")
   expect_s3_class(lead(x_date, default = NA), "Date")
