@@ -2,6 +2,8 @@
 
 export(brename)
 export(bselect)
+export(count)
+export(fct_relevel)
 export(lag)
 export(lead)
 export(n_distinct)
