@@ -43,12 +43,20 @@ remotes::install_github("selkamand/dfx")
 library(dfx)
 
 # Select columns
-select(mtcars, c("mpg", "hp"))
+head(select(mtcars, c("mpg", "hp")))
 
 # Rename Columns
-rename(mtcars, c("miles_per_gallon" = "mpg", "horsepower" = "hp"))
+head(rename(mtcars, c("miles_per_gallon" = "mpg", "horsepower" = "hp")))
 
-# Count unique observations
+
+# Count observations in data.frame column
+count(mtcars, "cyl")
+
+# Count unique levels in a vector
 n_distinct(mtcars)
+
+# Lag and lead
+lag(1:5)
+lead(1:5)
 ```
 
