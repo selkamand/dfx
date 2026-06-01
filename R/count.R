@@ -76,6 +76,7 @@ count <- function(.data, columns, sort = FALSE, name = "n", drop = TRUE) {
   if (is.na(drop)) {
     stop("`drop` argument must be TRUE/FALSE, not [NA]")
   }
+
   if (!is.character(name)) {
     stop("`name` argument must be a string, not an object of class [", toString(class(name)), "]")
   }
@@ -104,6 +105,11 @@ count <- function(.data, columns, sort = FALSE, name = "n", drop = TRUE) {
   # (since table + as.data.frame either converts keys to factors or strings)
   for (col in columns) {
     results[[col]] <- convert_vector_to_match_target(results[[col]], .data[[col]], failure = "keep_original", error_prefix = "count: ")
+
+    # Fix factor levels to match original data
+    if (is.factor(.data[[col]])) {
+      results[[col]] <- fct_align(results[[col]], .data[[col]])
+    }
   }
 
   # If drop=TRUE remove zero counts

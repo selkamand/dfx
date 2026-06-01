@@ -60,3 +60,28 @@ fct_relevel <- function(x, ref, after = 0L) {
 
   return(xnew)
 }
+
+
+# Reorder a factors levels based on a reference factor
+# x will be re-leveled so to match reference, with any levels
+# not in reference added at end.
+# Unlike in fct_relevel, where levels exclusive to reference are ignored,
+# fct_align adds those levels to x (in the order they're present in reference)
+#
+# Used in dplyr::count
+# If in the future we want to export, we need to add some assertion logic
+fct_align <- function(x, reference) {
+  ref_levels <- levels(reference)
+  new_levels <- append(ref_levels, setdiff(levels(x), ref_levels))
+
+  xnew <- factor(
+    as.character(x),
+    levels = new_levels,
+    ordered = is.ordered(x)
+  )
+
+  # Copy over names
+  names(xnew) <- names(x)
+
+  return(xnew)
+}
