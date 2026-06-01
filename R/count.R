@@ -100,7 +100,7 @@ count <- function(.data, columns, sort = FALSE, name = "n", drop = TRUE) {
   # Fix Key Column Types (convert back to original class)
   # (since table + as.data.frame either converts keys to factors or strings)
   for (col in columns) {
-    results[[col]] <- convert_vector_to_match_target(results[[col]], .data[[col]], failure = "keep_original")
+    results[[col]] <- convert_vector_to_match_target(results[[col]], .data[[col]], failure = "keep_original", error_prefix = "count: ")
   }
 
   # If drop=TRUE remove zero counts
