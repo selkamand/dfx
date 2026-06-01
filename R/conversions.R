@@ -41,22 +41,28 @@ is_vector_like <- function(x) {
 #'
 #' @return vector \code{x} with a class matching target
 #'
+#' @details
+#' When \code{target} is a factor, its levels are ignored. Levels will be derived only from the contents of \code{x}.
+#'
+#' When target is a POSIXct datetime the timezone will be set to match that of \code{target}
 convert_vector_to_match_target <- function(x, target, failure = c("error", "keep_original"), error_prefix = "conversion failure: ") {
   # Assertions & Arg prep
   failure <- match.arg(failure)
 
   target_class <- class(target)[1]
 
-  conversion_function <- if (target_class == "numeric") {
+  conversion_function <- if (target_class == "orig_class") {
+    return(x)
+  } else if (target_class == "numeric") {
     as.numeric
-  } else if (target_class == "function") {
-    as.function
+    # } else if (target_class == "function") { # We now remove function conversion because they are not vector-like
+    #   as.function
   } else if (target_class == "logical") {
     as.logical
   } else if (target_class == "integer") {
     as.integer
-  } else if (target_class == "numeric") {
-    as.numeric
+  } else if (target_class == "ordered") {
+    as.ordered
   } else if (target_class == "factor") {
     as.factor
   } else if (target_class == "character") {
@@ -66,11 +72,15 @@ convert_vector_to_match_target <- function(x, target, failure = c("error", "keep
   } else if (target_class == "Date") {
     as.Date
   } else if (target_class == "POSIXct") {
-    as.POSIXct
-  } else if (target_class == "POSIXlt") {
-    as.POSIXlt
-  } else if (target_class == "name") {
-    as.name
+    function(.x) {
+      as.POSIXct(.x, tz = attr(target, "tzone"))
+    }
+  } else if (target_class == "difftime") {
+    function(.x) {
+      as.difftime(.x, units = attr(target, "units"))
+    }
+  } else if (target_class == "raw") {
+    as.raw
   } else if (target_class == "pairlist") {
     as.pairlist
   } else if (target_class == "array") {
@@ -80,9 +90,18 @@ convert_vector_to_match_target <- function(x, target, failure = c("error", "keep
       .x
     }
   } else {
-    function(.x) {
-      stop()
-    }
+    NULL
+  }
+
+  # If Conversion function is NULL it means target is not supported
+  if (is.null(conversion_function)) {
+    stop(
+      error_prefix,
+      "no conversion method available for target class [",
+      toString(class(target)),
+      "]",
+      call. = TRUE
+    )
   }
 
   newx <- tryCatch(

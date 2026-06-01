@@ -1,3 +1,11 @@
+# convert_vector_to_match_target errors clearly for NULL targets
+
+    Code
+      convert_vector_to_match_target(1:3, NULL)
+    Condition
+      Error in `convert_vector_to_match_target()`:
+      ! conversion failure: no conversion method available for target class [NULL]
+
 # convert_vector_to_match_target: snapshot errors thrown when conversion function throws a warning
 
     Code
@@ -19,8 +27,8 @@
     Code
       convert_vector_to_match_target(c(1, 2, 3), target, failure = "error")
     Condition
-      Error:
-      ! conversion failure: can not convert [numeric] to [unsupported_target_class]
+      Error in `convert_vector_to_match_target()`:
+      ! conversion failure: no conversion method available for target class [unsupported_target_class]
 
 # convert_vector_to_match_target: snapshots invalid failure argument error message
 

@@ -63,29 +63,21 @@ test_that("convert_vector_to_match_target converts to POSIXct targets", {
   )
 })
 
-
-test_that("convert_vector_to_match_target converts to POSIXlt targets", {
-  result <- convert_vector_to_match_target(
-    c("2024-01-01 10:00:00", "2024-01-02 11:30:00"),
-    as.POSIXlt(character())
-  )
-
-  expect_s3_class(result, "POSIXlt")
-  expect_true(inherits(result, "POSIXt"))
-  expect_identical(
-    as.POSIXct(result),
-    as.POSIXct(c("2024-01-01 10:00:00", "2024-01-02 11:30:00"))
-  )
-})
-
-
-test_that("convert_vector_to_match_target converts to name targets", {
-  result <- convert_vector_to_match_target("abc", as.name("target"))
-
-  expect_type(result, "symbol")
-  expect_identical(as.character(result), "abc")
-})
-
+# Dropped POSIXlt since its list based (not a vector)
+# test_that("convert_vector_to_match_target converts to POSIXlt targets", {
+#   result <- convert_vector_to_match_target(
+#     c("2024-01-01 10:00:00", "2024-01-02 11:30:00"),
+#     as.POSIXlt(character())
+#   )
+#
+#   expect_s3_class(result, "POSIXlt")
+#   expect_true(inherits(result, "POSIXt"))
+#   expect_identical(
+#     as.POSIXct(result),
+#     as.POSIXct(c("2024-01-01 10:00:00", "2024-01-02 11:30:00"))
+#   )
+# })
+#
 
 test_that("convert_vector_to_match_target converts to pairlist targets", {
   result <- convert_vector_to_match_target(
@@ -227,6 +219,42 @@ test_that("convert_vector_to_match_target returns objects matching the intent of
   )
 })
 
+test_that("convert_vector_to_match_target handles ordered factor targets", {
+  target <- ordered(c("low", "medium", "high"), levels = c("low", "medium", "high"))
+
+  result <- convert_vector_to_match_target(
+    c("low", "high"),
+    target
+  )
+
+  expect_s3_class(result, "ordered")
+  expect_s3_class(result, "factor")
+  expect_identical(as.character(result), c("low", "high"))
+})
+
+test_that("convert_vector_to_match_target ignores factor levels from target", {
+  target <- factor(c("low", "medium", "high"), levels = c("low", "medium", "high"))
+
+  result <- convert_vector_to_match_target(
+    c("high", "low"),
+    target
+  )
+
+  expect_s3_class(result, "factor")
+  expect_identical(levels(result), c("high", "low"))
+})
+
+test_that("convert_vector_to_match_target preserves POSIXct timezone from target", {
+  target <- as.POSIXct(character(), tz = "UTC")
+
+  result <- convert_vector_to_match_target(
+    "2024-01-01 12:00:00",
+    target
+  )
+
+  expect_s3_class(result, "POSIXct")
+  expect_identical(attr(result, "tzone"), "UTC")
+})
 
 test_that("convert_vector_to_match_target error message reports the target class", {
   expect_error(
@@ -234,6 +262,29 @@ test_that("convert_vector_to_match_target error message reports the target class
     regexp = "can not convert \\[character\\] to \\[numeric\\]",
     fixed = FALSE
   )
+})
+
+test_that("convert_vector_to_match_target handles difftime targets", {
+  target <- as.difftime(numeric(), units = "days")
+
+  result <- convert_vector_to_match_target(
+    c(1, 2),
+    target
+  )
+
+  expect_s3_class(result, "difftime")
+  expect_identical(attr(result, "units"), "days")
+  expect_equal(as.numeric(result), c(1, 2))
+})
+
+test_that("convert_vector_to_match_target handles raw targets", {
+  result <- convert_vector_to_match_target(
+    c(1, 2, 255),
+    raw()
+  )
+
+  expect_type(result, "raw")
+  expect_identical(result, as.raw(c(1, 2, 255)))
 })
 
 test_that("convert_vector_to_match_target converts to logical targets", {
@@ -252,6 +303,51 @@ test_that("convert_vector_to_match_target converts to logical targets", {
   )
 })
 
+test_that("convert_vector_to_match_target errors clearly for NULL targets", {
+  expect_snapshot(
+    error = TRUE,
+    convert_vector_to_match_target(1:3, NULL)
+  )
+})
+
+test_that("convert_vector_to_match_target handles NULL x intentionally", {
+  expect_identical(
+    convert_vector_to_match_target(NULL, character()),
+    character()
+  )
+})
+
+test_that("convert_vector_to_match_target converts NA to typed NA", {
+  expect_identical(
+    convert_vector_to_match_target(NA, character()),
+    NA_character_
+  )
+
+  expect_identical(
+    convert_vector_to_match_target(NA, integer()),
+    NA_integer_
+  )
+
+  expect_identical(
+    convert_vector_to_match_target(NA, numeric()),
+    NA_real_
+  )
+
+  expect_equal(
+    convert_vector_to_match_target(NA_character_, complex()),
+    NA_complex_
+  )
+
+  expect_identical(
+    convert_vector_to_match_target(NA, logical()),
+    NA
+  )
+
+  expect_identical(
+    convert_vector_to_match_target(NA, as.Date(character())),
+    as.Date(NA)
+  )
+})
 
 test_that("convert_vector_to_match_target: snapshot errors thrown when conversion function throws a warning", {
   expect_snapshot(

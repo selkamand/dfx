@@ -29,3 +29,8 @@ vector \code{x} with a class matching target
 Convert vector x to target (must be a vector)
 On failure if failure = \code{error} throw an error. If \code{keep_original} just return the original x
 }
+\details{
+When \code{target} is a factor, its levels are ignored. Levels will be derived only from the contents of \code{x}.
+
+When target is a POSIXct datetime the timezone will be set to match that of \code{target}
+}
