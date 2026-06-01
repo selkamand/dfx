@@ -2,6 +2,7 @@
 
 export(brename)
 export(bselect)
+export(count)
 export(lag)
 export(lead)
 export(n_distinct)
