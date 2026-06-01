@@ -87,3 +87,17 @@ test_that("count sorts numeric keys numerically, not lexicographically", {
 
   expect_equal(out, expected, ignore_attr = TRUE)
 })
+
+
+test_that("count works when counted column is named like an order argument", {
+  df <- data.frame(decreasing = c("b", "a", "b"))
+
+  out <- count(df, "decreasing")
+
+  expected <- data.frame(
+    decreasing = c("a", "b"),
+    n = c(1, 2)
+  )
+
+  expect_equal(out, expected, ignore_attr = TRUE)
+})

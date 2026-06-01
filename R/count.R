@@ -107,7 +107,7 @@ count <- function(.data, columns, sort = FALSE, name = "n", drop = TRUE) {
     results <- results[order(-results[[name]]), , drop = FALSE]
   } else {
     # Sort by keys (ascending) if sort = FALSE
-    results <- results[do.call(order, results[columns]), , drop = FALSE]
+    results <- results[do.call(order, unname(results[columns])), , drop = FALSE]
   }
 
 
