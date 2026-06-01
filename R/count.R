@@ -62,9 +62,20 @@ count <- function(.data, columns, sort = FALSE, name = "n", drop = TRUE) {
   }
 
   if (!is.logical(sort) || length(sort) != 1) {
-    stop("`sort` argument must be TRUE/FALSE, not [", toString(sort), "]")
+    stop("`sort` argument must be TRUE/FALSE, not [", toString(class(sort)), "]")
   }
 
+  if (!is.logical(drop)) {
+    stop("`drop` argument must be TRUE/FALSE, not an object of class [", toString(class(drop)), "]")
+  }
+
+  if (length(drop) != 1) {
+    stop("`drop` argument must be TRUE/FALSE, not a logical vector of length [", length(drop), "]")
+  }
+
+  if (is.na(drop)) {
+    stop("`drop` argument must be TRUE/FALSE, not [NA]")
+  }
   if (!is.character(name)) {
     stop("`name` argument must be a string, not an object of class [", toString(class(name)), "]")
   }

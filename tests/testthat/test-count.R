@@ -101,3 +101,33 @@ test_that("count works when counted column is named like an order argument", {
 
   expect_equal(out, expected, ignore_attr = TRUE)
 })
+
+test_that("count validates drop", {
+  df <- data.frame(x = 1)
+
+  expect_error(count(df, "x", drop = NA), "`drop`")
+  expect_error(count(df, "x", drop = c(TRUE, FALSE)), "`drop`")
+  expect_error(count(df, "x", drop = "TRUE"), "`drop`")
+})
+
+
+# test_that("count respects factor level order", {
+#   df <- data.frame(
+#     x = factor(
+#       c("medium", "low", "medium"),
+#       levels = c("medium", "low", "high")
+#     )
+#   )
+#
+#   out <- count(df, "x", drop = FALSE)
+#
+#   expected <- data.frame(
+#     x = factor(
+#       c("medium", "low", "high"),
+#       levels = c("medium", "low", "high")
+#     ),
+#     n = c(2, 1, 0)
+#   )
+#
+#   expect_equal(out, expected, ignore_attr = TRUE)
+# })
