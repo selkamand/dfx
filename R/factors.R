@@ -1,6 +1,6 @@
 #' Reorder factor levels by hand
 #'
-#' Move any number of levels to any location
+#' Move any number of levels to any location.
 #'
 #' @param x a factor whose levels you want to reorder
 #' @param ref level names in the order you want them (character vector)
@@ -9,9 +9,9 @@
 #'
 #' @examples
 #' f <- factor(c("a", "b", "c", "d"), levels = c("b", "c", "d", "a"))
-#' fct_relevel(f)
 #' fct_relevel(f, "a")
-#' fct_relevel(f, "b", "a")
+#' fct_relevel(f, c("b", "a"))
+#' fct_relevel(f, c("b", "a", after = Inf))
 #'
 #' @export
 fct_relevel <- function(x, ref, after = 0L) {

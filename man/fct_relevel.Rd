@@ -17,12 +17,12 @@ fct_relevel(x, ref, after = 0L)
 a factor whose levels with reordered levels
 }
 \description{
-Move any number of levels to any location
+Move any number of levels to any location.
 }
 \examples{
 f <- factor(c("a", "b", "c", "d"), levels = c("b", "c", "d", "a"))
-fct_relevel(f)
 fct_relevel(f, "a")
-fct_relevel(f, "b", "a")
+fct_relevel(f, c("b", "a"))
+fct_relevel(f, c("b", "a", after = Inf))
 
 }
