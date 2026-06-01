@@ -55,8 +55,6 @@ convert_vector_to_match_target <- function(x, target, failure = c("error", "keep
     return(x)
   } else if (target_class == "numeric") {
     as.numeric
-    # } else if (target_class == "function") { # We now remove function conversion because they are not vector-like
-    #   as.function
   } else if (target_class == "logical") {
     as.logical
   } else if (target_class == "integer") {
@@ -104,8 +102,17 @@ convert_vector_to_match_target <- function(x, target, failure = c("error", "keep
     )
   }
 
+  # Turn factors into character vectors before conversions
+  # Unless target is also a factor
+  # This fixes an issue were as.numeric(factor(10)) returns 1
+  xnorm <- x
+  if (is.factor(x) && !is.factor(target)) {
+    xnorm <- as.character(x)
+  }
+
+
   newx <- tryCatch(
-    conversion_function(x),
+    conversion_function(xnorm),
     warning = function(warn) {
       handle_conversion_failure(x, target, error_prefix, failure)
     },

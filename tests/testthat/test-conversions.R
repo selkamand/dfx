@@ -100,6 +100,35 @@ test_that("convert_vector_to_match_target converts to array targets", {
   expect_identical(as.vector(result), c(1, 2, 3))
 })
 
+test_that("convert_vector_to_match_target converts factor labels to numeric values, not factor codes", {
+  x <- factor(c("10", "20", "30"))
+
+  # Factor to numeric
+  expect_identical(
+    convert_vector_to_match_target(x, numeric()),
+    c(10, 20, 30)
+  )
+
+  # Factor to integer
+  expect_identical(
+    convert_vector_to_match_target(x, integer()),
+    c(10L, 20L, 30L)
+  )
+})
+
+test_that("convert_vector_to_match_target treats non-numeric factor labels as failed numeric conversion", {
+  x <- factor(c("10", "not-a-number", "30"))
+
+  expect_snapshot(
+    error = TRUE,
+    convert_vector_to_match_target(x, numeric(), failure = "error")
+  )
+
+  expect_identical(
+    convert_vector_to_match_target(x, numeric(), failure = "keep_original"),
+    x
+  )
+})
 
 test_that("convert_vector_to_match_target treats conversion warnings as failures by default", {
   expect_error(

@@ -1,3 +1,11 @@
+# convert_vector_to_match_target treats non-numeric factor labels as failed numeric conversion
+
+    Code
+      convert_vector_to_match_target(x, numeric(), failure = "error")
+    Condition
+      Error:
+      ! conversion failure: can not convert [factor] to [numeric]
+
 # convert_vector_to_match_target errors clearly for NULL targets
 
     Code
