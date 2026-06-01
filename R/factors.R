@@ -16,8 +16,20 @@
 #' @export
 fct_relevel <- function(x, ref, after = 0L) {
   # Assertions
-  if (!is.factor(x)) stop("`x` must be a factor, not an object of class [", toString(class(x)), "]")
-  if (!is.character(ref)) stop("`ref` must be a character vector, not an object of class [", toString(class(ref)), "]")
+  if (!is.factor(x)) {
+    stop(
+      "`x` must be a factor, not an object of class [",
+      toString(class(x)),
+      "]"
+    )
+  }
+  if (!is.character(ref)) {
+    stop(
+      "`ref` must be a character vector, not an object of class [",
+      toString(class(ref)),
+      "]"
+    )
+  }
 
   if (!is.numeric(after) || length(after) != 1L || is.na(after)) {
     stop("`after` must be a single non-missing whole number.")
@@ -29,7 +41,6 @@ fct_relevel <- function(x, ref, after = 0L) {
   if (!is.infinite(after) && after != floor(after)) {
     stop("`after` must be a whole number.", call. = FALSE)
   }
-
 
   old_levels <- levels(x)
 

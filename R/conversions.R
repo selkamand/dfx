@@ -45,7 +45,12 @@ is_vector_like <- function(x) {
 #' When \code{target} is a factor, its levels are ignored. Levels will be derived only from the contents of \code{x}.
 #'
 #' When target is a POSIXct datetime the timezone will be set to match that of \code{target}
-convert_vector_to_match_target <- function(x, target, failure = c("error", "keep_original"), error_prefix = "conversion failure: ") {
+convert_vector_to_match_target <- function(
+  x,
+  target,
+  failure = c("error", "keep_original"),
+  error_prefix = "conversion failure: "
+) {
   # Assertions & Arg prep
   failure <- match.arg(failure)
 
@@ -109,7 +114,6 @@ convert_vector_to_match_target <- function(x, target, failure = c("error", "keep
   if (is.factor(x) && !is.factor(target)) {
     xnorm <- as.character(x)
   }
-
 
   newx <- tryCatch(
     conversion_function(xnorm),

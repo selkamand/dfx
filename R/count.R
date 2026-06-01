@@ -45,7 +45,11 @@ count <- function(.data, columns, sort = FALSE, name = "n", drop = TRUE) {
   }
 
   if (!is.vector(columns)) {
-    stop("'columns' argument must be a character vector, not a [", paste0(class(columns), collapse = "/"), "]")
+    stop(
+      "'columns' argument must be a character vector, not a [",
+      paste0(class(columns), collapse = "/"),
+      "]"
+    )
   }
 
   if (!is.character(columns)) {
@@ -58,19 +62,35 @@ count <- function(.data, columns, sort = FALSE, name = "n", drop = TRUE) {
 
   cols_not_found <- setdiff(columns, colnames(.data))
   if (length(cols_not_found) != 0) {
-    stop("Could not find column/s: [", paste0(cols_not_found, collapse = ", "), "]")
+    stop(
+      "Could not find column/s: [",
+      paste0(cols_not_found, collapse = ", "),
+      "]"
+    )
   }
 
   if (!is.logical(sort) || length(sort) != 1) {
-    stop("`sort` argument must be TRUE/FALSE, not [", toString(class(sort)), "]")
+    stop(
+      "`sort` argument must be TRUE/FALSE, not [",
+      toString(class(sort)),
+      "]"
+    )
   }
 
   if (!is.logical(drop)) {
-    stop("`drop` argument must be TRUE/FALSE, not an object of class [", toString(class(drop)), "]")
+    stop(
+      "`drop` argument must be TRUE/FALSE, not an object of class [",
+      toString(class(drop)),
+      "]"
+    )
   }
 
   if (length(drop) != 1) {
-    stop("`drop` argument must be TRUE/FALSE, not a logical vector of length [", length(drop), "]")
+    stop(
+      "`drop` argument must be TRUE/FALSE, not a logical vector of length [",
+      length(drop),
+      "]"
+    )
   }
 
   if (is.na(drop)) {
@@ -78,7 +98,11 @@ count <- function(.data, columns, sort = FALSE, name = "n", drop = TRUE) {
   }
 
   if (!is.character(name)) {
-    stop("`name` argument must be a string, not an object of class [", toString(class(name)), "]")
+    stop(
+      "`name` argument must be a string, not an object of class [",
+      toString(class(name)),
+      "]"
+    )
   }
 
   if (length(name) != 1) {
@@ -104,7 +128,12 @@ count <- function(.data, columns, sort = FALSE, name = "n", drop = TRUE) {
   # Fix Key Column Types (convert back to original class)
   # (since table + as.data.frame either converts keys to factors or strings)
   for (col in columns) {
-    results[[col]] <- convert_vector_to_match_target(results[[col]], .data[[col]], failure = "keep_original", error_prefix = "count: ")
+    results[[col]] <- convert_vector_to_match_target(
+      results[[col]],
+      .data[[col]],
+      failure = "keep_original",
+      error_prefix = "count: "
+    )
 
     # Fix factor levels to match original data
     if (is.factor(.data[[col]])) {
@@ -126,7 +155,6 @@ count <- function(.data, columns, sort = FALSE, name = "n", drop = TRUE) {
     # Sort by keys (ascending) if sort = FALSE
     results <- results[do.call(order, unname(results[columns])), , drop = FALSE]
   }
-
 
   # Ensure rownames are empty
   rownames(results) <- NULL

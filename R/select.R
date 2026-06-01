@@ -36,7 +36,13 @@ rename <- function(.data, namemap) {
 
   missing_names <- setdiff(namemap, colnames(.data))
   if (length(missing_names) > 0) {
-    stop("rename: could not find column/s named [", paste0(missing_names, collapse = ", "), "]. Valid column names include: [", paste0(colnames(.data), collapse = ", "), "]")
+    stop(
+      "rename: could not find column/s named [",
+      paste0(missing_names, collapse = ", "),
+      "]. Valid column names include: [",
+      paste0(colnames(.data), collapse = ", "),
+      "]"
+    )
   }
 
   colnames(.data)[match(namemap, colnames(.data))] <- names(namemap)
@@ -89,7 +95,11 @@ select <- function(.data, columns) {
   }
 
   if (!is.vector(columns)) {
-    stop("select: 'columns' argument must be a character vector, not a [", paste0(class(columns), collapse = "/"), "]")
+    stop(
+      "select: 'columns' argument must be a character vector, not a [",
+      paste0(class(columns), collapse = "/"),
+      "]"
+    )
   }
 
   if (!is.character(columns)) {
@@ -102,7 +112,11 @@ select <- function(.data, columns) {
 
   cols_not_found <- setdiff(columns, colnames(.data))
   if (length(cols_not_found) != 0) {
-    stop("select: Could not find column/s: [", paste0(cols_not_found, collapse = ", "), "]")
+    stop(
+      "select: Could not find column/s: [",
+      paste0(cols_not_found, collapse = ", "),
+      "]"
+    )
   }
 
   # Both subset and rename dataframe if 'columns' vector is named
@@ -121,8 +135,10 @@ select <- function(.data, columns) {
 #' @inherit select
 #'
 #' @export
-bselect <- function(.data, columns){
-  warning("`bselect` has now been renamed to `select` and will be removed from this package in an upcoming release")
+bselect <- function(.data, columns) {
+  warning(
+    "`bselect` has now been renamed to `select` and will be removed from this package in an upcoming release"
+  )
   select(.data, columns)
 }
 
@@ -133,8 +149,10 @@ bselect <- function(.data, columns){
 #' @inherit rename
 #'
 #' @export
-brename <- function(.data, namemap){
-  warning("`brename` has now been renamed to `rename` and will be removed from this package in an upcoming release")
+brename <- function(.data, namemap) {
+  warning(
+    "`brename` has now been renamed to `rename` and will be removed from this package in an upcoming release"
+  )
   brename(.data, namemap)
 }
 
