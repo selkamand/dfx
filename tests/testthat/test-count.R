@@ -14,7 +14,6 @@ test_that("count counts multi columns", {
     n = c(2, 1, 1, 1)
   )
 
-  expected <- dplyr::count(df, x, y)
   expect_equal(out, expected, ignore_attr = TRUE)
 })
 
