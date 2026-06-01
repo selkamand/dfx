@@ -74,3 +74,16 @@ test_that("count adds 'n' attribute describing column name", {
   attr(expected2, "n") <- "bob"
   expect_equal(out2, expected2, ignore_attr = FALSE)
 })
+
+test_that("count sorts numeric keys numerically, not lexicographically", {
+  df <- data.frame(x = c(10, 2, 1, 10))
+
+  out <- count(df, "x")
+
+  expected <- data.frame(
+    x = c(1, 2, 10),
+    n = c(1, 1, 2)
+  )
+
+  expect_equal(out, expected, ignore_attr = TRUE)
+})

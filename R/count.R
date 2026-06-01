@@ -89,14 +89,6 @@ count <- function(.data, columns, sort = FALSE, name = "n", drop = TRUE) {
   # Rename Last Column to name
   colnames(results)[ncol(results)] <- name
 
-  if (sort) {
-    # Sort by tally (descending) if sort = TRUE
-    results <- results[order(-results[[name]]), , drop = FALSE]
-  } else {
-    # Sort by keys (ascending) if sort = FALSE
-    results <- results[do.call(order, results[columns]), , drop = FALSE]
-  }
-
   # Fix Key Column Types (convert back to original class)
   # (since table + as.data.frame either converts keys to factors or strings)
   for (col in columns) {
@@ -108,6 +100,16 @@ count <- function(.data, columns, sort = FALSE, name = "n", drop = TRUE) {
   if (drop) {
     results <- results[results[[name]] > 0, , drop = FALSE]
   }
+
+  # Sort data.frame by keys or tally column depending on `sort` flag
+  if (sort) {
+    # Sort by tally (descending) if sort = TRUE
+    results <- results[order(-results[[name]]), , drop = FALSE]
+  } else {
+    # Sort by keys (ascending) if sort = FALSE
+    results <- results[do.call(order, results[columns]), , drop = FALSE]
+  }
+
 
   # Ensure rownames are empty
   rownames(results) <- NULL
