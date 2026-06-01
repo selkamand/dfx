@@ -3,6 +3,7 @@
 #' Tally the frequency of each level in a column
 #' (or combination of levels in several column).
 #'
+#' @param .data a data.frame.
 #' @param columns names of columns whole levels to tally (character vector).
 #' @param sort sort by tallies in descending order.
 #' If \code{FALSE} table is sorted by columns (flag)

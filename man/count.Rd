@@ -7,6 +7,8 @@
 count(.data, columns, sort = FALSE, name = "n", drop = TRUE)
 }
 \arguments{
+\item{.data}{a data.frame.}
+
 \item{columns}{names of columns whole levels to tally (character vector).}
 
 \item{sort}{sort by tallies in descending order.
