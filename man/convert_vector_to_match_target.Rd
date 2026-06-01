@@ -7,7 +7,8 @@
 convert_vector_to_match_target(
   x,
   target,
-  failure = c("error", "keep_original")
+  failure = c("error", "keep_original"),
+  error_prefix = "conversion failure: "
 )
 }
 \arguments{
@@ -16,6 +17,10 @@ convert_vector_to_match_target(
 \item{target}{a vector whose type you want to convert x to.}
 
 \item{failure}{When conversion errors should we throw an \code{error} or \code{keep_original} type.}
+
+\item{error_prefix}{a string to prefix on the error. This can be used to
+indicate calling scope since we set \code{call.=FALSE} when calling stop since
+the trycatch scope is pretty uninformative}
 }
 \value{
 vector \code{x} with a class matching target
