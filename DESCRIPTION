@@ -13,3 +13,4 @@ Roxygen: list(markdown = TRUE)
 URL: https://github.com/selkamand/dfx
 BugReports: https://github.com/selkamand/dfx/issues
 Config/roxygen2/version: 8.0.0
+RoxygenNote: 8.0.0
