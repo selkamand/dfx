@@ -4,10 +4,10 @@
 \alias{rename}
 \title{Rename columns in a data frame}
 \usage{
-rename(.data, namemap)
+rename(data, namemap)
 }
 \arguments{
-\item{.data}{A data frame whose columns will be renamed.}
+\item{data}{A data frame whose columns will be renamed.}
 
 \item{namemap}{A named vector or list, where the names represent the new column
 names and the values represent the current column names in the data frame.}

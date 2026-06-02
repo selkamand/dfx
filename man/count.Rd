@@ -4,10 +4,10 @@
 \alias{count}
 \title{Count}
 \usage{
-count(.data, columns, sort = FALSE, name = "n", drop = TRUE)
+count(data, columns, sort = FALSE, name = "n", drop = TRUE)
 }
 \arguments{
-\item{.data}{a data.frame.}
+\item{data}{a data.frame.}
 
 \item{columns}{names of columns whole levels to tally (character vector).}
 

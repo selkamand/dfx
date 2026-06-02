@@ -2,7 +2,7 @@
 #'
 #' This function renames columns in a data frame
 #'
-#' @param .data A data frame whose columns will be renamed.
+#' @param data A data frame whose columns will be renamed.
 #' @param namemap A named vector or list, where the names represent the new column
 #' names and the values represent the current column names in the data frame.
 #'
@@ -25,7 +25,7 @@
 #' print(df_renamed)
 #'
 #' @export
-rename <- function(.data, namemap) {
+rename <- function(data, namemap) {
   if (!is.vector(names(namemap))) {
     stop("rename: 'namemap' must be a named vector")
   }
@@ -34,19 +34,19 @@ rename <- function(.data, namemap) {
     stop("rename: all elements in 'namemap' must be named")
   }
 
-  missing_names <- setdiff(namemap, colnames(.data))
+  missing_names <- setdiff(namemap, colnames(data))
   if (length(missing_names) > 0) {
     stop(
       "rename: could not find column/s named [",
       paste0(missing_names, collapse = ", "),
       "]. Valid column names include: [",
-      paste0(colnames(.data), collapse = ", "),
+      paste0(colnames(data), collapse = ", "),
       "]"
     )
   }
 
-  colnames(.data)[match(namemap, colnames(.data))] <- names(namemap)
-  return(.data)
+  colnames(data)[match(namemap, colnames(data))] <- names(namemap)
+  return(data)
 }
 
 
@@ -58,12 +58,12 @@ rename <- function(.data, namemap) {
 #' in the resulting data frame. The new column names are taken from the names of the `columns` vector,
 #' and the old column names are taken from the values of the `columns` vector.
 #'
-#' @param .data A data frame from which to select columns.
-#' @param columns A character vector of column names to select from \code{.data}.
+#' @param data A data frame from which to select columns.
+#' @param columns A character vector of column names to select from \code{data}.
 #' If \code{columns} is a named vector, the selected columns will be renamed in the returned data frame
 #' using the names of \code{columns} as the new column names.
 #'
-#' @return A data frame containing only the specified columns from \code{.data}.
+#' @return A data frame containing only the specified columns from \code{data}.
 #' If \code{columns} is a named vector, the columns in the returned data frame will be renamed accordingly.
 #'
 #' @details
@@ -88,10 +88,10 @@ rename <- function(.data, namemap) {
 #' print(df_selected_renamed)
 #'
 #' @export
-select <- function(.data, columns) {
+select <- function(data, columns) {
   # Assertions
-  if (!is.data.frame(.data)) {
-    stop("select: '.data' must be a data.frame")
+  if (!is.data.frame(data)) {
+    stop("select: 'data' must be a data.frame")
   }
 
   if (!is.vector(columns)) {
@@ -110,7 +110,7 @@ select <- function(.data, columns) {
     stop("select: 'columns' argument must not contain duplicates")
   }
 
-  cols_not_found <- setdiff(columns, colnames(.data))
+  cols_not_found <- setdiff(columns, colnames(data))
   if (length(cols_not_found) != 0) {
     stop(
       "select: Could not find column/s: [",
@@ -121,11 +121,11 @@ select <- function(.data, columns) {
 
   # Both subset and rename dataframe if 'columns' vector is named
   if (!is.null(names(columns))) {
-    return(rename(.data[columns], named_only(columns)))
+    return(rename(data[columns], named_only(columns)))
   }
 
   # Otherwise just subset the data.frame
-  return(.data[columns])
+  return(data[columns])
 }
 
 #' Deprecated
@@ -135,11 +135,11 @@ select <- function(.data, columns) {
 #' @inherit select
 #'
 #' @export
-bselect <- function(.data, columns) {
+bselect <- function(data, columns) {
   warning(
     "`bselect` has now been renamed to `select` and will be removed from this package in an upcoming release"
   )
-  select(.data, columns)
+  select(data, columns)
 }
 
 #' Deprecated
@@ -149,11 +149,11 @@ bselect <- function(.data, columns) {
 #' @inherit rename
 #'
 #' @export
-brename <- function(.data, namemap) {
+brename <- function(data, namemap) {
   warning(
     "`brename` has now been renamed to `rename` and will be removed from this package in an upcoming release"
   )
-  brename(.data, namemap)
+  brename(data, namemap)
 }
 
 # Function returns only the named elements of a vector

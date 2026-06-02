@@ -157,11 +157,11 @@ test_that("select with columns not a vector throws an error", {
   )
 })
 
-test_that("select with .data not a data.frame throws an error", {
+test_that("select with data not a data.frame throws an error", {
   df <- matrix(1:10, nrow = 5)
   expect_error(
     select(df, c("a", "b")),
-    regexp = "select: '.data' must be a data.frame"
+    regexp = "select: 'data' must be a data.frame"
   )
 })
 

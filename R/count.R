@@ -3,7 +3,7 @@
 #' Tally the frequency of each level in a column
 #' (or combination of levels in several column).
 #'
-#' @param .data a data.frame.
+#' @param data a data.frame.
 #' @param columns names of columns whole levels to tally (character vector).
 #' @param sort sort by tallies in descending order.
 #' If \code{FALSE} table is sorted by columns (flag)
@@ -38,10 +38,10 @@
 #' 2. Lookup the 'n' attribute of the count data.frame which describes the true name of the tally column.
 #'
 #' @export
-count <- function(.data, columns, sort = FALSE, name = "n", drop = TRUE) {
+count <- function(data, columns, sort = FALSE, name = "n", drop = TRUE) {
   # Assertions
-  if (!is.data.frame(.data)) {
-    stop("'.data' must be a data.frame")
+  if (!is.data.frame(data)) {
+    stop("'data' must be a data.frame")
   }
 
   if (!is.vector(columns)) {
@@ -60,7 +60,7 @@ count <- function(.data, columns, sort = FALSE, name = "n", drop = TRUE) {
     stop("'columns' argument must not contain duplicates")
   }
 
-  cols_not_found <- setdiff(columns, colnames(.data))
+  cols_not_found <- setdiff(columns, colnames(data))
   if (length(cols_not_found) != 0) {
     stop(
       "Could not find column/s: [",
@@ -118,7 +118,7 @@ count <- function(.data, columns, sort = FALSE, name = "n", drop = TRUE) {
 
   # Tally unique combinations
   results <- as.data.frame(
-    table(.data[, columns, drop = FALSE], useNA = "ifany"),
+    table(data[, columns, drop = FALSE], useNA = "ifany"),
     stringsAsFactors = FALSE
   )
 
@@ -130,14 +130,14 @@ count <- function(.data, columns, sort = FALSE, name = "n", drop = TRUE) {
   for (col in columns) {
     results[[col]] <- convert_vector_to_match_target(
       results[[col]],
-      .data[[col]],
+      data[[col]],
       failure = "keep_original",
       error_prefix = "count: "
     )
 
     # Fix factor levels to match original data
-    if (is.factor(.data[[col]])) {
-      results[[col]] <- fct_align(results[[col]], .data[[col]])
+    if (is.factor(data[[col]])) {
+      results[[col]] <- fct_align(results[[col]], data[[col]])
     }
   }
 
