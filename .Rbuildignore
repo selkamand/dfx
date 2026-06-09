@@ -6,3 +6,5 @@
 ^\.positai$
 ^\.claude$
 ^\.github$
+^[.]?air[.]toml$
+^\.vscode$

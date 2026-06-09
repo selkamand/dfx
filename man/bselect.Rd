@@ -4,17 +4,17 @@
 \alias{bselect}
 \title{Deprecated}
 \usage{
-bselect(.data, columns)
+bselect(data, columns)
 }
 \arguments{
-\item{.data}{A data frame from which to select columns.}
+\item{data}{A data frame from which to select columns.}
 
-\item{columns}{A character vector of column names to select from \code{.data}.
+\item{columns}{A character vector of column names to select from \code{data}.
 If \code{columns} is a named vector, the selected columns will be renamed in the returned data frame
 using the names of \code{columns} as the new column names.}
 }
 \value{
-A data frame containing only the specified columns from \code{.data}.
+A data frame containing only the specified columns from \code{data}.
 If \code{columns} is a named vector, the columns in the returned data frame will be renamed accordingly.
 }
 \description{

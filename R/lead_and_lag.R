@@ -33,94 +33,187 @@ NULL
 
 #' @rdname lead_and_lag
 #' @export
-lag <- function(x, n = 1L, default = NULL){
-
+lag <- function(x, n = 1L, default = NULL) {
   # Assertions
-  if (inherits(x, "ts")) stop("`x` must be a vector, not a <ts>, do you want `stats::lag()`?")
-  if (!is.vector(x) && !is.factor(x) && !inherits(x, "Date") && !inherits(x, "POSIXct") || is.matrix(x)) stop("`x` must be a vector, not an object of class: [", toString(class(x)), "]")
-  if(!is.numeric(n)) stop("`n` must be an integer, not an object of class [", toString(class(n)), "]")
-  if(length(n) != 1) stop("`n` must be a single number (supplied value had length of ", length(n), ")")
-  if (is.list(x)) return(lag_list(x=x, n=n, default = default))
+  if (inherits(x, "ts")) {
+    stop("`x` must be a vector, not a <ts>, do you want `stats::lag()`?")
+  }
+  if (
+    !is.vector(x) &&
+      !is.factor(x) &&
+      !inherits(x, "Date") &&
+      !inherits(x, "POSIXct") ||
+      is.matrix(x)
+  ) {
+    stop(
+      "`x` must be a vector, not an object of class: [",
+      toString(class(x)),
+      "]"
+    )
+  }
+  if (!is.numeric(n)) {
+    stop(
+      "`n` must be an integer, not an object of class [",
+      toString(class(n)),
+      "]"
+    )
+  }
+  if (length(n) != 1) {
+    stop(
+      "`n` must be a single number (supplied value had length of ",
+      length(n),
+      ")"
+    )
+  }
+  if (is.list(x)) {
+    return(lag_list(x = x, n = n, default = default))
+  }
 
   # Process Default
-  if(!is.null(default)) {
-    if(length(default) != 1)
-      stop("`default` must be NULL or a scalar value, not a vector of length: ", length(default))
+  if (!is.null(default)) {
+    if (length(default) != 1) {
+      stop(
+        "`default` must be NULL or a scalar value, not a vector of length: ",
+        length(default)
+      )
+    }
 
     # When x is an integer type and default is a non-integer number but whole, do the conversion
-    if(is.integer(x) & is.numeric(default) & default%%1==0)
+    if (is.integer(x) & is.numeric(default) & default %% 1 == 0) {
       default <- as.integer(default)
+    }
 
     # When default is NA, ensure type of NA matches type of x
-    if(is.na(default)) default <- pick_correct_na_to_match_type(x)
+    if (is.na(default)) {
+      default <- pick_correct_na_to_match_type(x)
+    }
 
     # If type of default does not match type of x, throw an error
-    if(!identical(typeof(default), typeof(x))){
-      stop("`default` must be the same type as x. Expected [", toString(typeof(x)), "] but recieved [", toString(typeof(default)), "]")
+    if (!identical(typeof(default), typeof(x))) {
+      stop(
+        "`default` must be the same type as x. Expected [",
+        toString(typeof(x)),
+        "] but recieved [",
+        toString(typeof(default)),
+        "]"
+      )
     }
   }
 
-  if(n < 0) stop("`n` must positive")
+  if (n < 0) {
+    stop("`n` must positive")
+  }
 
   # if vector is empty, return as is
-  if(length(x) == 0) return(x)
+  if (length(x) == 0) {
+    return(x)
+  }
 
   # Setup padding
-  padding <- if(!is.null(default)) default else pick_correct_na_to_match_type(x)
+  padding <- if (!is.null(default)) {
+    default
+  } else {
+    pick_correct_na_to_match_type(x)
+  }
 
   # Early return if n is longer than x
-  if(n >= length(x))
+  if (n >= length(x)) {
     return(rep(padding, times = length(x)))
+  }
 
   # Lag vector
-  c(rep(padding, times=n), utils::head(x, n = length(x)-n))
+  c(rep(padding, times = n), utils::head(x, n = length(x) - n))
 }
 
 #' @rdname lead_and_lag
 #' @export
-lead <- function(x, n = 1L, default = NULL){
-
+lead <- function(x, n = 1L, default = NULL) {
   # Assertions
-  if (!is.vector(x) && !is.factor(x) && !inherits(x, "Date") && !inherits(x, "POSIXct") || is.matrix(x)) stop("`x` must be a vector, not an object of class: [", toString(class(x)), "]")
-  if(!is.numeric(n)) stop("`n` must be an integer, not an object of class [", toString(class(n)), "]")
-  if(length(n) != 1) stop("`n` must be a single number (supplied value had length of ", length(n), ")")
-  if (is.list(x)) return(lead_list(x=x, n=n, default = default))
+  if (
+    !is.vector(x) &&
+      !is.factor(x) &&
+      !inherits(x, "Date") &&
+      !inherits(x, "POSIXct") ||
+      is.matrix(x)
+  ) {
+    stop(
+      "`x` must be a vector, not an object of class: [",
+      toString(class(x)),
+      "]"
+    )
+  }
+  if (!is.numeric(n)) {
+    stop(
+      "`n` must be an integer, not an object of class [",
+      toString(class(n)),
+      "]"
+    )
+  }
+  if (length(n) != 1) {
+    stop(
+      "`n` must be a single number (supplied value had length of ",
+      length(n),
+      ")"
+    )
+  }
+  if (is.list(x)) {
+    return(lead_list(x = x, n = n, default = default))
+  }
 
   # Process Default
-  if(!is.null(default)) {
-    if(length(default) != 1)
-      stop("`default` must be NULL or a scalar value, not a vector of length: ", length(default))
+  if (!is.null(default)) {
+    if (length(default) != 1) {
+      stop(
+        "`default` must be NULL or a scalar value, not a vector of length: ",
+        length(default)
+      )
+    }
 
     # When x is an integer type and default is a non-integer number but whole, do the conversion
-    if(is.integer(x) & is.numeric(default) & default%%1==0)
+    if (is.integer(x) & is.numeric(default) & default %% 1 == 0) {
       default <- as.integer(default)
+    }
 
     # When default is NA, ensure type of NA matches type of x
-    if(is.na(default)) default <- pick_correct_na_to_match_type(x)
+    if (is.na(default)) {
+      default <- pick_correct_na_to_match_type(x)
+    }
 
     # If type of default does not match type of x, throw an error
-    if(!identical(typeof(default), typeof(x))){
-      stop("`default` must be the same type as x. Expected [", toString(typeof(x)), "] but recieved [", toString(typeof(default)), "]")
+    if (!identical(typeof(default), typeof(x))) {
+      stop(
+        "`default` must be the same type as x. Expected [",
+        toString(typeof(x)),
+        "] but recieved [",
+        toString(typeof(default)),
+        "]"
+      )
     }
   }
 
-  if(n < 0) stop("`n` must positive")
-
+  if (n < 0) {
+    stop("`n` must positive")
+  }
 
   # Setup padding
-  padding <- if(!is.null(default)) default else pick_correct_na_to_match_type(x)
+  padding <- if (!is.null(default)) {
+    default
+  } else {
+    pick_correct_na_to_match_type(x)
+  }
 
   # Early return if n is longer than x
-  if(n >= length(x))
+  if (n >= length(x)) {
     return(rep(padding, times = length(x)))
+  }
 
   # Lead vector
-  c(utils::tail(x, n = length(x)-n), rep(padding, times=n))
+  c(utils::tail(x, n = length(x) - n), rep(padding, times = n))
 }
 
 
 # List Versions -----------------------------------------------------------
-lag_list <- function(x, n, default){
+lag_list <- function(x, n, default) {
   padding <- list(default)
   #  if(is.null(default)) list(NULL)
   # else if(is.list(default)) default
@@ -129,14 +222,15 @@ lag_list <- function(x, n, default){
   orig_len <- length(x)
 
   # Early return if n > orig length
-  if(n >= orig_len)
+  if (n >= orig_len) {
     return(rep(padding, times = orig_len))
+  }
 
   new_long <- append(x = x, values = rep(padding, times = n), after = 0)
   new_long[seq_len(orig_len)]
 }
 
-lead_list <- function(x, n, default){
+lead_list <- function(x, n, default) {
   padding <- list(default)
   # padding <- if(is.null(default)) list(NULL)
   # else if(is.list(default)) default
@@ -145,9 +239,10 @@ lead_list <- function(x, n, default){
   orig_len <- length(x)
 
   # Early return if n > orig length
-  if(n >= orig_len)
+  if (n >= orig_len) {
     return(rep(padding, times = orig_len))
+  }
 
   # padding = list(
-  c(utils::tail(x, n = orig_len-n), rep(padding, times=n))
+  c(utils::tail(x, n = orig_len - n), rep(padding, times = n))
 }

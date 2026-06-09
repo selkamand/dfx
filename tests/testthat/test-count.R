@@ -111,6 +111,137 @@ test_that("count validates drop", {
 })
 
 
+test_that("count counts logical columns including missing values", {
+  df <- data.frame(flag = c(TRUE, FALSE, TRUE, NA, FALSE, FALSE))
+
+  out <- count(df, "flag")
+
+  expected <- data.frame(
+    flag = c(FALSE, TRUE, NA),
+    n = c(3, 2, 1)
+  )
+
+  expect_type(out$flag, "logical")
+  expect_equal(out, expected, ignore_attr = TRUE)
+})
+
+test_that("count preserves integer columns as integer", {
+  df <- data.frame(x = c(-1L, 0L, -1L, 2L, 0L, 2L, 2L))
+
+  out <- count(df, "x")
+
+  expected <- data.frame(
+    x = c(-1L, 0L, 2L),
+    n = c(2, 2, 3)
+  )
+
+  expect_type(out$x, "integer")
+  expect_equal(out, expected, ignore_attr = TRUE)
+})
+
+test_that("count preserves ordered factor columns", {
+  df <- data.frame(
+    priority = ordered(
+      c("medium", "low", "medium", "high"),
+      levels = c("low", "medium", "high")
+    )
+  )
+
+  out <- count(df, "priority")
+
+  expected <- data.frame(
+    priority = ordered(
+      c("low", "medium", "high"),
+      levels = c("low", "medium", "high")
+    ),
+    n = c(1, 2, 1)
+  )
+
+  expect_true(is.ordered(out$priority))
+  expect_equal(levels(out$priority), levels(df$priority))
+  expect_equal(out, expected, ignore_attr = TRUE)
+})
+
+test_that("count preserves POSIXct columns and counts missing timestamps", {
+  times <- as.POSIXct(
+    c(
+      "2020-01-01 01:00:00",
+      "2020-01-01 01:00:00",
+      "2020-06-01 12:30:00",
+      NA,
+      "2020-06-01 12:30:00"
+    ),
+    tz = "UTC"
+  )
+
+  df <- data.frame(when = times)
+
+  out <- count(df, "when")
+
+  expected <- data.frame(
+    when = as.POSIXct(
+      c(
+        "2020-01-01 01:00:00",
+        "2020-06-01 12:30:00",
+        NA
+      ),
+      tz = "UTC"
+    ),
+    n = c(2, 2, 1)
+  )
+
+  expect_s3_class(out$when, "POSIXct")
+  expect_equal(attr(out$when, "tzone"), "UTC")
+  expect_equal(out, expected, ignore_attr = TRUE)
+})
+
+test_that("count distinguishes character NA from literal NA string", {
+  df <- data.frame(
+    x = c("", "NA", NA, "", "NA"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- count(df, "x")
+
+  expected <- data.frame(
+    x = c("", "NA", NA),
+    n = c(2, 2, 1),
+    stringsAsFactors = FALSE
+  )
+
+  expect_type(out$x, "character")
+  expect_equal(out, expected, ignore_attr = TRUE)
+})
+
+test_that("count counts mixed non-character column types together", {
+  df <- data.frame(
+    day = as.Date(c(
+      "2020-01-02",
+      "2020-01-01",
+      "2020-01-01",
+      "2020-01-02",
+      "2020-01-01"
+    )),
+    flag = c(TRUE, FALSE, TRUE, TRUE, TRUE)
+  )
+
+  out <- count(df, c("day", "flag"))
+
+  expected <- data.frame(
+    day = as.Date(c(
+      "2020-01-01",
+      "2020-01-01",
+      "2020-01-02"
+    )),
+    flag = c(FALSE, TRUE, TRUE),
+    n = c(1, 2, 2)
+  )
+
+  expect_s3_class(out$day, "Date")
+  expect_type(out$flag, "logical")
+  expect_equal(out, expected, ignore_attr = TRUE)
+})
+
 # test_that("count respects factor level order", {
 #   df <- data.frame(
 #     x = factor(
