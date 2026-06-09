@@ -72,7 +72,6 @@ rename(minicars, c("miles_per_gallon" = "mpg", "horsepower" = "hp"))
 #> Hornet Sportabout    3    2
 #> Valiant              3    1
 
-
 # Count observations in data.frame column
 count(minicars, "cyl")
 #>   cyl n
@@ -90,3 +89,8 @@ lag(1:5)
 lead(1:5)
 #> [1]  2  3  4  5 NA
 ```
+
+## For Developers
+
+Ensure PRs are formatted with
+[air](https://posit-dev.github.io/air/formatter.html).

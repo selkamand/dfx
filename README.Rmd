@@ -61,3 +61,7 @@ n_distinct(mtcars)
 lag(1:5)
 lead(1:5)
 ```
+
+## For Developers
+
+Ensure PRs are formatted with [air](https://posit-dev.github.io/air/formatter.html).
