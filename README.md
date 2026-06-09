@@ -42,8 +42,11 @@ library(dfx)
 #> 
 #>     lag
 
+# Prep example data
+minicars <- head(mtcars)
+
 # Select columns
-head(select(mtcars, c("mpg", "hp")))
+select(minicars, c("mpg", "hp"))
 #>                    mpg  hp
 #> Mazda RX4         21.0 110
 #> Mazda RX4 Wag     21.0 110
@@ -53,7 +56,7 @@ head(select(mtcars, c("mpg", "hp")))
 #> Valiant           18.1 105
 
 # Rename Columns
-head(rename(mtcars, c("miles_per_gallon" = "mpg", "horsepower" = "hp")))
+rename(minicars, c("miles_per_gallon" = "mpg", "horsepower" = "hp"))
 #>                   miles_per_gallon cyl disp horsepower drat    wt  qsec vs am
 #> Mazda RX4                     21.0   6  160        110 3.90 2.620 16.46  0  1
 #> Mazda RX4 Wag                 21.0   6  160        110 3.90 2.875 17.02  0  1
@@ -71,11 +74,11 @@ head(rename(mtcars, c("miles_per_gallon" = "mpg", "horsepower" = "hp")))
 
 
 # Count observations in data.frame column
-count(mtcars, "cyl")
-#>   cyl  n
-#> 1   4 11
-#> 2   6  7
-#> 3   8 14
+count(minicars, "cyl")
+#>   cyl n
+#> 1   4 1
+#> 2   6 4
+#> 3   8 1
 
 # Count unique levels in a vector
 n_distinct(mtcars)

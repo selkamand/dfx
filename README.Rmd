@@ -39,18 +39,20 @@ remotes::install_github("selkamand/dfx")
 
 ## Quick Start
 
-```{r paged.print=TRUE}
+```{r}
 library(dfx)
 
+# Prep example data
+minicars <- head(mtcars)
+
 # Select columns
-head(select(mtcars, c("mpg", "hp")))
+select(minicars, c("mpg", "hp"))
 
 # Rename Columns
-head(rename(mtcars, c("miles_per_gallon" = "mpg", "horsepower" = "hp")))
-
+rename(minicars, c("miles_per_gallon" = "mpg", "horsepower" = "hp"))
 
 # Count observations in data.frame column
-count(mtcars, "cyl")
+count(minicars, "cyl")
 
 # Count unique levels in a vector
 n_distinct(mtcars)
@@ -59,4 +61,3 @@ n_distinct(mtcars)
 lag(1:5)
 lead(1:5)
 ```
-
