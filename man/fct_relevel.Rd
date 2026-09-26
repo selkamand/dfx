@@ -7,14 +7,14 @@
 fct_relevel(x, ref, after = 0L)
 }
 \arguments{
-\item{x}{a factor whose levels you want to reorder}
+\item{x}{a factor (or character vector) whose levels you want to reorder}
 
 \item{ref}{level names in the order you want them (character vector)}
 
 \item{after}{the position to move the reference levels to (number)}
 }
 \value{
-a factor whose levels with reordered levels
+a factor with levels reordered based on their order in \code{ref}
 }
 \description{
 Move any number of levels to any location.
