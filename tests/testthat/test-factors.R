@@ -129,10 +129,23 @@ test_that("fct_relevel preserves names", {
 })
 
 
-test_that("fct_relevel errors when x is not a factor", {
+test_that("fct_relevel converts character vectors to unordered factors", {
+  x <- c(first = "z", second = NA_character_, third = "a", fourth = "b")
+
+  expect_silent(result <- fct_relevel(x, "b"))
+
+  expect_identical(levels(result), c("b", "a", "z"))
+  expect_identical(as.character(result), unname(x))
+  expect_identical(names(result), names(x))
+  expect_identical(is.na(result), is.na(x))
+  expect_identical(class(result), "factor")
+})
+
+
+test_that("fct_relevel rejects unsupported input types", {
   expect_error(
-    fct_relevel(c("a", "b", "c"), c("a", "b")),
-    "`x` must be a factor",
+    fct_relevel(1:3, "a"),
+    "`x` must be a factor or character vector",
     fixed = TRUE
   )
 })

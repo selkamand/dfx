@@ -2,10 +2,11 @@
 #'
 #' Move any number of levels to any location.
 #'
-#' @param x a factor whose levels you want to reorder
+#' @param x a factor (or character vector) whose levels you want to reorder
 #' @param ref level names in the order you want them (character vector)
 #' @param after the position to move the reference levels to (number)
-#' @return a factor whose levels with reordered levels
+#'
+#' @return a factor with levels reordered based on their order in `ref`.
 #'
 #' @examples
 #' f <- factor(c("a", "b", "c", "d"), levels = c("b", "c", "d", "a"))
@@ -14,11 +15,17 @@
 #' fct_relevel(f, c("b", "a", after = Inf))
 #'
 #' @export
+#' @md
 fct_relevel <- function(x, ref, after = 0L) {
-  # Assertions
-  if (!is.factor(x)) {
+
+  # Assertions about x:
+  #  - Must be a character vector or factor
+  #  - If a character vector -> silently convert to an unordered factor
+  if (is.character(x)) {
+    x <- factor(x)
+  } else if (!is.factor(x)) {
     stop(
-      "`x` must be a factor, not an object of class [",
+      "`x` must be a factor or character vector, not an object of class [",
       toString(class(x)),
       "]"
     )
