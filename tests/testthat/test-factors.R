@@ -1,3 +1,5 @@
+# fct_relevel ----------
+
 test_that("fct_relevel throws error when no ref is supplied", {
   x <- factor(c("a", "b", "c"), levels = c("b", "c", "a"))
 
@@ -116,6 +118,38 @@ test_that("fct_relevel preserves missing values", {
 })
 
 
+test_that("fct_relevel preserves an explicit NA level", {
+  x <- factor(c("a", NA, "b"), levels = c("a", "b", NA), exclude = NULL)
+  expected <- factor(c("a", NA, "b"), levels = c("b", "a", NA), exclude = NULL)
+
+  expect_identical(fct_relevel(x, "b"), expected)
+})
+
+
+test_that("fct_relevel can move an explicit NA level", {
+  x <- factor(c("a", NA, "b"), levels = c("a", "b", NA), exclude = NULL)
+
+  result <- fct_relevel(x, NA_character_)
+
+  expect_identical(levels(result), c(NA_character_, "a", "b"))
+  expect_identical(as.character(result), as.character(x))
+})
+
+
+test_that("fct_relevel preserves extra factor attributes", {
+  x <- factor(c("a", "b"))
+  attr(x, "label") <- "example"
+  attr(x, "tag") <- list(source = "test")
+
+  result <- fct_relevel(x, "b")
+
+  expect_identical(
+    attributes(result)[c("label", "tag")],
+    attributes(x)[c("label", "tag")]
+  )
+})
+
+
 test_that("fct_relevel preserves names", {
   x <- factor(
     c(first = "a", second = "b", third = "c"),
@@ -188,4 +222,109 @@ test_that("fct_relevel validates after", {
     "`after` must be a whole number.",
     fixed = TRUE
   )
+})
+
+# fct_rev ----------
+
+test_that("fct_rev reverses all levels without moving values", {
+  x <- factor(
+    c("a", "c", "a", "b"),
+    levels = c("b", "a", "unused", "c")
+  )
+
+  result <- fct_rev(x)
+
+  expect_identical(levels(result), c("c", "unused", "a", "b"))
+  expect_identical(as.character(result), as.character(x))
+  expect_identical(is.na(result), is.na(x))
+  expect_identical(class(result), "factor")
+})
+
+
+test_that("fct_rev preserves ordered factors", {
+  x <- ordered(c("low", "high", "medium"), levels = c("low", "medium", "high"))
+
+  result <- fct_rev(x)
+
+  expect_identical(levels(result), c("high", "medium", "low"))
+  expect_identical(as.character(result), as.character(x))
+  expect_identical(class(result), c("ordered", "factor"))
+})
+
+
+test_that("fct_rev preserves names and missing values", {
+  x <- factor(
+    c(first = "a", missing = NA_character_, last = "b"),
+    levels = c("b", "a")
+  )
+
+  result <- fct_rev(x)
+
+  expect_identical(names(result), names(x))
+  expect_identical(levels(result), c("a", "b"))
+  expect_identical(as.character(result), as.character(x))
+  expect_identical(is.na(result), is.na(x))
+})
+
+
+test_that("fct_rev converts character input to an unordered factor", {
+  x <- c(first = "b", missing = NA_character_, last = "a")
+
+  result <- fct_rev(x)
+
+  expect_identical(class(result), "factor")
+  expect_identical(levels(result), c("b", "a"))
+  expect_identical(as.character(result), unname(x))
+  expect_identical(names(result), names(x))
+  expect_identical(is.na(result), is.na(x))
+})
+
+
+test_that("fct_rev handles empty inputs", {
+  empty_factor <- factor(character(), levels = c("a", "unused", "b"))
+
+  result <- fct_rev(empty_factor)
+  empty_character_result <- fct_rev(character())
+
+  expect_identical(levels(result), c("b", "unused", "a"))
+  expect_identical(length(result), 0L)
+  expect_identical(class(result), "factor")
+  expect_identical(empty_character_result, factor(character()))
+})
+
+
+test_that("reversing twice restores an ordinary factor", {
+  x <- factor(c("b", NA, "a"), levels = c("a", "unused", "b"))
+
+  expect_identical(fct_rev(fct_rev(x)), x)
+})
+
+
+test_that("fct_rev rejects unsupported input types", {
+  expect_error(fct_rev(1:3))
+  expect_error(fct_rev(c(TRUE, FALSE)))
+  expect_error(fct_rev(list("a", "b")))
+  expect_error(fct_rev(NULL))
+})
+
+
+test_that("fct_rev preserves an explicit NA level", {
+  x <- factor(c("a", NA, "b"), levels = c("a", "b", NA), exclude = NULL)
+  expected <- factor(c("a", NA, "b"), levels = c(NA, "b", "a"), exclude = NULL)
+
+  expect_identical(fct_rev(x), expected)
+})
+
+test_that("fct_rev does NOT create NA levels when character vector is supplied", {
+  x <- c("a", NA_character_, "b")
+  expected <- factor(c("a", NA_character_, "b"), levels = c("b", "a"))
+
+  expect_identical(fct_rev(x), expected)
+})
+
+test_that("fct_rev preserves extra factor attributes", {
+  x <- factor(c("a", "b"))
+  attr(x, "label") <- "example"
+
+  expect_identical(attr(fct_rev(x), "label"), "example")
 })
