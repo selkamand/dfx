@@ -74,6 +74,51 @@ fct_relevel <- function(x, ref, after = 0L) {
 }
 
 
+#' Reverse factor level order
+#'
+#' Reverse levels of a factor
+#' @param x a factor (or character vector) whose levels you want to reverse
+#' @return A factor with its levels in reverse order.
+#'
+#' @details
+#' Explicit `NA` levels in factors are preserved. If a factor contains both an
+#' explicit `NA` level and genuinely missing values, the missing values become
+#' part of the `NA` level, as in `forcats::fct_rev()`. Character vectors are
+#' converted to factors without creating an explicit `NA` level.
+#'
+#' @examples
+#' f <- factor(c("a", "b", "c", "d"), levels = c("a", "b", "c", "d"))
+#' reversed <- fct_rev(f)
+#'
+#' levels(reversed) # d, c, b, a
+#'
+#' @export
+#' @md
+fct_rev <- function(x){
+
+  # Assertions about x:
+  #  - Must be a character vector or factor
+  #  - If a character vector -> silently convert to an unordered factor
+  if (is.character(x)) {
+    x <- factor(x)
+  } else if (!is.factor(x)) {
+    stop(
+      "`x` must be a factor or character vector, not an object of class [",
+      toString(class(x)),
+      "]"
+    )
+  }
+
+
+  # Get reversed order of levels
+  new_levels <- rev(levels(x))
+
+  # Create a new factor, updating the levels but preserving all other attributes, names, etc
+  xnew <- change_factor_levels(x, new_levels)
+
+  return(xnew)
+}
+
 # Factor helpers ----
 
 # Create a new factor identical to an existing one but with different levels
