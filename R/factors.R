@@ -17,7 +17,6 @@
 #' @export
 #' @md
 fct_relevel <- function(x, ref, after = 0L) {
-
   # Assertions about x:
   #  - Must be a character vector or factor
   #  - If a character vector -> silently convert to an unordered factor
@@ -66,7 +65,6 @@ fct_relevel <- function(x, ref, after = 0L) {
   # New Levels
   new_levels <- append(levels_not_in_ref, levels_in_ref, after = after)
 
-
   # Create new factor
   xnew <- change_factor_levels(x, new_levels)
 
@@ -94,8 +92,7 @@ fct_relevel <- function(x, ref, after = 0L) {
 #'
 #' @export
 #' @md
-fct_rev <- function(x){
-
+fct_rev <- function(x) {
   # Assertions about x:
   #  - Must be a character vector or factor
   #  - If a character vector -> silently convert to an unordered factor
@@ -108,7 +105,6 @@ fct_rev <- function(x){
       "]"
     )
   }
-
 
   # Get reversed order of levels
   new_levels <- rev(levels(x))
@@ -124,8 +120,7 @@ fct_rev <- function(x){
 # Create a new factor identical to an existing one but with different levels
 # Preserves names, ordered-status, explicit NA levels, and attributes.
 # x should be a factor, and levels a character vector with the new levels
-change_factor_levels <- function(x, levels){
-
+change_factor_levels <- function(x, levels) {
   xnew <- factor(
     as.character(x),
     levels = levels,
