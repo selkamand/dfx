@@ -14,7 +14,7 @@ fct_relevel(x, ref, after = 0L)
 \item{after}{the position to move the reference levels to (number)}
 }
 \value{
-a factor with levels reordered based on their order in \code{ref}
+a factor with levels reordered based on their order in \code{ref}.
 }
 \description{
 Move any number of levels to any location.

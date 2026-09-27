@@ -1,3 +1,5 @@
+# fct_relevel ----------
+
 test_that("fct_relevel throws error when no ref is supplied", {
   x <- factor(c("a", "b", "c"), levels = c("b", "c", "a"))
 
@@ -113,6 +115,38 @@ test_that("fct_relevel preserves missing values", {
   expect_identical(levels(result), c("a", "b", "c"))
   expect_identical(is.na(result), is.na(x))
   expect_identical(as.character(result), as.character(x))
+})
+
+
+test_that("fct_relevel preserves an explicit NA level", {
+  x <- factor(c("a", NA, "b"), levels = c("a", "b", NA), exclude = NULL)
+  expected <- factor(c("a", NA, "b"), levels = c("b", "a", NA), exclude = NULL)
+
+  expect_identical(fct_relevel(x, "b"), expected)
+})
+
+
+test_that("fct_relevel can move an explicit NA level", {
+  x <- factor(c("a", NA, "b"), levels = c("a", "b", NA), exclude = NULL)
+
+  result <- fct_relevel(x, NA_character_)
+
+  expect_identical(levels(result), c(NA_character_, "a", "b"))
+  expect_identical(as.character(result), as.character(x))
+})
+
+
+test_that("fct_relevel preserves extra factor attributes", {
+  x <- factor(c("a", "b"))
+  attr(x, "label") <- "example"
+  attr(x, "tag") <- list(source = "test")
+
+  result <- fct_relevel(x, "b")
+
+  expect_identical(
+    attributes(result)[c("label", "tag")],
+    attributes(x)[c("label", "tag")]
+  )
 })
 
 
