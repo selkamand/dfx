@@ -11,15 +11,15 @@
 #' so `template = numeric(1)`.
 #' Passed to `FUN.VALUE` argument of vapply.
 #' @param drop If `TRUE`, unused factor levels in `by` are omitted. If `drop=FALSE` they are included.
-#' @param empty The value provided for an unused level when `drop = FALSE`. By default,
+#' @param default The value provided for an unused level when `drop = FALSE`. By default,
 #'   we use a missing value matching the class of `template`. A raw vector has no notion of a missing value, so an
-#'   explicit `empty` value is required
+#'   explicit `default` value is required
 #'
 #' @details
 #' Non-factor `by` values are converted to a factor, so their groups appear in
 #' sorted order. Ordinary missing values in `by` are omitted. An explicit `NA`
 #' factor level is treated as a group when it has observations. Unused levels
-#' receive `empty` without calling `fun` on an empty vector.
+#' receive `default` without calling `fun` on an empty vector.
 #'
 #' @return A named vector with one element per observed group, or per factor
 #'   level when `drop = FALSE`. The result follows the type rules of `vapply()`.
@@ -52,14 +52,14 @@
 #' )
 #'
 #' # Manually set what value should be returned for unused values
-#' # using the `empty` argument
+#' # using the `default` argument
 #' summarise_vector_by(
 #'   vehicles$speed,
 #'   vehicles$type,
 #'   mean,
 #'   template = numeric(1),
 #'   drop = FALSE,
-#'   empty = 0
+#'   default = 0
 #' )
 #'
 #' @export
@@ -69,7 +69,7 @@ summarise_vector_by <- function(
   fun,
   template = numeric(1),
   drop = TRUE,
-  empty = template[NA_integer_] # trick to get an NA type that matches template
+  default = template[NA_integer_] # trick to get an NA type that matches template
 ) {
   if (missing(fun)) {
     stop("`fun` must be supplied.", call. = FALSE)
@@ -114,11 +114,11 @@ summarise_vector_by <- function(
   groups <- split(x = x, f = by, drop = FALSE)
   unused <- lengths(groups) == 0L
 
-  if (!drop && any(unused) && typeof(template) == "raw" && missing(empty)) {
-    stop("`empty` must be supplied for a raw result template.", call. = FALSE)
+  if (!drop && any(unused) && typeof(template) == "raw" && missing(default)) {
+    stop("`default` must be supplied for a raw result template.", call. = FALSE)
   }
-  if (!missing(empty) || (!drop && any(unused))) {
-    vapply(list(empty), identity, FUN.VALUE = template)
+  if (!missing(default) || (!drop && any(unused))) {
+    vapply(list(default), identity, FUN.VALUE = template)
   }
 
   if (drop) {
@@ -129,9 +129,9 @@ summarise_vector_by <- function(
     X = groups,
     FUN = function(group) {
       # If `by` is a factor with levels not present in `x`
-      # return whatever the user specified as `empty` (defaults to missing value)
+      # return whatever the user specified as `default` (defaults to missing value)
       if (length(group) == 0L) {
-        empty
+        default
       } else {
         # Otherwise call the actual function
         fun(group)

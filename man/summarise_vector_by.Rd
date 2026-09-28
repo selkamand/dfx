@@ -10,7 +10,7 @@ summarise_vector_by(
   fun,
   template = numeric(1),
   drop = TRUE,
-  empty = template[NA_integer_]
+  default = template[NA_integer_]
 )
 }
 \arguments{
@@ -27,9 +27,9 @@ Passed to \code{FUN.VALUE} argument of vapply.}
 
 \item{drop}{If \code{TRUE}, unused factor levels in \code{by} are omitted. If \code{drop=FALSE} they are included.}
 
-\item{empty}{The value provided for an unused level when \code{drop = FALSE}. By default,
+\item{default}{The value provided for an unused level when \code{drop = FALSE}. By default,
 we use a missing value matching the class of \code{template}. A raw vector has no notion of a missing value, so an
-explicit \code{empty} value is required}
+explicit \code{default} value is required}
 }
 \value{
 A named vector with one element per observed group, or per factor
@@ -43,7 +43,7 @@ return one summary value per group, in factor-level order.
 Non-factor \code{by} values are converted to a factor, so their groups appear in
 sorted order. Ordinary missing values in \code{by} are omitted. An explicit \code{NA}
 factor level is treated as a group when it has observations. Unused levels
-receive \code{empty} without calling \code{fun} on an empty vector.
+receive \code{default} without calling \code{fun} on an empty vector.
 }
 \examples{
 vehicles <- data.frame(
@@ -73,14 +73,14 @@ summarise_vector_by(
 )
 
 # Manually set what value should be returned for unused values
-# using the `empty` argument
+# using the `default` argument
 summarise_vector_by(
   vehicles$speed,
   vehicles$type,
   mean,
   template = numeric(1),
   drop = FALSE,
-  empty = 0
+  default = 0
 )
 
 }

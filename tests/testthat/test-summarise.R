@@ -23,7 +23,7 @@ test_that("summarise_vector_by fills unused levels without calling fun", {
   )
   expect_identical(calls, 2L)
   expect_identical(
-    summarise_vector_by(c(10, 20, 30), by, sum, drop = FALSE, empty = 0),
+    summarise_vector_by(c(10, 20, 30), by, sum, drop = FALSE, default = 0),
     c(b = 20, a = 40, unused = 0)
   )
 })
@@ -117,7 +117,7 @@ test_that("summarise_vector_by validates inputs and scalar results", {
       factor("a", levels = c("a", "b")),
       sum,
       drop = FALSE,
-      empty = c(0, 1)
+      default = c(0, 1)
     ),
     "values must be length 1"
   )
@@ -127,17 +127,17 @@ test_that("summarise_vector_by validates inputs and scalar results", {
       factor("a", levels = c("a", "b")),
       sum,
       drop = FALSE,
-      empty = "x"
+      default = "x"
     ),
     "must be type 'double'"
   )
   expect_error(
-    summarise_vector_by(1, "a", sum, empty = "x"),
+    summarise_vector_by(1, "a", sum, default = "x"),
     "must be type 'double'"
   )
 })
 
-test_that("summarise_vector_by requires an explicit raw empty value", {
+test_that("summarise_vector_by requires an explicit raw default value", {
   by <- factor("a", levels = c("a", "unused"))
   fun <- function(x) as.raw(sum(x))
 
@@ -147,7 +147,7 @@ test_that("summarise_vector_by requires an explicit raw empty value", {
   )
   expect_error(
     summarise_vector_by(1, by, fun, template = raw(1), drop = FALSE),
-    "`empty` must be supplied"
+    "`default` must be supplied"
   )
   expect_identical(
     summarise_vector_by(
@@ -156,7 +156,7 @@ test_that("summarise_vector_by requires an explicit raw empty value", {
       fun,
       template = raw(1),
       drop = FALSE,
-      empty = as.raw(0)
+      default = as.raw(0)
     ),
     structure(as.raw(c(1, 0)), names = c("a", "unused"))
   )
