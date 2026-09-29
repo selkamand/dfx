@@ -41,7 +41,6 @@ test_that("lead and lag preserves dates and times", {
 })
 
 
-
 test_that("`lead()` / `lag()` validate `n`", {
   expect_snapshot(error = TRUE, {
     lead(1:5, n = 1:2)
@@ -118,16 +117,23 @@ test_that("works with `n = 0` with and without `default`", {
 test_that("throws error when data.frames are supplied", {
   df <- data.frame(a = 1:3, b = letters[1:3])
 
-  expect_snapshot(error = TRUE, { lead(df) })
-  expect_snapshot(error = TRUE, { lag(df) })
-
+  expect_snapshot(error = TRUE, {
+    lead(df)
+  })
+  expect_snapshot(error = TRUE, {
+    lag(df)
+  })
 })
 
 test_that("throws error when matrices are supplied", {
-  mx <- matrix(1:6, nrow=3)
+  mx <- matrix(1:6, nrow = 3)
 
-  expect_snapshot(error = TRUE, { lead(mx) })
-  expect_snapshot(error = TRUE, { lag(mx) })
+  expect_snapshot(error = TRUE, {
+    lead(mx)
+  })
+  expect_snapshot(error = TRUE, {
+    lag(mx)
+  })
 })
 
 test_that("`default` is cast to the type of `x`", {
@@ -140,6 +146,16 @@ test_that("`default` is cast to the type of `x`", {
   expect_snapshot(error = TRUE, {
     lead(1L, default = 1.5)
   })
+})
+
+test_that("lag retains an infinite default for doubles and rejects it for integers", {
+  expect_identical(lag(c(1, 2), default = Inf), c(Inf, 1))
+  expect_error(lag(1L, default = Inf), "same type")
+})
+
+test_that("lead retains an infinite default for doubles and rejects it for integers", {
+  expect_identical(lead(c(1, 2), default = Inf), c(2, Inf))
+  expect_error(lead(1L, default = Inf), "same type")
 })
 
 test_that("`default` must be size 1 (#5641)", {
@@ -180,16 +196,44 @@ test_that("`default = NA` is typed to match `x`", {
   expect_s3_class(lead(x_date, default = NA), "Date")
 })
 
+test_that("lead and lag leave raw vectors unchanged when n is zero", {
+  x <- as.raw(c(1, 2))
+
+  expect_identical(lag(x, n = 0L), x)
+  expect_identical(lead(x, n = 0L), x)
+})
+
+test_that("lead and lag use 0x00 as default padding value for raw vectors", {
+  x <- as.raw(c(1, 2))
+
+  expect_identical(lag(x), as.raw(c(0, 1)))
+  expect_identical(lead(x), as.raw(c(2, 0)))
+})
+
+test_that("lag accepts an explicit raw padding value", {
+  expect_identical(
+    lag(as.raw(c(1, 2)), default = as.raw(100)),
+    as.raw(c(100, 1))
+  )
+})
+
+test_that("lead accepts an explicit raw padding value", {
+  expect_identical(
+    lead(as.raw(c(1, 2)), default = as.raw(100)),
+    as.raw(c(2, 100))
+  )
+})
+
 # List Inputs -------------------------------------------------------------
 
 test_that("lead and lag work on lists", {
   x <- list(a = 1, b = 1000, c("AA", "BB", "CC"))
-  expect_equal(lag(x), list(NULL, a=1, b = 1000))
+  expect_equal(lag(x), list(NULL, a = 1, b = 1000))
   expect_equal(lead(x), list(b = 1000, c("AA", "BB", "CC"), NULL))
 
   # What about when n > length of x
-  expect_equal(lag(x, n=5), list(NULL, NULL, NULL))
-  expect_equal(lead(x, n=5), list(NULL, NULL, NULL))
+  expect_equal(lag(x, n = 5), list(NULL, NULL, NULL))
+  expect_equal(lead(x, n = 5), list(NULL, NULL, NULL))
 })
 
 test_that("lag() works on list input with default NULL padding", {
