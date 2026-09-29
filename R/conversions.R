@@ -1,25 +1,32 @@
-pick_correct_na_to_match_type <- function(x) {
-  if (inherits(x, "Date")) {
-    as.Date(NA)
-  } else if (inherits(x, "POSIXct")) {
-    as.POSIXct(NA)
-  } else if (is.factor(x)) {
-    as.factor(NA)
-  } else if (is.complex(x)) {
-    NA_complex_
-  } else if (is.logical(x)) {
-    NA
-  } else if (is.character(x)) {
-    NA_character_
-  } else if (is.integer(x)) {
-    NA_integer_
-  } else if (is.numeric(x)) {
-    NA_real_
-  } else {
-    NA
-  }
-}
+# # Replaced with a simpler method below that better preserves attribute.
+# pick_correct_na_to_match_type <- function(x) {
+#   if (inherits(x, "Date")) {
+#     as.Date(NA)
+#   } else if (inherits(x, "POSIXct")) {
+#     as.POSIXct(NA)
+#   } else if (is.factor(x)) {
+#     as.factor(NA)
+#   } else if (is.complex(x)) {
+#     NA_complex_
+#   } else if (is.logical(x)) {
+#     NA
+#   } else if (is.character(x)) {
+#     NA_character_
+#   } else if (is.integer(x)) {
+#     NA_integer_
+#   } else if (is.numeric(x)) {
+#     NA_real_
+#   } else {
+#     NA
+#   }
+# }
 
+# Take any object x and return a missingness value that
+# matches the type. Preserves attributes so works for even more complex types.
+# For raw vectors which don't have a notion of missingness, it returns 00 as a padding byte.
+pick_correct_na_to_match_type <- function(x) {
+  unname(x[NA_integer_])
+}
 
 is_vector_like <- function(x) {
   (is.atomic(x) || is.list(x)) && is.null(dim(x))

@@ -1,3 +1,52 @@
+test_that("pick_correct_na_to_match_type preserves factor levels and ordering", {
+  x <- factor("a", levels = c("a", "b"))
+  expect_identical(
+    pick_correct_na_to_match_type(x),
+    factor(NA_character_, levels = c("a", "b"))
+  )
+
+  x <- ordered("low", levels = c("low", "high"))
+  expect_identical(
+    pick_correct_na_to_match_type(x),
+    ordered(NA_character_, levels = c("low", "high"))
+  )
+})
+
+test_that("pick_correct_na_to_match_type preserves time zones and duration units", {
+  x <- as.POSIXct("2024-01-01", tz = "Pacific/Auckland")
+  expect_identical(
+    pick_correct_na_to_match_type(x),
+    as.POSIXct(NA, tz = "Pacific/Auckland")
+  )
+
+  x <- as.difftime(1, units = "days")
+  expect_identical(
+    pick_correct_na_to_match_type(x),
+    as.difftime(NA_real_, units = "days")
+  )
+})
+
+test_that("pick_correct_na_to_match_type returns a missing list element", {
+  expect_identical(
+    pick_correct_na_to_match_type(list(1, 2)),
+    list(NULL)
+  )
+})
+
+test_that("pick_correct_na_to_match_type does not copy input names", {
+  expect_identical(
+    pick_correct_na_to_match_type(c(a = 1L)),
+    NA_integer_
+  )
+})
+
+test_that("pick_correct_na_to_match_type uses 00 as padding bytes for raw vectors", {
+  expect_identical(
+    pick_correct_na_to_match_type(as.raw(1)),
+    as.raw(0x00)
+  )
+})
+
 test_that("convert_vector_to_match_target converts to simple atomic target types", {
   expect_identical(
     convert_vector_to_match_target(c("1", "2", "3"), numeric()),
@@ -243,13 +292,19 @@ test_that("convert_vector_to_match_target returns objects matching the intent of
   )
 
   expect_s3_class(
-    convert_vector_to_match_target("2024-01-01 00:00:00", as.POSIXct(character())),
+    convert_vector_to_match_target(
+      "2024-01-01 00:00:00",
+      as.POSIXct(character())
+    ),
     "POSIXct"
   )
 })
 
 test_that("convert_vector_to_match_target handles ordered factor targets", {
-  target <- ordered(c("low", "medium", "high"), levels = c("low", "medium", "high"))
+  target <- ordered(
+    c("low", "medium", "high"),
+    levels = c("low", "medium", "high")
+  )
 
   result <- convert_vector_to_match_target(
     c("low", "high"),
@@ -262,7 +317,10 @@ test_that("convert_vector_to_match_target handles ordered factor targets", {
 })
 
 test_that("convert_vector_to_match_target ignores factor levels from target", {
-  target <- factor(c("low", "medium", "high"), levels = c("low", "medium", "high"))
+  target <- factor(
+    c("low", "medium", "high"),
+    levels = c("low", "medium", "high")
+  )
 
   result <- convert_vector_to_match_target(
     c("high", "low"),
@@ -386,7 +444,11 @@ test_that("convert_vector_to_match_target: snapshot errors thrown when conversio
 
   expect_snapshot(
     error = TRUE,
-    convert_vector_to_match_target("not-an-integer", integer(), failure = "error")
+    convert_vector_to_match_target(
+      "not-an-integer",
+      integer(),
+      failure = "error"
+    )
   )
 })
 
