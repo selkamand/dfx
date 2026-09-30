@@ -10,7 +10,7 @@ summarise_vector_by(
   fun,
   template = numeric(1),
   drop = TRUE,
-  default = template[NA_integer_]
+  default = NULL
 )
 }
 \arguments{
@@ -19,21 +19,23 @@ summarise_vector_by(
 \item{by}{A factor, character, numeric, or logical vector labelling which
 group each element in \code{x} belongs to. Must have the same length as \code{x}.}
 
-\item{fun}{A function applied to each nonempty group. Must return a single value whose class matches \code{template}.}
+\item{fun}{A function applied to each nonempty group. Must return a value
+compatible with the length and type of \code{template}.}
 
-\item{template}{A length-one vector indicating the type of value \code{fun} must return. For example, by default we expect single length vectors
-so \code{template = numeric(1)}.
-Passed to \code{FUN.VALUE} argument of vapply.}
+\item{template}{A length-one atomic vector indicating the type of value
+\code{fun} must return, such as \code{numeric(1)}. List templates are not supported.
+Passed to the \code{FUN.VALUE} argument of \code{vapply()}.}
 
 \item{drop}{If \code{TRUE}, unused factor levels in \code{by} are omitted. If \code{drop=FALSE} they are included.}
 
-\item{default}{The value provided for an unused level when \code{drop = FALSE}. By default,
-we use a missing value matching the class of \code{template}. A raw vector has no notion of a missing value, so an
-explicit \code{default} value is required}
+\item{default}{The value to return for unused levels. Only relevant when \code{drop = FALSE}. \code{NULL}
+by default, a missing value of type matching \code{template}will be supplied.
+If template is a raw vector, a \code{0x00} byte is used since raw vectors have no missing value
+A supplied value must be compatible with the length and type of \code{template}.}
 }
 \value{
-A named vector with one element per observed group, or per factor
-level when \code{drop = FALSE}. The result follows the type rules of \code{vapply()}.
+A named atomic vector with one element per observed group, or per factor
+level when by is a factor and \code{drop = FALSE}.
 }
 \description{
 Apply a function to the values of \code{x} in each group of \code{by} and
