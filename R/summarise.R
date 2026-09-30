@@ -130,7 +130,7 @@ summarise_vector_by <- function(
     groups <- groups[!unused]
   }
 
-  vapply(
+  result <- vapply(
     X = groups,
     FUN = function(group) {
       # If `by` is a factor with levels not present in `x`
@@ -145,4 +145,15 @@ summarise_vector_by <- function(
     FUN.VALUE = template,
     USE.NAMES = TRUE
   )
+
+  # If template is a date, turn the result of vapply back into a date
+  # (vapply will strip it out)
+  if (identical(class(template), "Date")) {
+    class(result) <- class(template)
+  } else if (identical(class(template), c("POSIXct", "POSIXt"))) {
+    class(result) <- class(template)
+    attr(result, "tzone") <- attr(template, "tzone")
+  }
+
+  result
 }

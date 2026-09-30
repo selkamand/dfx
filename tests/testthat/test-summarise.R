@@ -77,7 +77,11 @@ test_that("summarise_vector_by rejects list templates", {
   )
   expect_error(
     summarise_vector_by(
-      1, by, sum, template = list(NULL), drop = FALSE
+      1,
+      by,
+      sum,
+      template = list(NULL),
+      drop = FALSE
     ),
     list_error
   )
@@ -102,13 +106,22 @@ test_that("summarise_vector_by derives a missing value from a character template
   )
   expect_identical(
     summarise_vector_by(
-      "hello", by, paste, template = character(1), drop = FALSE, default = NA
+      "hello",
+      by,
+      paste,
+      template = character(1),
+      drop = FALSE,
+      default = NA
     ),
     c(a = "hello", unused = NA_character_)
   )
   expect_identical(
     summarise_vector_by(
-      "hello", by, paste, template = character(1), drop = FALSE,
+      "hello",
+      by,
+      paste,
+      template = character(1),
+      drop = FALSE,
       default = "none"
     ),
     c(a = "hello", unused = "none")
@@ -121,6 +134,37 @@ test_that("summarise_vector_by treats explicit NULL as the derived default", {
   expect_identical(
     summarise_vector_by(1, by, sum, drop = FALSE, default = NULL),
     c(a = 1, unused = NA_real_)
+  )
+})
+
+test_that("summarise_vector_by returns valid Date and POSIXct summaries", {
+  by <- factor(c("a", "b", "a"), levels = c("a", "b", "unused"))
+  dates <- as.Date(c("2024-01-02", "2024-01-01", "2024-01-03"))
+  timezone <- "Pacific/Auckland"
+  datetimes <- as.POSIXct(dates, tz = timezone)
+  group_names <- c("a", "b", "unused")
+
+  date_result <- summarise_vector_by(
+    dates, by, min, template = as.Date(NA), drop = FALSE
+  )
+  expect_s3_class(date_result, "Date")
+  expect_identical(
+    date_result,
+    setNames(dates[c(1, 2, NA_integer_)], group_names)
+  )
+
+  datetime_result <- summarise_vector_by(
+    datetimes,
+    by,
+    min,
+    template = as.POSIXct(NA, tz = timezone),
+    drop = FALSE
+  )
+  expect_s3_class(datetime_result, "POSIXct")
+  expect_identical(attr(datetime_result, "tzone"), timezone)
+  expect_identical(
+    datetime_result,
+    setNames(datetimes[c(1, 2, NA_integer_)], group_names)
   )
 })
 
