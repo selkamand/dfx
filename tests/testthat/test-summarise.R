@@ -4,7 +4,12 @@ test_that("summarise_vector_by follows factor order and drops unused levels", {
   by <- factor(c("a", "b", "a"), levels = c("b", "a", "unused"))
 
   expect_identical(
-    summarise_vector_by(x = c(10, 20, 30), by = by, fun = sum),
+    summarise_vector_by(
+      x = c(10, 20, 30),
+      by = by,
+      fun = sum,
+      template = numeric(1)
+    ),
     c(b = 20, a = 40)
   )
 })
@@ -18,30 +23,58 @@ test_that("summarise_vector_by fills unused levels without calling fun", {
   }
 
   expect_identical(
-    summarise_vector_by(c(10, 20, 30), by, summarise, drop = FALSE),
+    summarise_vector_by(
+      c(10, 20, 30),
+      by,
+      summarise,
+      template = numeric(1),
+      drop = FALSE
+    ),
     c(b = 20, a = 40, unused = NA_real_)
   )
   expect_identical(calls, 2L)
   expect_identical(
-    summarise_vector_by(c(10, 20, 30), by, sum, drop = FALSE, default = 0),
+    summarise_vector_by(
+      c(10, 20, 30),
+      by,
+      sum,
+      template = numeric(1),
+      drop = FALSE,
+      default = 0
+    ),
     c(b = 20, a = 40, unused = 0)
   )
 })
 
 test_that("summarise_vector_by sorts character groups and omits missing keys", {
   expect_identical(
-    summarise_vector_by(c(1, 2, 3, 4), c("z", "a", NA, "z"), sum),
+    summarise_vector_by(
+      c(1, 2, 3, 4),
+      c("z", "a", NA, "z"),
+      sum,
+      template = numeric(1)
+    ),
     c(a = 2, z = 5)
   )
 })
 
 test_that("summarise_vector_by accepts numeric and logical groups", {
   expect_identical(
-    summarise_vector_by(1:5, c(10, 2, 10, NA_real_, 1), sum),
+    summarise_vector_by(
+      1:5,
+      c(10, 2, 10, NA_real_, 1),
+      sum,
+      template = numeric(1)
+    ),
     c(`1` = 5, `2` = 2, `10` = 4)
   )
   expect_identical(
-    summarise_vector_by(1:4, c(TRUE, FALSE, TRUE, NA), sum),
+    summarise_vector_by(
+      1:4,
+      c(TRUE, FALSE, TRUE, NA),
+      sum,
+      template = numeric(1)
+    ),
     c(`FALSE` = 2, `TRUE` = 4)
   )
 })
@@ -50,16 +83,21 @@ test_that("summarise_vector_by retains an observed explicit NA level", {
   by <- factor(c("a", NA, "b"), levels = c("a", "b", NA), exclude = NULL)
 
   expect_identical(
-    summarise_vector_by(1:3, by, sum),
+    summarise_vector_by(1:3, by, sum, template = numeric(1)),
     setNames(c(1, 3, 2), c("a", "b", NA_character_))
   )
 })
 
 test_that("summarise_vector_by forwards additional arguments", {
   expect_identical(
-    summarise_vector_by(c(1, NA, 3), c("a", "a", "b"), function(x) {
-      mean(x, na.rm = TRUE)
-    }),
+    summarise_vector_by(
+      c(1, NA, 3),
+      c("a", "a", "b"),
+      function(x) {
+        mean(x, na.rm = TRUE)
+      },
+      template = numeric(1)
+    ),
     c(a = 1, b = 3)
   )
 })
@@ -132,7 +170,14 @@ test_that("summarise_vector_by treats explicit NULL as the derived default", {
   by <- factor("a", levels = c("a", "unused"))
 
   expect_identical(
-    summarise_vector_by(1, by, sum, drop = FALSE, default = NULL),
+    summarise_vector_by(
+      1,
+      by,
+      sum,
+      template = numeric(1),
+      drop = FALSE,
+      default = NULL
+    ),
     c(a = 1, unused = NA_real_)
   )
 })
@@ -145,7 +190,11 @@ test_that("summarise_vector_by returns valid Date and POSIXct summaries", {
   group_names <- c("a", "b", "unused")
 
   date_result <- summarise_vector_by(
-    dates, by, min, template = as.Date(NA), drop = FALSE
+    dates,
+    by,
+    min,
+    template = as.Date(NA),
+    drop = FALSE
   )
   expect_s3_class(date_result, "Date")
   expect_identical(
@@ -178,15 +227,20 @@ test_that("summarise_vector_by validates inputs and scalar results", {
     "`template`"
   )
   expect_error(
-    summarise_vector_by(1:2, c("a", "a"), function(x) x),
+    summarise_vector_by(1:2, c("a", "a"), function(x) x, template = numeric(1)),
     "values must be length 1"
   )
   expect_error(
-    summarise_vector_by(1:2, c("a", "b"), function(x) "x"),
+    summarise_vector_by(
+      1:2,
+      c("a", "b"),
+      function(x) "x",
+      template = numeric(1)
+    ),
     "must be type 'double'"
   )
   expect_error(
-    summarise_vector_by(1, "a", function(x) list(x)),
+    summarise_vector_by(1, "a", function(x) list(x), template = numeric(1)),
     "must be type 'double'"
   )
   expect_error(
@@ -194,6 +248,7 @@ test_that("summarise_vector_by validates inputs and scalar results", {
       1,
       factor("a", levels = c("a", "b")),
       sum,
+      template = numeric(1),
       drop = FALSE,
       default = c(0, 1)
     ),
@@ -204,13 +259,14 @@ test_that("summarise_vector_by validates inputs and scalar results", {
       1,
       factor("a", levels = c("a", "b")),
       sum,
+      template = numeric(1),
       drop = FALSE,
       default = "x"
     ),
     "must be type 'double'"
   )
   expect_error(
-    summarise_vector_by(1, "a", sum, default = "x"),
+    summarise_vector_by(1, "a", sum, template = numeric(1), default = "x"),
     "must be type 'double'"
   )
 })

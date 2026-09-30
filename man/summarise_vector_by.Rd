@@ -4,14 +4,7 @@
 \alias{summarise_vector_by}
 \title{Split a vector by some other variable and summarise}
 \usage{
-summarise_vector_by(
-  x,
-  by,
-  fun,
-  template = numeric(1),
-  drop = TRUE,
-  default = NULL
-)
+summarise_vector_by(x, by, fun, template, drop = TRUE, default = NULL)
 }
 \arguments{
 \item{x}{A vector of values to summarise.}
@@ -23,7 +16,7 @@ group each element in \code{x} belongs to. Must have the same length as \code{x}
 compatible with the length and type of \code{template}.}
 
 \item{template}{A length-one atomic vector indicating the type of value
-\code{fun} must return, such as \code{numeric(1)}. List templates are not supported.
+\code{fun} must return, such as \code{numeric(1)} or character(1).
 Passed to the \code{FUN.VALUE} argument of \code{vapply()}.}
 
 \item{drop}{If \code{TRUE}, unused factor levels in \code{by} are omitted.

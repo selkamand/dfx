@@ -9,8 +9,8 @@
 #' @param fun A function applied to each nonempty group. Must return a value
 #'   compatible with the length and type of `template`.
 #' @param template A length-one atomic vector indicating the type of value
-#'   `fun` must return, such as `numeric(1)`. List templates are not supported.
-#'   Passed to the `FUN.VALUE` argument of `vapply()`.
+#'   `fun` must return, such as `numeric(1)` or character(1).
+#'    Passed to the `FUN.VALUE` argument of `vapply()`.
 #' @param drop If `TRUE`, unused factor levels in `by` are omitted.
 #'   If `drop=FALSE` they are included.
 #' @param default
@@ -72,7 +72,7 @@ summarise_vector_by <- function(
   x,
   by,
   fun,
-  template = numeric(1),
+  template,
   drop = TRUE,
   default = NULL
 ) {
