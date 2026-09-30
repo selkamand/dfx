@@ -79,7 +79,12 @@ lag <- function(x, n = 1L, default = NULL) {
     }
 
     # When x is an integer type and default is a non-integer number but whole, do the conversion
-    if (is.integer(x) & is.numeric(default) & default %% 1 == 0) {
+    if (
+      is.integer(x) &&
+        is.numeric(default) &&
+        is.finite(default) &&
+        default %% 1 == 0
+    ) {
       default <- as.integer(default)
     }
 
@@ -170,7 +175,12 @@ lead <- function(x, n = 1L, default = NULL) {
     }
 
     # When x is an integer type and default is a non-integer number but whole, do the conversion
-    if (is.integer(x) & is.numeric(default) & default %% 1 == 0) {
+    if (
+      is.integer(x) &&
+        is.numeric(default) &&
+        is.finite(default) &&
+        default %% 1 == 0
+    ) {
       default <- as.integer(default)
     }
 
