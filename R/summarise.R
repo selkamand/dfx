@@ -11,11 +11,14 @@
 #' @param template A length-one atomic vector indicating the type of value
 #'   `fun` must return, such as `numeric(1)`. List templates are not supported.
 #'   Passed to the `FUN.VALUE` argument of `vapply()`.
-#' @param drop If `TRUE`, unused factor levels in `by` are omitted. If `drop=FALSE` they are included.
-#' @param default The value to return for unused levels. Only relevant when `drop = FALSE`. `NULL`
-#'   by default, a missing value of type matching `template`will be supplied.
-#'   If template is a raw vector, a `0x00` byte is used since raw vectors have no missing value
-#'   A supplied value must be compatible with the length and type of `template`.
+#' @param drop If `TRUE`, unused factor levels in `by` are omitted.
+#'   If `drop=FALSE` they are included.
+#' @param default
+#'   The value to return for unused levels. Only relevant when `drop = FALSE`.
+#'   By default, a missing value of a type matching `template` will be supplied.
+#'   If template is a raw vector, a `0x00` byte is used since they do not support
+#'   explicit missing values
+#'   Supplied value must be a scalar value whose type matches `template`.
 #'
 #' @details
 #' Non-factor `by` values are converted to a factor, so their groups appear in

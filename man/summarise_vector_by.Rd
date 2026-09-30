@@ -26,12 +26,14 @@ compatible with the length and type of \code{template}.}
 \code{fun} must return, such as \code{numeric(1)}. List templates are not supported.
 Passed to the \code{FUN.VALUE} argument of \code{vapply()}.}
 
-\item{drop}{If \code{TRUE}, unused factor levels in \code{by} are omitted. If \code{drop=FALSE} they are included.}
+\item{drop}{If \code{TRUE}, unused factor levels in \code{by} are omitted.
+If \code{drop=FALSE} they are included.}
 
-\item{default}{The value to return for unused levels. Only relevant when \code{drop = FALSE}. \code{NULL}
-by default, a missing value of type matching \code{template}will be supplied.
-If template is a raw vector, a \code{0x00} byte is used since raw vectors have no missing value
-A supplied value must be compatible with the length and type of \code{template}.}
+\item{default}{The value to return for unused levels. Only relevant when \code{drop = FALSE}.
+By default, a missing value of a type matching \code{template} will be supplied.
+If template is a raw vector, a \code{0x00} byte is used since they do not support
+explicit missing values
+Supplied value must be a scalar value whose type matches \code{template}.}
 }
 \value{
 A named atomic vector with one element per observed group, or per factor
