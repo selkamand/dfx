@@ -17,6 +17,7 @@ Requests](https://img.shields.io/github/issues-closed/selkamand/dfx)
 size](https://img.shields.io/github/languages/code-size/selkamand/dfx.svg)](https://github.com/selkamand/dfx)
 ![GitHub last
 commit](https://img.shields.io/github/last-commit/selkamand/dfx)
+
 <!-- badges: end -->
 
 dfx is a data.frame transformation package with a tidy-like interface
@@ -94,3 +95,36 @@ lead(1:5)
 
 Ensure PRs are formatted with
 [air](https://posit-dev.github.io/air/formatter.html).
+
+## Deciding when to use dfx
+
+**Performing a data analysis for research / datavis:**
+
+- Consider using the tidyverse/data.table instead
+
+**Developing a package with only base R dependencies:**
+
+- data.table is blazingly fast, stable, and if installing from CRAN all
+  you need is R. I highly recommend it for package dev. It also includes
+  c code so if you have to compile from source you may need additional
+  packages.
+
+**Developing a package from a tidyverse style analysis:**
+
+- Theres nothing wrong with using dplyr and other tidyverse tools in
+  packages. The tidyverse team is great at lifecycle management, so if
+  you depend on their tools you’ll start seeing warnings and migration
+  instructions long before any deprecated functions / approaches get
+  removed. However, the APIs have historically been improved over time,
+  changing much more than datatable, so expect to have to update your
+  packages every now and then. If you want your package to be set and
+  forget, data.table is a great option but you lose some of the great
+  tidyverse API design & porting can be a bit of work. dfx seeks to sit
+  between these. Expressive, functional design inspired by the
+  tidyverse, but without support for the non-standard evaluation that
+  IMHO makes interactive analysis speedy to write but package codebases
+  more difficult to reason about.
+
+dfx does not use any C, C++ or rust to speed up operations. This makes
+it substantially slower than data.table, but unbelievably easy to
+install from source on any platform.
