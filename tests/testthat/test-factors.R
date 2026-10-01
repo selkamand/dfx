@@ -150,6 +150,41 @@ test_that("fct_relevel preserves extra factor attributes", {
 })
 
 
+test_that("fct_relevel keeps custom contrasts aligned when inserting levels", {
+  x <- factor(
+    c("a", "b", "b", "c", "c", "c"),
+    levels = c("a", "b", "unused", "c")
+  )
+  stats::contrasts(x) <- stats::contr.sum(levels(x))
+  before <- stats::model.matrix(~group, data = data.frame(group = x))
+
+  result <- fct_relevel(x, c("c", "a"), after = 1L)
+  after <- stats::model.matrix(~group, data = data.frame(group = result))
+
+  expect_identical(levels(result), c("b", "c", "a", "unused"))
+  expect_identical(as.character(result), as.character(x))
+  expect_identical(
+    stats::contrasts(result),
+    stats::contrasts(x)[levels(result), , drop = FALSE]
+  )
+  expect_identical(
+    unname(after[, -1L, drop = FALSE]),
+    unname(before[, -1L, drop = FALSE])
+  )
+})
+
+
+test_that("fct_relevel retains a character contrast setting", {
+  x <- factor(c("a", "b", "c"), levels = c("a", "b", "c"))
+  stats::contrasts(x) <- "contr.sum"
+
+  result <- fct_relevel(x, "c")
+
+  expect_identical(attr(result, "contrasts"), "contr.sum")
+  expect_identical(rownames(stats::contrasts(result)), levels(result))
+})
+
+
 test_that("fct_relevel preserves names", {
   x <- factor(
     c(first = "a", second = "b", third = "c"),
@@ -327,4 +362,328 @@ test_that("fct_rev preserves extra factor attributes", {
   attr(x, "label") <- "example"
 
   expect_identical(attr(fct_rev(x), "label"), "example")
+})
+
+
+test_that("fct_rev keeps custom contrasts aligned with reversed levels", {
+  x <- ordered(
+    c("a", "b", "b", "c", "c", "c"),
+    levels = c("a", "b", "unused", "c")
+  )
+  stats::contrasts(x) <- stats::contr.sum(levels(x))
+  before <- stats::model.matrix(~group, data = data.frame(group = x))
+
+  result <- fct_rev(x)
+  after <- stats::model.matrix(~group, data = data.frame(group = result))
+
+  expect_identical(levels(result), c("c", "unused", "b", "a"))
+  expect_identical(class(result), c("ordered", "factor"))
+  expect_identical(as.character(result), as.character(x))
+  expect_identical(
+    stats::contrasts(result),
+    stats::contrasts(x)[levels(result), , drop = FALSE]
+  )
+  expect_identical(
+    unname(after[, -1L, drop = FALSE]),
+    unname(before[, -1L, drop = FALSE])
+  )
+})
+
+
+test_that("fct_rev retains a character contrast setting", {
+  x <- ordered(c("a", "b", "c"), levels = c("a", "b", "c"))
+  stats::contrasts(x) <- "contr.sum"
+
+  result <- fct_rev(x)
+
+  expect_identical(attr(result, "contrasts"), "contr.sum")
+  expect_identical(rownames(stats::contrasts(result)), levels(result))
+})
+
+# fct_infreq ----------
+
+test_that("fct_infreq orders levels by descending observed frequency", {
+  x <- factor(
+    c("a", "b", "b", "c", "c", "c"),
+    levels = c("b", "a", "c", "unused")
+  )
+
+  result <- fct_infreq(x)
+
+  expect_identical(levels(result), c("c", "b", "a", "unused"))
+  expect_identical(as.character(result), as.character(x))
+  expect_identical(class(result), "factor")
+})
+
+
+test_that("fct_infreq breaks ties in original level order", {
+  x <- factor(
+    c("a", "b", "a", "b", "c"),
+    levels = c("c", "b", "a", "unused2", "unused1")
+  )
+
+  expect_identical(
+    levels(fct_infreq(x)),
+    c("b", "a", "c", "unused2", "unused1")
+  )
+})
+
+
+test_that("fct_infreq converts character input without adding an NA level", {
+  x <- c(
+    first = "z",
+    second = "a",
+    third = "z",
+    missing = NA_character_,
+    fifth = "b",
+    sixth = "b",
+    seventh = "b"
+  )
+
+  expect_silent(result <- fct_infreq(x))
+
+  expect_identical(levels(result), c("b", "z", "a"))
+  expect_identical(as.character(result), unname(x))
+  expect_identical(names(result), names(x))
+  expect_identical(is.na(result), is.na(x))
+  expect_identical(class(result), "factor")
+})
+
+
+test_that("fct_infreq does not count ordinary missing values", {
+  x <- factor(
+    c("a", NA, NA, NA, "b", "b"),
+    levels = c("a", "b", "unused")
+  )
+
+  result <- fct_infreq(x)
+
+  expect_identical(levels(result), c("b", "a", "unused"))
+  expect_identical(is.na(result), is.na(x))
+  expect_identical(as.character(result), as.character(x))
+})
+
+
+test_that("fct_infreq counts an observed explicit NA level", {
+  x <- factor(
+    c("a", NA, NA, "b"),
+    levels = c("a", "b", NA, "unused"),
+    exclude = NULL
+  )
+
+  result <- fct_infreq(x)
+
+  expect_identical(levels(result), c(NA_character_, "a", "b", "unused"))
+  expect_identical(as.character(result), as.character(x))
+  expect_identical(is.na(result), is.na(x))
+})
+
+
+test_that("fct_infreq keeps an unused explicit NA level among zero counts", {
+  x <- factor(
+    c("b", "b", "a"),
+    levels = c(NA, "unused", "a", "b"),
+    exclude = NULL
+  )
+
+  result <- fct_infreq(x)
+
+  expect_identical(levels(result), c("b", "a", NA_character_, "unused"))
+  expect_identical(as.character(result), as.character(x))
+})
+
+
+test_that("fct_infreq distinguishes a literal NA label from an NA level", {
+  x <- factor(
+    c("NA", NA, "NA"),
+    levels = c(NA, "NA", "unused"),
+    exclude = NULL
+  )
+
+  expect_identical(
+    levels(fct_infreq(x)),
+    c("NA", NA_character_, "unused")
+  )
+})
+
+
+test_that("fct_infreq handles empty and all-missing inputs", {
+  empty_factor <- factor(character(), levels = c("b", "a"))
+  all_missing_factor <- factor(c(NA, NA), levels = c("b", "a"))
+
+  expect_identical(fct_infreq(empty_factor), empty_factor)
+  expect_identical(fct_infreq(character()), factor(character()))
+  expect_identical(fct_infreq(all_missing_factor), all_missing_factor)
+  expect_identical(
+    fct_infreq(c(NA_character_, NA_character_)),
+    factor(c(NA, NA))
+  )
+})
+
+
+test_that("fct_infreq preserves unordered factors across ordered settings", {
+  x <- factor(
+    c(first = "a", second = "b", third = "b"),
+    levels = c("unused", "a", "b")
+  )
+  attr(x, "label") <- "example"
+  attr(x, "tag") <- list(source = "test")
+  settings <- list(
+    preserve = list(value = NA, class = "factor"),
+    order = list(value = TRUE, class = c("ordered", "factor")),
+    unorder = list(value = FALSE, class = "factor")
+  )
+
+  for (setting in settings) {
+    result <- fct_infreq(x, ordered = setting$value)
+
+    expect_identical(levels(result), c("b", "a", "unused"))
+    expect_identical(class(result), setting$class)
+    expect_identical(as.character(result), as.character(x))
+    expect_identical(names(result), names(x))
+    expect_identical(attr(result, "label"), attr(x, "label"))
+    expect_identical(attr(result, "tag"), attr(x, "tag"))
+  }
+})
+
+
+test_that("fct_infreq preserves ordered factors across ordered settings", {
+  x <- ordered(
+    c(first = "a", second = "b", third = "b"),
+    levels = c("unused", "a", "b")
+  )
+  attr(x, "label") <- "example"
+  settings <- list(
+    preserve = list(value = NA, class = c("ordered", "factor")),
+    order = list(value = TRUE, class = c("ordered", "factor")),
+    unorder = list(value = FALSE, class = "factor")
+  )
+
+  for (setting in settings) {
+    result <- fct_infreq(x, ordered = setting$value)
+
+    expect_identical(levels(result), c("b", "a", "unused"))
+    expect_identical(class(result), setting$class)
+    expect_identical(as.character(result), as.character(x))
+    expect_identical(names(result), names(x))
+    expect_identical(attr(result, "label"), attr(x, "label"))
+  }
+})
+
+
+test_that("fct_infreq supports all ordered settings for character input", {
+  x <- c(first = "a", second = "b", third = "b")
+  settings <- list(
+    preserve = list(value = NA, class = "factor"),
+    order = list(value = TRUE, class = c("ordered", "factor")),
+    unorder = list(value = FALSE, class = "factor")
+  )
+
+  for (setting in settings) {
+    result <- fct_infreq(x, ordered = setting$value)
+
+    expect_identical(levels(result), c("b", "a"))
+    expect_identical(class(result), setting$class)
+    expect_identical(as.character(result), unname(x))
+    expect_identical(names(result), names(x))
+  }
+})
+
+
+test_that("fct_infreq rejects unsupported input types", {
+  expect_error(
+    fct_infreq(1:3),
+    "`x` must be a factor or character vector",
+    fixed = TRUE
+  )
+  expect_error(
+    fct_infreq(c(TRUE, FALSE)),
+    "`x` must be a factor or character vector",
+    fixed = TRUE
+  )
+  expect_error(
+    fct_infreq(list("a", "b")),
+    "`x` must be a factor or character vector",
+    fixed = TRUE
+  )
+  expect_error(
+    fct_infreq(NULL),
+    "`x` must be a factor or character vector",
+    fixed = TRUE
+  )
+  expect_error(
+    fct_infreq(data.frame(x = "a")),
+    "`x` must be a factor or character vector",
+    fixed = TRUE
+  )
+})
+
+
+test_that("fct_infreq validates ordered", {
+  x <- factor(c("a", "b"))
+
+  expect_error(
+    fct_infreq(x, ordered = 1),
+    "`ordered` must be either TRUE, FALSE or NA",
+    fixed = TRUE
+  )
+  expect_error(
+    fct_infreq(x, ordered = "TRUE"),
+    "`ordered` must be either TRUE, FALSE or NA",
+    fixed = TRUE
+  )
+  expect_error(
+    fct_infreq(x, ordered = NULL),
+    "`ordered` must be either TRUE, FALSE or NA",
+    fixed = TRUE
+  )
+  expect_error(
+    fct_infreq(x, ordered = logical()),
+    "`ordered` must be a scalar value",
+    fixed = TRUE
+  )
+  expect_error(
+    fct_infreq(x, ordered = c(TRUE, FALSE)),
+    "`ordered` must be a scalar value",
+    fixed = TRUE
+  )
+})
+
+
+test_that("fct_infreq aligns custom contrast rows with reordered levels", {
+  x <- factor(
+    c("a", "b", "b", "c", "c", "c"),
+    levels = c("a", "b", "unused", "c")
+  )
+  stats::contrasts(x) <- stats::contr.sum(levels(x))
+
+  result <- fct_infreq(x)
+
+  expect_identical(levels(result), c("c", "b", "a", "unused"))
+  expect_identical(as.character(result), as.character(x))
+  expect_identical(
+    stats::contrasts(result),
+    stats::contrasts(x)[levels(result), , drop = FALSE]
+  )
+})
+
+
+test_that("fct_infreq preserves model matrix values with custom contrasts", {
+  x <- factor(
+    c("a", "b", "b", "c", "c", "c"),
+    levels = c("a", "b", "unused", "c")
+  )
+  stats::contrasts(x) <- stats::contr.sum(levels(x))
+  before <- stats::model.matrix(~group, data = data.frame(group = x))
+
+  for (ordered_setting in list(NA, TRUE, FALSE)) {
+    result <- fct_infreq(x, ordered = ordered_setting)
+    after <- stats::model.matrix(~group, data = data.frame(group = result))
+
+    expect_identical(
+      unname(after[, -1L, drop = FALSE]),
+      unname(before[, -1L, drop = FALSE]),
+      info = paste("ordered =", ordered_setting)
+    )
+  }
 })
