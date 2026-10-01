@@ -144,6 +144,7 @@ fct_infreq <- function(x, ordered = NA) {
   }
 
   # Assertions about `ordered`
+  #   - must be a logical, scalar value (TRUE, FALSE, or NA)
   if (!is.logical(ordered)) {
     stop(
       "`ordered` must be either TRUE, FALSE or NA. Not an object of class [",
@@ -151,7 +152,6 @@ fct_infreq <- function(x, ordered = NA) {
       "]"
     )
   }
-
   if (length(ordered) != 1) {
     stop(
       "`ordered` must be a scalar value (expected length = 1, observed length = ",
