@@ -150,6 +150,41 @@ test_that("fct_relevel preserves extra factor attributes", {
 })
 
 
+test_that("fct_relevel keeps custom contrasts aligned when inserting levels", {
+  x <- factor(
+    c("a", "b", "b", "c", "c", "c"),
+    levels = c("a", "b", "unused", "c")
+  )
+  stats::contrasts(x) <- stats::contr.sum(levels(x))
+  before <- stats::model.matrix(~group, data = data.frame(group = x))
+
+  result <- fct_relevel(x, c("c", "a"), after = 1L)
+  after <- stats::model.matrix(~group, data = data.frame(group = result))
+
+  expect_identical(levels(result), c("b", "c", "a", "unused"))
+  expect_identical(as.character(result), as.character(x))
+  expect_identical(
+    stats::contrasts(result),
+    stats::contrasts(x)[levels(result), , drop = FALSE]
+  )
+  expect_identical(
+    unname(after[, -1L, drop = FALSE]),
+    unname(before[, -1L, drop = FALSE])
+  )
+})
+
+
+test_that("fct_relevel retains a character contrast setting", {
+  x <- factor(c("a", "b", "c"), levels = c("a", "b", "c"))
+  stats::contrasts(x) <- "contr.sum"
+
+  result <- fct_relevel(x, "c")
+
+  expect_identical(attr(result, "contrasts"), "contr.sum")
+  expect_identical(rownames(stats::contrasts(result)), levels(result))
+})
+
+
 test_that("fct_relevel preserves names", {
   x <- factor(
     c(first = "a", second = "b", third = "c"),
@@ -327,6 +362,42 @@ test_that("fct_rev preserves extra factor attributes", {
   attr(x, "label") <- "example"
 
   expect_identical(attr(fct_rev(x), "label"), "example")
+})
+
+
+test_that("fct_rev keeps custom contrasts aligned with reversed levels", {
+  x <- ordered(
+    c("a", "b", "b", "c", "c", "c"),
+    levels = c("a", "b", "unused", "c")
+  )
+  stats::contrasts(x) <- stats::contr.sum(levels(x))
+  before <- stats::model.matrix(~group, data = data.frame(group = x))
+
+  result <- fct_rev(x)
+  after <- stats::model.matrix(~group, data = data.frame(group = result))
+
+  expect_identical(levels(result), c("c", "unused", "b", "a"))
+  expect_identical(class(result), c("ordered", "factor"))
+  expect_identical(as.character(result), as.character(x))
+  expect_identical(
+    stats::contrasts(result),
+    stats::contrasts(x)[levels(result), , drop = FALSE]
+  )
+  expect_identical(
+    unname(after[, -1L, drop = FALSE]),
+    unname(before[, -1L, drop = FALSE])
+  )
+})
+
+
+test_that("fct_rev retains a character contrast setting", {
+  x <- ordered(c("a", "b", "c"), levels = c("a", "b", "c"))
+  stats::contrasts(x) <- "contr.sum"
+
+  result <- fct_rev(x)
+
+  expect_identical(attr(result, "contrasts"), "contr.sum")
+  expect_identical(rownames(stats::contrasts(result)), levels(result))
 })
 
 # fct_infreq ----------
