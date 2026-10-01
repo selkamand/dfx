@@ -579,8 +579,40 @@ test_that("fct_infreq validates ordered", {
 })
 
 
-test_that("fct_infreq does not accept a weight argument", {
-  x <- factor(c("a", "b"))
+test_that("fct_infreq aligns custom contrast rows with reordered levels", {
+  x <- factor(
+    c("a", "b", "b", "c", "c", "c"),
+    levels = c("a", "b", "unused", "c")
+  )
+  stats::contrasts(x) <- stats::contr.sum(levels(x))
 
-  expect_error(fct_infreq(x, w = c(1, 2)), "unused argument")
+  result <- fct_infreq(x)
+
+  expect_identical(levels(result), c("c", "b", "a", "unused"))
+  expect_identical(as.character(result), as.character(x))
+  expect_identical(
+    stats::contrasts(result),
+    stats::contrasts(x)[levels(result), , drop = FALSE]
+  )
+})
+
+
+test_that("fct_infreq preserves model matrix values with custom contrasts", {
+  x <- factor(
+    c("a", "b", "b", "c", "c", "c"),
+    levels = c("a", "b", "unused", "c")
+  )
+  stats::contrasts(x) <- stats::contr.sum(levels(x))
+  before <- stats::model.matrix(~group, data = data.frame(group = x))
+
+  for (ordered_setting in list(NA, TRUE, FALSE)) {
+    result <- fct_infreq(x, ordered = ordered_setting)
+    after <- stats::model.matrix(~group, data = data.frame(group = result))
+
+    expect_identical(
+      unname(after[, -1L, drop = FALSE]),
+      unname(before[, -1L, drop = FALSE]),
+      info = paste("ordered =", ordered_setting)
+    )
+  }
 })

@@ -185,8 +185,12 @@ fct_infreq <- function(x, ordered = NA) {
 
 # Create a new factor identical to an existing one but with different levels
 # Preserves names, ordered-status, explicit NA levels, and attributes.
+# Matrix contrasts are reordered with the levels they describe.
 # x should be a factor, and levels a character vector with the new levels
 change_factor_levels <- function(x, levels) {
+  old_levels <- levels(x)
+  old_contrasts <- attr(x, "contrasts", exact = TRUE)
+
   xnew <- factor(
     as.character(x),
     levels = levels,
@@ -196,6 +200,13 @@ change_factor_levels <- function(x, levels) {
 
   names(xnew) <- names(x)
   attributes(xnew) <- utils::modifyList(attributes(x), attributes(xnew))
+  if (is.matrix(old_contrasts) || inherits(old_contrasts, "Matrix")) {
+    attr(xnew, "contrasts") <- old_contrasts[
+      match(levels(xnew), old_levels),
+      ,
+      drop = FALSE
+    ]
+  }
 
   return(xnew)
 }
