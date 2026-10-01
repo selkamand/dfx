@@ -115,6 +115,72 @@ fct_rev <- function(x) {
   return(xnew)
 }
 
+#' Reorder factor levels by frequency
+#'
+#' Reorder factor levels based on how many times they are observed.
+#'
+#' @param x a factor or character vector
+#' @param ordered should the factor returned be ordered. By default, returned factor will have the same `ordered` status as the input factor.
+#'
+#' @return A factor with levels reordered based on observation frequency
+#'
+#' @examples
+#' f <- factor(c("b", "b", "a", "c", "c", "c"))
+#' levels(fct_infreq(f)) # "c" "b" "a"
+#'
+#' @export
+fct_infreq <- function(x, ordered = NA) {
+  # Assertions about x:
+  #  - Must be a character vector or factor
+  #  - If a character vector -> silently convert to an unordered factor
+  if (is.character(x)) {
+    x <- factor(x)
+  } else if (!is.factor(x)) {
+    stop(
+      "`x` must be a factor or character vector, not an object of class [",
+      toString(class(x)),
+      "]"
+    )
+  }
+
+  # Assertions about `ordered`
+  if (!is.logical(ordered)) {
+    stop(
+      "`ordered` must be either TRUE, FALSE or NA. Not an object of class [",
+      toString(class(ordered)),
+      "]"
+    )
+  }
+
+  if (length(ordered) != 1) {
+    stop(
+      "`ordered` must be a scalar value (expected length = 1, observed length = ",
+      length(ordered),
+      ")"
+    )
+  }
+
+  # Names will be levels, values will be counts
+  lvl_counts <- summarise_vector_by(
+    x = x,
+    by = x,
+    fun = length,
+    template = numeric(1),
+    drop = FALSE,
+    default = 0
+  )
+
+  # Relevel factor based on frequency conuts
+  xnew <- fct_relevel(x, names(sort(lvl_counts, decreasing = TRUE)))
+
+  # Ensure factor ordered status matches the expectation of `ordered` argument
+  if (!is.na(ordered) && ordered != is.ordered(xnew)) {
+    class(xnew) <- if (ordered) c("ordered", "factor") else "factor"
+  }
+
+  return(xnew)
+}
+
 # Factor helpers ----
 
 # Create a new factor identical to an existing one but with different levels
