@@ -45,7 +45,7 @@ fct_relevel <- function(x, ref, after = 0L) {
   }
 
   if (!is.infinite(after) && after != floor(after)) {
-    stop("`after` must be a whole number.", call. = FALSE)
+    stop("`after` must be a whole number.")
   }
 
   old_levels <- levels(x)

@@ -77,7 +77,7 @@ summarise_vector_by <- function(
   default = NULL
 ) {
   if (missing(fun)) {
-    stop("`fun` must be supplied.", call. = FALSE)
+    stop("`fun` must be supplied.")
   }
   fun <- match.fun(fun)
 
@@ -86,8 +86,7 @@ summarise_vector_by <- function(
   ) {
     stop(
       "`by` must be a factor, character, numeric, or logical vector. Not an object of class: ",
-      toString(class(by)),
-      call. = FALSE
+      toString(class(by))
     )
   }
   if (length(x) != length(by)) {
@@ -95,17 +94,15 @@ summarise_vector_by <- function(
       "`x` and `by` must have the same length. ",
       length(x),
       "!= ",
-      length(by),
-      call. = FALSE
+      length(by)
     )
   }
   if (!is.logical(drop) || length(drop) != 1L || is.na(drop)) {
-    stop("`drop` must be TRUE or FALSE.", call. = FALSE)
+    stop("`drop` must be TRUE or FALSE.")
   }
   if (is.list(template)) {
     stop(
-      "List templates are not supported; `template` must be a length-one atomic vector.",
-      call. = FALSE
+      "List templates are not supported; `template` must be a length-one atomic vector."
     )
   }
   if (
@@ -113,7 +110,7 @@ summarise_vector_by <- function(
       !is.null(dim(template)) ||
       !is.atomic(template)
   ) {
-    stop("`template` must be a length-one atomic vector.", call. = FALSE)
+    stop("`template` must be a length-one atomic vector.")
   }
   if (is.null(default) || identical(default, NA)) {
     default <- pick_correct_na_to_match_type(template)
