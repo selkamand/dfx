@@ -218,12 +218,12 @@ fct_infreq <- function(x, ordered = NA) {
 #' f <- factor(c("A", "A", "B", "C"))
 #'
 #' # Expand Levels to include D, E and F
-#' fct_expand(f, add = c("D, E, F"))
+#' fct_expand(f, add = c("D", "E", "F"))
 #'
 #'
 #' # If you attempt to add levels that already exist
 #' # (e.g. "A") they will be ignored and kept at their existing position
-#' fct_expand(f, add = c("A", "D, E, F"))
+#' fct_expand(f, add = c("A", "D", "E", "F"))
 #'
 #' @md
 #' @export
