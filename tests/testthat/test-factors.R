@@ -150,26 +150,23 @@ test_that("fct_relevel preserves extra factor attributes", {
 })
 
 
-test_that("fct_relevel keeps custom contrasts aligned when inserting levels", {
+test_that("fct_relevel retains custom contrasts when reordering levels", {
   x <- factor(
     c("a", "b", "b", "c", "c", "c"),
     levels = c("a", "b", "unused", "c")
   )
   stats::contrasts(x) <- stats::contr.sum(levels(x))
-  before <- stats::model.matrix(~group, data = data.frame(group = x))
-
-  result <- fct_relevel(x, c("c", "a"), after = 1L)
-  after <- stats::model.matrix(~group, data = data.frame(group = result))
+  expect_warning(
+    result <- fct_relevel(x, c("c", "a"), after = 1L),
+    "explicit `contrasts` attribute",
+    fixed = TRUE
+  )
 
   expect_identical(levels(result), c("b", "c", "a", "unused"))
   expect_identical(as.character(result), as.character(x))
   expect_identical(
-    stats::contrasts(result),
-    stats::contrasts(x)[levels(result), , drop = FALSE]
-  )
-  expect_identical(
-    unname(after[, -1L, drop = FALSE]),
-    unname(before[, -1L, drop = FALSE])
+    attr(result, "contrasts", exact = TRUE),
+    attr(x, "contrasts", exact = TRUE)
   )
 })
 
@@ -178,7 +175,7 @@ test_that("fct_relevel retains a character contrast setting", {
   x <- factor(c("a", "b", "c"), levels = c("a", "b", "c"))
   stats::contrasts(x) <- "contr.sum"
 
-  result <- fct_relevel(x, "c")
+  expect_warning(result <- fct_relevel(x, "c"), "explicit `contrasts` attribute", fixed = TRUE)
 
   expect_identical(attr(result, "contrasts"), "contr.sum")
   expect_identical(rownames(stats::contrasts(result)), levels(result))
@@ -365,27 +362,20 @@ test_that("fct_rev preserves extra factor attributes", {
 })
 
 
-test_that("fct_rev keeps custom contrasts aligned with reversed levels", {
+test_that("fct_rev retains custom contrasts when reversing levels", {
   x <- ordered(
     c("a", "b", "b", "c", "c", "c"),
     levels = c("a", "b", "unused", "c")
   )
   stats::contrasts(x) <- stats::contr.sum(levels(x))
-  before <- stats::model.matrix(~group, data = data.frame(group = x))
-
-  result <- fct_rev(x)
-  after <- stats::model.matrix(~group, data = data.frame(group = result))
+  expect_warning(result <- fct_rev(x), "explicit `contrasts` attribute", fixed = TRUE)
 
   expect_identical(levels(result), c("c", "unused", "b", "a"))
   expect_identical(class(result), c("ordered", "factor"))
   expect_identical(as.character(result), as.character(x))
   expect_identical(
-    stats::contrasts(result),
-    stats::contrasts(x)[levels(result), , drop = FALSE]
-  )
-  expect_identical(
-    unname(after[, -1L, drop = FALSE]),
-    unname(before[, -1L, drop = FALSE])
+    attr(result, "contrasts", exact = TRUE),
+    attr(x, "contrasts", exact = TRUE)
   )
 })
 
@@ -394,7 +384,7 @@ test_that("fct_rev retains a character contrast setting", {
   x <- ordered(c("a", "b", "c"), levels = c("a", "b", "c"))
   stats::contrasts(x) <- "contr.sum"
 
-  result <- fct_rev(x)
+  expect_warning(result <- fct_rev(x), "explicit `contrasts` attribute", fixed = TRUE)
 
   expect_identical(attr(result, "contrasts"), "contr.sum")
   expect_identical(rownames(stats::contrasts(result)), levels(result))
@@ -650,40 +640,227 @@ test_that("fct_infreq validates ordered", {
 })
 
 
-test_that("fct_infreq aligns custom contrast rows with reordered levels", {
+test_that("fct_infreq retains custom contrasts when reordering levels", {
   x <- factor(
     c("a", "b", "b", "c", "c", "c"),
     levels = c("a", "b", "unused", "c")
   )
   stats::contrasts(x) <- stats::contr.sum(levels(x))
 
-  result <- fct_infreq(x)
+  expect_warning(result <- fct_infreq(x), "explicit `contrasts` attribute", fixed = TRUE)
 
   expect_identical(levels(result), c("c", "b", "a", "unused"))
   expect_identical(as.character(result), as.character(x))
   expect_identical(
-    stats::contrasts(result),
-    stats::contrasts(x)[levels(result), , drop = FALSE]
+    attr(result, "contrasts", exact = TRUE),
+    attr(x, "contrasts", exact = TRUE)
   )
 })
 
 
-test_that("fct_infreq preserves model matrix values with custom contrasts", {
+test_that("fct_infreq retains a character contrast setting", {
+  x <- factor(c("a", "b", "b"), levels = c("a", "b"))
+  stats::contrasts(x) <- "contr.sum"
+
+  expect_warning(result <- fct_infreq(x), "explicit `contrasts` attribute", fixed = TRUE)
+
+  expect_identical(attr(result, "contrasts"), "contr.sum")
+  expect_identical(rownames(stats::contrasts(result)), levels(result))
+})
+
+
+test_that("fct_infreq warns once for explicit contrasts across ordered settings", {
   x <- factor(
     c("a", "b", "b", "c", "c", "c"),
     levels = c("a", "b", "unused", "c")
   )
   stats::contrasts(x) <- stats::contr.sum(levels(x))
-  before <- stats::model.matrix(~group, data = data.frame(group = x))
-
   for (ordered_setting in list(NA, TRUE, FALSE)) {
-    result <- fct_infreq(x, ordered = ordered_setting)
-    after <- stats::model.matrix(~group, data = data.frame(group = result))
+    warnings <- character()
+    result <- withCallingHandlers(
+      fct_infreq(x, ordered = ordered_setting),
+      warning = function(w) {
+        warnings <<- c(warnings, conditionMessage(w))
+        invokeRestart("muffleWarning")
+      }
+    )
 
+    expect_length(warnings, 1L)
+    expect_match(warnings[[1L]], "explicit `contrasts` attribute", fixed = TRUE)
     expect_identical(
-      unname(after[, -1L, drop = FALSE]),
-      unname(before[, -1L, drop = FALSE]),
+      attr(result, "contrasts", exact = TRUE),
+      attr(x, "contrasts", exact = TRUE),
       info = paste("ordered =", ordered_setting)
     )
   }
+})
+
+# fct_expand ----------
+
+test_that("fct_expand appends new levels after existing and unused levels", {
+  x <- factor(c("b", "a", "b"), levels = c("b", "a", "unused"))
+
+  result <- fct_expand(x, c("d", "c"))
+
+  expect_identical(levels(result), c("b", "a", "unused", "d", "c"))
+  expect_identical(as.character(result), as.character(x))
+  expect_identical(as.integer(result), as.integer(x))
+  expect_identical(class(result), "factor")
+})
+
+
+test_that("fct_expand ignores existing and repeated levels without moving them", {
+  x <- factor(c("a", "b"), levels = c("b", "a", "unused"))
+
+  result <- fct_expand(x, c("a", "new2", "new1", "new2", "b", "new3"))
+
+  expect_identical(
+    levels(result),
+    c("b", "a", "unused", "new2", "new1", "new3")
+  )
+  expect_identical(as.character(result), as.character(x))
+})
+
+
+test_that("fct_expand handles empty additions and empty inputs", {
+  x <- factor(c("a", NA), levels = c("a", "unused"))
+  empty_factor <- factor(character(), levels = c("b", "a"))
+
+  expect_identical(fct_expand(x, character()), x)
+  expect_identical(
+    fct_expand(empty_factor, "c"),
+    factor(character(), levels = c("b", "a", "c"))
+  )
+  expect_identical(
+    fct_expand(character(), "c"),
+    factor(character(), levels = "c")
+  )
+})
+
+
+test_that("fct_expand preserves ordered factors", {
+  x <- ordered(c("low", "high"), levels = c("high", "low"))
+  expected <- ordered(c("low", "high"), levels = c("high", "low", "medium"))
+
+  expect_identical(fct_expand(x, "medium"), expected)
+})
+
+
+test_that("fct_expand preserves names, missing values, and extra attributes", {
+  x <- factor(
+    c(first = "b", missing = NA_character_, last = "a"),
+    levels = c("a", "b", "unused")
+  )
+  attr(x, "label") <- "example"
+  attr(x, "tag") <- list(source = "test")
+
+  result <- fct_expand(x, "c")
+
+  expect_identical(levels(result), c("a", "b", "unused", "c"))
+  expect_identical(as.character(result), as.character(x))
+  expect_identical(is.na(result), is.na(x))
+  expect_identical(names(result), names(x))
+  expect_identical(attr(result, "label"), attr(x, "label"))
+  expect_identical(attr(result, "tag"), attr(x, "tag"))
+})
+
+
+test_that("fct_expand converts character input to an unordered factor", {
+  x <- c(first = "z", missing = NA_character_, last = "a")
+
+  result <- fct_expand(x, "new")
+
+  expect_identical(levels(result), c("a", "z", "new"))
+  expect_identical(as.character(result), unname(x))
+  expect_identical(is.na(result), is.na(x))
+  expect_identical(names(result), names(x))
+  expect_identical(class(result), "factor")
+})
+
+
+test_that("fct_expand preserves an explicit NA level", {
+  x <- factor(c("a", NA, "b"), levels = c("a", NA, "b"), exclude = NULL)
+  expected <- factor(
+    c("a", NA, "b"),
+    levels = c("a", NA, "b", "c"),
+    exclude = NULL
+  )
+
+  expect_identical(fct_expand(x, "c"), expected)
+})
+
+
+test_that("fct_expand can add an explicit NA level", {
+  x <- factor(c("a", NA), levels = "a")
+  expected <- factor(c("a", NA), levels = c("a", NA), exclude = NULL)
+
+  expect_identical(fct_expand(x, NA_character_), expected)
+})
+
+
+test_that("fct_expand rejects unsupported x inputs", {
+  for (x in list(1:2, c(TRUE, FALSE), list("a"), NULL)) {
+    expect_error(
+      fct_expand(x, "new"),
+      "`x` must be a factor or character vector",
+      fixed = TRUE
+    )
+  }
+})
+
+
+test_that("fct_expand requires a character add argument", {
+  x <- factor("a")
+
+  expect_error(fct_expand(x))
+  for (add in list(list("new"), factor("new"), NULL)) {
+    expect_error(
+      fct_expand(x, add),
+      "must be a character vector",
+      fixed = TRUE
+    )
+  }
+})
+
+
+test_that("fct_expand reports the class of an invalid add argument", {
+  x <- factor("a")
+
+  expect_error(fct_expand(x, 1L), "class [integer]", fixed = TRUE)
+})
+
+
+test_that("fct_expand preserves custom matrix contrasts when adding levels", {
+  x <- factor(c("a", "b", "a"), levels = c("a", "b", "unused"))
+  stats::contrasts(x) <- stats::contr.sum(levels(x))
+
+  expect_warning(result <- fct_expand(x, "c"), "explicit `contrasts` attribute", fixed = TRUE)
+
+  expect_identical(levels(result), c("a", "b", "unused", "c"))
+  expect_identical(
+    attr(result, "contrasts", exact = TRUE),
+    attr(x, "contrasts", exact = TRUE)
+  )
+})
+
+
+test_that("fct_expand preserves a character contrast setting", {
+  x <- factor(c("a", "b"))
+  stats::contrasts(x) <- "contr.sum"
+
+  expect_warning(result <- fct_expand(x, "c"), "explicit `contrasts` attribute", fixed = TRUE)
+
+  expect_identical(levels(result), c("a", "b", "c"))
+  expect_identical(attr(result, "contrasts"), "contr.sum")
+})
+
+
+test_that("unchanged levels do not warn about explicit contrasts", {
+  x <- factor(c("a", "a", "b"), levels = c("a", "b"))
+  stats::contrasts(x) <- stats::contr.sum(levels(x))
+
+  expect_silent(fct_relevel(x, "a"))
+  expect_silent(fct_infreq(x))
+  expect_silent(fct_infreq(x, ordered = TRUE))
+  expect_silent(fct_expand(x, c("a", "b")))
 })

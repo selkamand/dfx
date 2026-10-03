@@ -17,6 +17,10 @@ A factor with levels reordered based on observation frequency
 \description{
 Reorder factor levels based on how many times they are observed.
 }
+\details{
+An explicit \code{contrasts} attribute is retained unchanged. If levels change,
+a warning reminds you to consider rebuilding contrasts after all level changes.
+}
 \examples{
 f <- factor(c("b", "b", "a", "c", "c", "c"))
 levels(fct_infreq(f)) # "c" "b" "a"

@@ -20,6 +20,8 @@ Explicit \code{NA} levels in factors are preserved. If a factor contains both an
 explicit \code{NA} level and genuinely missing values, the missing values become
 part of the \code{NA} level, as in \code{forcats::fct_rev()}. Character vectors are
 converted to factors without creating an explicit \code{NA} level.
+An explicit \code{contrasts} attribute is retained unchanged. If levels change,
+a warning reminds you to consider rebuilding contrasts after all level changes.
 }
 \examples{
 f <- factor(c("a", "b", "c", "d"), levels = c("a", "b", "c", "d"))
