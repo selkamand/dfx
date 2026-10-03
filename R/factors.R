@@ -8,6 +8,10 @@
 #'
 #' @return a factor with levels reordered based on their order in `ref`.
 #'
+#' @details
+#' Any explicit `contrasts` attributes remain unchanged. If levels change,
+#' a warning reminds you to consider rebuilding contrasts after all level changes.
+#'
 #' @examples
 #' f <- factor(c("a", "b", "c", "d"), levels = c("b", "c", "d", "a"))
 #' fct_relevel(f, "a")
@@ -83,6 +87,8 @@ fct_relevel <- function(x, ref, after = 0L) {
 #' explicit `NA` level and genuinely missing values, the missing values become
 #' part of the `NA` level, as in `forcats::fct_rev()`. Character vectors are
 #' converted to factors without creating an explicit `NA` level.
+#' An explicit `contrasts` attribute is retained unchanged. If levels change,
+#' a warning reminds you to consider rebuilding contrasts after all level changes.
 #'
 #' @examples
 #' f <- factor(c("a", "b", "c", "d"), levels = c("a", "b", "c", "d"))
@@ -123,6 +129,10 @@ fct_rev <- function(x) {
 #' @param ordered should the factor returned be ordered. By default, returned factor will have the same `ordered` status as the input factor.
 #'
 #' @return A factor with levels reordered based on observation frequency
+#'
+#' @details
+#' An explicit `contrasts` attribute is retained unchanged. If levels change,
+#' a warning reminds you to consider rebuilding contrasts after all level changes.
 #'
 #' @examples
 #' f <- factor(c("b", "b", "a", "c", "c", "c"))
@@ -193,6 +203,8 @@ fct_infreq <- function(x, ordered = NA) {
 #' @details
 #' New levels will be appended to the end.
 #' Any levels already in `x` will be left in their original position (NOT moved to end).
+#' An explicit `contrasts` attribute is retained unchanged. If levels change,
+#' a warning reminds you to consider rebuilding contrasts after all level changes.
 #'
 #' Differences from `forcats::fct_expand` include:
 #'  - dfx::fct_expand does NOT support `...`, a vector of levels to add must be supplied to `add` argument
@@ -255,13 +267,11 @@ fct_expand <- function(x, add) {
 
 # Create a new factor identical to an existing one but with different levels
 # Preserves names, ordered-status, explicit NA levels, and attributes.
-# Matrix contrasts are reordered with the levels they describe.
+# Explicit contrast attributes are left unchanged, but we warn when
+# levels change so callers can revisit their contrasts if needed.
 # x should be a factor, and levels a character vector with the new levels
 # neither of these type constraints are asserted in this function. Must guarantee in upstream code
 change_factor_levels <- function(x, levels) {
-  old_levels <- levels(x)
-  old_contrasts <- attr(x, "contrasts", exact = TRUE)
-
   xnew <- factor(
     as.character(x),
     levels = levels,
@@ -271,12 +281,18 @@ change_factor_levels <- function(x, levels) {
 
   names(xnew) <- names(x)
   attributes(xnew) <- utils::modifyList(attributes(x), attributes(xnew))
-  if (is.matrix(old_contrasts) || inherits(old_contrasts, "Matrix")) {
-    attr(xnew, "contrasts") <- old_contrasts[
-      match(levels(xnew), old_levels),
-      ,
-      drop = FALSE
-    ]
+
+  # Warn user if there is an explicit contrasts matrix (describes an experimental design)
+  # And the levels have changed, meaning theres a chance contrast matrix has gone out of sync
+  # with factor. See issue #10
+  old_contrasts <- attr(x, "contrasts", exact = TRUE)
+  if (!is.null(old_contrasts)) {
+    if (!identical(levels(x), levels(xnew))) {
+      warning(
+        "Factor levels changed while an explicit `contrasts` attribute is set. ",
+        "Consider rebuilding contrasts after all level changes are complete."
+      )
+    }
   }
 
   return(xnew)

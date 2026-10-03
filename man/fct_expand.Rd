@@ -20,6 +20,8 @@ Add levels to a factor. Any levels already present will be ignored
 \details{
 New levels will be appended to the end.
 Any levels already in \code{x} will be left in their original position (NOT moved to end).
+An explicit \code{contrasts} attribute is retained unchanged. If levels change,
+a warning reminds you to consider rebuilding contrasts after all level changes.
 
 Differences from \code{forcats::fct_expand} include:
 \itemize{
