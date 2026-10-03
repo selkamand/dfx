@@ -181,12 +181,83 @@ fct_infreq <- function(x, ordered = NA) {
   return(xnew)
 }
 
+#' Add levels to a factor
+#'
+#' Add levels to a factor. Any levels already present will be ignored
+#'
+#' @return a factor with `levels` added
+#'
+#' @param x a factor
+#' @param add character vector of levels to add
+#'
+#' @details
+#' New levels will be appended to the end.
+#' Any levels already in `x` will be left in their original position (NOT moved to end).
+#'
+#' Differences from `forcats::fct_expand` include:
+#'  - dfx::fct_expand does NOT support `...`, a vector of levels to add must be supplied to `add` argument
+#'  - dfx::fct_expand does NOT allow position of levels to be controlled by an `after` argument.
+#'    The user intent of an `after` argument is unclear, since `add` can contain levels already present in factor
+#'    and that should not be moved.
+#'    Users can simply call fct_relevel after fct_expand to move levels precisely where they need.
+#'
+#'
+#' @examples
+#' f <- factor(c("A", "A", "B", "C"))
+#'
+#' # Expand Levels to include D, E and F
+#' fct_expand(f, add = c("D, E, F"))
+#'
+#'
+#' # If you attempt to add levels that already exist
+#' # (e.g. "A") they will be ignored and kept at their existing position
+#' fct_expand(f, add = c("A", "D, E, F"))
+#'
+#' @md
+#' @export
+fct_expand <- function(x, add) {
+  # Assertions about x:
+  #  - Must be a character vector or factor
+  #  - If a character vector -> silently convert to an unordered factor
+  if (is.character(x)) {
+    x <- factor(x)
+  } else if (!is.factor(x)) {
+    stop(
+      "`x` must be a factor or character vector, not an object of class [",
+      toString(class(x)),
+      "]"
+    )
+  }
+
+  # Assertions about levels:
+  #  - Must be a character vector
+  if (!is.character(add) || !is.atomic(add)) {
+    stop(
+      "`levels` to add in fct_expand must be a character vector, not an object of class [",
+      toString(class(add)),
+      "]"
+    )
+  }
+
+  old_levels <- levels(x)
+
+  # Ignore levels already in factor
+  levels_to_append <- setdiff(add, old_levels)
+
+  # Append new to levels
+  revised_levels <- c(old_levels, levels_to_append)
+
+  # Change factor levels
+  change_factor_levels(x, revised_levels)
+}
+
 # Factor helpers ----
 
 # Create a new factor identical to an existing one but with different levels
 # Preserves names, ordered-status, explicit NA levels, and attributes.
 # Matrix contrasts are reordered with the levels they describe.
 # x should be a factor, and levels a character vector with the new levels
+# neither of these type constraints are asserted in this function. Must guarantee in upstream code
 change_factor_levels <- function(x, levels) {
   old_levels <- levels(x)
   old_contrasts <- attr(x, "contrasts", exact = TRUE)
