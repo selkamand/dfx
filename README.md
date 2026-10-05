@@ -17,7 +17,6 @@ Requests](https://img.shields.io/github/issues-closed/selkamand/dfx)
 size](https://img.shields.io/github/languages/code-size/selkamand/dfx.svg)](https://github.com/selkamand/dfx)
 ![GitHub last
 commit](https://img.shields.io/github/last-commit/selkamand/dfx)
-
 <!-- badges: end -->
 
 dfx is a data.frame transformation package with a tidy-like interface
@@ -39,9 +38,9 @@ remotes::install_github("selkamand/dfx")
 library(dfx)
 #> 
 #> Attaching package: 'dfx'
-#> The following object is masked from 'package:stats':
+#> The following objects are masked from 'package:stats':
 #> 
-#>     lag
+#>     filter, lag
 
 # Prep example data
 minicars <- head(mtcars)
@@ -79,6 +78,20 @@ count(minicars, "cyl")
 #> 1   4 1
 #> 2   6 4
 #> 3   8 1
+
+# Filter data.frame using a function
+filter(minicars, function(d) { d$mpg > 20 & d$cyl == 6 })
+#>                 mpg cyl disp  hp drat    wt  qsec vs am gear carb
+#> Mazda RX4      21.0   6  160 110 3.90 2.620 16.46  0  1    4    4
+#> Mazda RX4 Wag  21.0   6  160 110 3.90 2.875 17.02  0  1    4    4
+#> Hornet 4 Drive 21.4   6  258 110 3.08 3.215 19.44  1  0    3    1
+
+# Filter data.frame based on a logical vector
+keep_rows(minicars, minicars$mpg > 20 & minicars$cyl == 6)
+#>                 mpg cyl disp  hp drat    wt  qsec vs am gear carb
+#> Mazda RX4      21.0   6  160 110 3.90 2.620 16.46  0  1    4    4
+#> Mazda RX4 Wag  21.0   6  160 110 3.90 2.875 17.02  0  1    4    4
+#> Hornet 4 Drive 21.4   6  258 110 3.08 3.215 19.44  1  0    3    1
 
 # Count unique levels in a vector
 n_distinct(mtcars)
