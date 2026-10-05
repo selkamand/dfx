@@ -9,8 +9,8 @@
 #' @return a factor with levels reordered based on their order in `ref`.
 #'
 #' @details
-#' Any explicit `contrasts` attributes remain unchanged. If levels change,
-#' a warning reminds you to consider rebuilding contrasts after all level changes.
+#' Any explicit `contrasts` attribute will remain unchanged. If levels change,
+#' a warning reminds you to consider rebuilding contrasts.
 #'
 #' @examples
 #' f <- factor(c("a", "b", "c", "d"), levels = c("b", "c", "d", "a"))

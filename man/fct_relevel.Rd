@@ -20,8 +20,8 @@ a factor with levels reordered based on their order in \code{ref}.
 Move any number of levels to any location.
 }
 \details{
-An explicit \code{contrasts} attribute is retained unchanged. If levels change,
-a warning reminds you to consider rebuilding contrasts after all level changes.
+Any explicit \code{contrasts} attribute will remain unchanged. If levels change,
+a warning reminds you to consider rebuilding contrasts.
 }
 \examples{
 f <- factor(c("a", "b", "c", "d"), levels = c("b", "c", "d", "a"))
