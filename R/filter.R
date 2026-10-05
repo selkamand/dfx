@@ -104,7 +104,7 @@ filter <- function(data, fun) {
   if (func_arg_count(fun, dots = "count_as_0") != 1) {
     stop(
       "`fun` must have exactly one parameter (expecting a data.frame). Found ",
-      func_arg_count(fun, dots = "count_as_0"),
+      func_arg_count(fun, dots = "count_as_0")
     )
   }
 
