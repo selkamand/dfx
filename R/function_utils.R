@@ -6,7 +6,7 @@ func_arg_names <- function(func) {
 
 func_supports_variable_arguments <- function(func) {
   arg_names <- func_arg_names(func)
-  any(grepl(x = arg_names, pattern = "...", fixed = TRUE))
+  any("..." %in% arg_names)
 }
 
 func_args_as_pairlist <- function(func) {
