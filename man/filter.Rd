@@ -42,5 +42,5 @@ filter(head(iris), \(df){any(df$Petal.Width>0.4)}, by = "Species")
 
 }
 \seealso{
-\code{\link[=keep_rows]{keep_rows()}}
+\code{\link[=keep_rows]{keep_rows()}} \code{\link[base:subset]{base::subset()}}
 }

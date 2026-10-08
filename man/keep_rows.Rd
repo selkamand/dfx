@@ -30,5 +30,5 @@ keep_rows(mtcars, keep = mtcars$mpg > 20 & mtcars$cyl == 6)
 
 }
 \seealso{
-\code{\link[=filter]{filter()}}
+\code{\link[=filter]{filter()}} \code{\link[base:subset]{base::subset()}}
 }

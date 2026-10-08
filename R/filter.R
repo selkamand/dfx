@@ -17,7 +17,7 @@
 #' keep_rows(mtcars, keep = mtcars$mpg > 20 & mtcars$cyl == 6)
 #'
 #' @export
-#' @seealso [filter()]
+#' @seealso [filter()] [base::subset()]
 keep_rows <- function(data, keep) {
   if (!is.data.frame(data)) {
     stop(
@@ -83,7 +83,7 @@ keep_rows <- function(data, keep) {
 #' filter(head(iris), \(df){any(df$Petal.Width>0.4)}, by = "Species")
 #'
 #' @export
-#' @seealso [keep_rows()]
+#' @seealso [keep_rows()] [base::subset()]
 filter <- function(data, fun, by = NULL) {
   if (!is.data.frame(data)) {
     stop(
