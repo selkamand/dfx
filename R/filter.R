@@ -59,7 +59,8 @@ keep_rows <- function(data, keep) {
 #'
 #' @param data A data frame to filter.
 #' @param fun A one-argument function that receives `data` and returns a logical
-#'   vector with one value per row.
+#'   vector with one value per row, or if `by` is supplied, one value per group.
+#' @param by name of columns to group operations by.
 #'
 #' @return A data frame containing rows where `fun` returns `TRUE`.
 #'
@@ -69,14 +70,21 @@ keep_rows <- function(data, keep) {
 #'    expression. Refer to columns with `$` inside the function.
 #'  - Missing values in the result of `fun` cause an error rather than dropping
 #'    those rows.
-#'  - `fun` runs once on the full data frame, not separately within groups.
+#'  - When `by` is supplied function must return EXACTLY 1 logical value per group whereas
+#'    dplyr::filter allows can't set a grouping variable and then filter the data the same way.
+#'    E.g. `iris[iris$Petal.Width > 0.4,] == dplyr::filter(iris, Petal.Width > 0.4, .by = Species)` whereas
+#'    `dfx::filter(iris, \(x){x$Petal.Width > 0.4}, by = "Species")` will error
 #'
 #' @examples
 #' filter(mtcars, function(d) d$mpg > 20 & d$cyl == 6)
 #'
+#' # Filter for any plants whose species includes
+#' # at least one plant with Petl.Width > 0.4
+#' filter(head(iris), \(df){any(df$Petal.Width>0.4)}, by = "Species")
+#'
 #' @export
 #' @seealso [keep_rows()]
-filter <- function(data, fun) {
+filter <- function(data, fun, by = NULL) {
   if (!is.data.frame(data)) {
     stop(
       "`data` must be a data.frame, not an object of class [",
@@ -108,9 +116,38 @@ filter <- function(data, fun) {
     )
   }
 
-  # Apply function to data.frame
-  bool_vector <- fun(data)
+  #  Create logical filter mask based on `by` if supplied
+  bool_vector <- if (is.null(by)) {
+    fun(data)
+  } else {
+    # Assert `by` argument is a character vector
+    if (!is.character(by)) {
+      stop(
+        "`by` must be a character vector. Not an object of class [",
+        toString(class(by)),
+        "]"
+      )
+    }
 
+    # Ensure `by` is unique by removing dups
+    by <- unique(by)
+
+    # Assert `by` describes names of columns in `data`
+    if (!all(by %in% colnames(data))) {
+      stop(
+        "`by` must be valid column names. Could not find column/s: ",
+        toString(setdiff(by), colnames(data)),
+        " in `data`"
+      )
+    }
+
+    # Apply function to groups specified by 'by'
+    # TODO: we should try to improve the error message when fun produces more than 1 value per group
+    # TODO: Add tests when `by` is used
+    tapply_for_dataframe_filter(data, fun, by)
+  }
+
+  # Check result is an appropriately sized boolean vector
   if (!is.logical(bool_vector) || !is.vector(bool_vector)) {
     stop(
       "`fun` must return a logical vector, not an object of class [",

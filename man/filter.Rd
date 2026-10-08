@@ -4,13 +4,15 @@
 \alias{filter}
 \title{Filter rows using a data frame predicate}
 \usage{
-filter(data, fun)
+filter(data, fun, by = NULL)
 }
 \arguments{
 \item{data}{A data frame to filter.}
 
 \item{fun}{A one-argument function that receives \code{data} and returns a logical
-vector with one value per row.}
+vector with one value per row, or if \code{by} is supplied, one value per group.}
+
+\item{by}{name of columns to group operations by.}
 }
 \value{
 A data frame containing rows where \code{fun} returns \code{TRUE}.
@@ -25,11 +27,18 @@ Differences from \code{dplyr::filter()} include:
 expression. Refer to columns with \code{$} inside the function.
 \item Missing values in the result of \code{fun} cause an error rather than dropping
 those rows.
-\item \code{fun} runs once on the full data frame, not separately within groups.
+\item When \code{by} is supplied function must return EXACTLY 1 logical value per group whereas
+dplyr::filter allows can't set a grouping variable and then filter the data the same way.
+E.g. \code{iris[iris$Petal.Width > 0.4,] == dplyr::filter(iris, Petal.Width > 0.4, .by = Species)} whereas
+\verb{dfx::filter(iris, \\(x)\{x$Petal.Width > 0.4\}, by = "Species")} will error
 }
 }
 \examples{
 filter(mtcars, function(d) d$mpg > 20 & d$cyl == 6)
+
+# Filter for any plants whose species includes
+# at least one plant with Petl.Width > 0.4
+filter(head(iris), \(df){any(df$Petal.Width>0.4)}, by = "Species")
 
 }
 \seealso{
