@@ -192,6 +192,22 @@
       Error in `filter()`:
       ! `fun` threw an error when applied to the data: predicate failed
 
+# filter rejects matrix-valued grouping columns before calling the predicate
+
+    Code
+      filter(data, function(d) stop("predicate was called"), by = "key")
+    Condition
+      Error in `filter()`:
+      ! `by` cannot include matrix-valued columns: `key`
+
+---
+
+    Code
+      filter(data, function(d) stop("predicate was called"), by = c("id", "key"))
+    Condition
+      Error in `filter()`:
+      ! `by` cannot include matrix-valued columns: `key`
+
 # filter rejects empty grouping columns before calling the predicate
 
     Code

@@ -31,6 +31,8 @@ those rows.
 dplyr::filter allows it.
 E.g. \code{iris[iris$Petal.Width > 0.3,] == dplyr::filter(iris, Petal.Width > 0.4, .by = Species)} whereas
 \verb{dfx::filter(iris, \\(x)\{x$Petal.Width > 0.4\}, by = "Species")} will error.
+\item Matrix-valued columns cannot be used in \code{by}; \code{dplyr::filter()} supports
+grouping by them.
 }
 }
 \examples{

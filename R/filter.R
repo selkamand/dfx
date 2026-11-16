@@ -74,6 +74,8 @@ keep_rows <- function(data, keep) {
 #'    dplyr::filter allows it.
 #'    E.g. `iris[iris$Petal.Width > 0.3,] == dplyr::filter(iris, Petal.Width > 0.4, .by = Species)` whereas
 #'    `dfx::filter(iris, \(x){x$Petal.Width > 0.4}, by = "Species")` will error.
+#'  - Matrix-valued columns cannot be used in `by`; `dplyr::filter()` supports
+#'    grouping by them.
 #'
 #' @examples
 #' filter(mtcars, function(d) d$mpg > 20 & d$cyl == 6)
@@ -159,6 +161,14 @@ filter <- function(data, fun, by = NULL) {
         "`by` must be valid column names. Could not find column/s: ",
         toString(setdiff(by, colnames(data))),
         " in `data`"
+      )
+    }
+
+    matrix_by <- by[vapply(data[by], is.matrix, logical(1))]
+    if (length(matrix_by) > 0L) {
+      stop(
+        "`by` cannot include matrix-valued columns: ",
+        paste0("`", matrix_by, "`", collapse = ", ")
       )
     }
 

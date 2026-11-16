@@ -309,6 +309,20 @@ test_that("filter groups by combinations of columns", {
   expect_identical(result, data[c(1L, 5L), , drop = FALSE])
 })
 
+test_that("filter rejects matrix-valued grouping columns before calling the predicate", {
+  data <- data.frame(id = 1:4)
+  data$key <- matrix(c(1L, 1L, 2L, 2L, 10L, 20L, 10L, 20L), ncol = 2L)
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(data, function(d) stop("predicate was called"), by = "key")
+  })
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(data, function(d) stop("predicate was called"), by = c("id", "key"))
+  })
+
+  expect_identical(filter(data, function(d) TRUE, by = "id"), data)
+})
+
 test_that("filter ignores duplicate names in by", {
   data <- data.frame(id = 1:4, group = c("a", "a", "b", "b"))
   predicate <- function(d) d$group[[1L]] == "a"
