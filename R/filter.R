@@ -122,7 +122,7 @@ filter <- function(data, fun, by = NULL) {
 
   # Create logical filter mask based on `by` if supplied
   bool_vector <- if (is.null(by)) {
-    filter_call <- sys.call()
+    filter_call <- sys.call() # Save caller info for later (so error message can say `Error in filter(...)`
     tryCatch(
       fun(data),
       error = function(err) {

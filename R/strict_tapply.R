@@ -19,6 +19,7 @@ tapply_for_dataframe_filter <- function(data, fun, by) {
   # Initialise the logical vector we'll return (1 element per data.frame row)
   keep <- rep(FALSE, nrow(data))
 
+  # Save parent frame to use in error messages later (so errors can say 'error in filter(...)'
   filter_call <- sys.call(sys.parent(1L))
 
   # For each group of rows, apply the function to decide whether they should be kept
