@@ -232,7 +232,7 @@ test_that("filter reports two missing predicate values", {
   })
 })
 
-test_that("filter propagates errors raised by the predicate", {
+test_that("filter reports errors raised by the predicate", {
   expect_snapshot(error = TRUE, cran = TRUE, {
     filter(make_filter_data(), function(d) stop("predicate failed"))
   })

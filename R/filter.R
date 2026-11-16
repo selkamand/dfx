@@ -120,7 +120,19 @@ filter <- function(data, fun, by = NULL) {
 
   # Create logical filter mask based on `by` if supplied
   bool_vector <- if (is.null(by)) {
-    fun(data)
+    filter_call <- sys.call()
+    tryCatch(
+      fun(data),
+      error = function(err) {
+        stop(simpleError(
+          message = paste0(
+            "`fun` threw an error when applied to the data: ",
+            conditionMessage(err)
+          ),
+          call = filter_call
+        ))
+      }
+    )
   } else {
     # Assert `by` argument is a character vector
     if (!is.character(by)) {

@@ -184,13 +184,13 @@
       Error in `filter()`:
       ! `fun` returned 2 missing values. All values returned by `fun` must be TRUE/FALSE
 
-# filter propagates errors raised by the predicate
+# filter reports errors raised by the predicate
 
     Code
       filter(make_filter_data(), function(d) stop("predicate failed"))
     Condition
-      Error in `fun()`:
-      ! predicate failed
+      Error in `filter()`:
+      ! `fun` threw an error when applied to the data: predicate failed
 
 # filter rejects empty grouping columns before calling the predicate
 
