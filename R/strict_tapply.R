@@ -1,23 +1,64 @@
-# A tapply except it always returns a logical vector with 1 element per value
-# Checks nothing about params. Please confirm upstream that data is a data.frame, fun is a function that takes one arg, and by is a character vector of column names `data`
+# To support filtering dataframes `by` some set of grouping columns
+# we created a stricter version of tapply that returns a logical vector with 1 element per value.
+# To keep this function fast this function checks nothing about params.
+# Please confirm upstream that data is a data.frame, fun is a function that takes one arg, and `by` is a character vector of column names `data`
+
 tapply_for_dataframe_filter <- function(data, fun, by) {
-  ls_split <- split.data.frame(
-    x = data,
-    f = data[, by, drop = FALSE],
-    drop = TRUE
+  # Implementation Approach:
+  # 1. Generate a new key vector that has a unique value for every unique combination of values across
+  # columns in `by`.
+  # We do this by asssigning an integer code to each unique value of the grouping columns and concatenate IDs into a `:` sepearated key.
+  # The conversion into an integer ensures character values don't mess up concatination.
+  codes <- lapply(data[by], function(x) match(x, unique(x)))
+  key <- do.call(paste, c(unname(codes), list(sep = ":")))
+
+  # Generate a list with one vector per unique key, describing all row indices belonging to that group.
+  # Groups are kept in first-appearance order.
+  groups <- split(seq_len(nrow(data)), factor(key, levels = unique(key)))
+
+  # Initialise the logical vector we'll return (1 element per data.frame row)
+  keep <- rep(FALSE, nrow(data))
+
+  # For each group of rows, apply the function to decide whether they should be kept
+  for (rows in groups) {
+    decision <- fun(data[rows, , drop = FALSE])
+    if (!is.logical(decision) || length(decision) != 1L) {
+      stop_because_of_invalid_group_decision(data, by, rows[[1L]], decision)
+    }
+    keep[rows] <- decision
+  }
+
+  keep
+}
+
+stop_because_of_invalid_group_decision <- function(data, by, row, decision) {
+  group_values <- vapply(
+    data[row, by, drop = FALSE],
+    function(value) {
+      if (is.atomic(value) && length(value) == 1L && is.na(value)) {
+        return("NA")
+      }
+      if (is.character(value) || is.factor(value)) {
+        return(encodeString(as.character(value), quote = '"'))
+      }
+      paste(format(value, trim = TRUE), collapse = ", ")
+    },
+    character(1)
   )
-  bool_per_group <- vapply(
-    X = ls_split,
-    FUN = fun,
-    FUN.VALUE = logical(1),
-    USE.NAMES = FALSE
+  group_label <- paste(
+    paste0("`", by, "` = ", group_values),
+    collapse = ", "
   )
-
-  # Count rows in data.frame
-  n_rows_per_group <- vapply(ls_split, FUN = nrow, FUN.VALUE = numeric(1))
-
-  # Expand result based on list lengths
-  bool_per_row <- rep(bool_per_group, times = n_rows_per_group)
-
-  return(bool_per_row)
+  n_values <- length(decision)
+  stop(
+    "`fun` must return exactly one logical value per group but instead returned ",
+    n_values,
+    " ",
+    typeof(decision),
+    " value",
+    if (n_values == 1L) "" else "s",
+    " for Group (",
+    group_label,
+    ")"
+  )
 }

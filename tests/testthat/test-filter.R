@@ -92,110 +92,150 @@ test_that("filter preserves column types and missing data values", {
   expect_identical(result$payload, data$payload[2:3])
 })
 
-test_that("filter requires a data frame before evaluating its predicate", {
-  invalid_data <- list(NULL, 1:4, matrix(1:4, ncol = 1), list(id = 1:4))
-
-  for (data in invalid_data) {
-    expect_error(
-      filter(data, function(d) stop("predicate was called")),
-      "`data` must be a data.frame",
-      fixed = TRUE
-    )
-  }
+test_that("filter rejects NULL data before calling the predicate", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(NULL, function(d) stop("predicate was called"))
+  })
 })
 
-test_that("filter requires a function", {
-  data <- make_filter_data()
-
-  for (fun in list(NULL, 1L, "predicate", list(TRUE))) {
-    expect_error(
-      filter(data, fun),
-      "`fun` must be a function",
-      fixed = TRUE
-    )
-  }
+test_that("filter rejects vector data before calling the predicate", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(1:4, function(d) stop("predicate was called"))
+  })
 })
 
-test_that("filter requires one explicit predicate parameter", {
-  data <- make_filter_data()
-
-  expect_error(
-    filter(data, function() TRUE),
-    "`fun` must have exactly one parameter",
-    fixed = TRUE
-  )
-  expect_error(
-    filter(data, function(d, other) TRUE),
-    "`fun` must have exactly one parameter",
-    fixed = TRUE
-  )
-  expect_error(
-    filter(data, function(d, other = NULL) TRUE),
-    "`fun` must have exactly one parameter",
-    fixed = TRUE
-  )
-  expect_error(
-    filter(data, function(d, ...) TRUE),
-    "`fun` supports variable arguments",
-    fixed = TRUE
-  )
+test_that("filter rejects matrix data before calling the predicate", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(matrix(1:4, ncol = 1), function(d) stop("predicate was called"))
+  })
 })
 
-test_that("filter requires a logical vector result without coercion", {
-  data <- make_filter_data()
-  invalid_results <- list(
-    NULL,
-    1L,
-    c("TRUE", "FALSE", "TRUE", "FALSE"),
-    list(TRUE, FALSE, TRUE, FALSE),
-    matrix(c(TRUE, FALSE, TRUE, FALSE), ncol = 1L)
-  )
-
-  for (value in invalid_results) {
-    expect_error(
-      filter(data, function(d) value),
-      "`fun` must return a logical vector",
-      fixed = TRUE
-    )
-  }
+test_that("filter rejects list data before calling the predicate", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(list(id = 1:4), function(d) stop("predicate was called"))
+  })
 })
 
-test_that("filter rejects every result length other than the row count", {
-  data <- make_filter_data()
-  invalid_results <- list(logical(), TRUE, rep(TRUE, 3), rep(TRUE, 5))
-
-  for (value in invalid_results) {
-    expect_error(
-      filter(data, function(d) value),
-      "`fun` must return a vector with one value for each row",
-      fixed = TRUE
-    )
-  }
+test_that("filter rejects NULL as a predicate", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(make_filter_data(), NULL)
+  })
 })
 
-test_that("filter rejects missing predicate values and reports their count", {
-  data <- make_filter_data()
+test_that("filter rejects an integer as a predicate", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(make_filter_data(), 1L)
+  })
+})
 
-  expect_error(
-    filter(data, function(d) c(TRUE, NA, FALSE, FALSE)),
-    "`fun` returned 1 missing values",
-    fixed = TRUE
-  )
-  expect_error(
-    filter(data, function(d) c(NA, TRUE, FALSE, NA)),
-    "`fun` returned 2 missing values",
-    fixed = TRUE
-  )
+test_that("filter rejects a string as a predicate", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(make_filter_data(), "predicate")
+  })
+})
+
+test_that("filter rejects a list as a predicate", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(make_filter_data(), list(TRUE))
+  })
+})
+
+test_that("filter rejects a predicate with no parameters", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(make_filter_data(), function() TRUE)
+  })
+})
+
+test_that("filter rejects a predicate with two required parameters", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(make_filter_data(), function(d, other) TRUE)
+  })
+})
+
+test_that("filter rejects a predicate with an optional second parameter", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(make_filter_data(), function(d, other = NULL) TRUE)
+  })
+})
+
+test_that("filter rejects a predicate with dots", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(make_filter_data(), function(d, ...) TRUE)
+  })
+})
+
+test_that("filter rejects a NULL predicate result", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(make_filter_data(), function(d) NULL)
+  })
+})
+
+test_that("filter rejects an integer predicate result", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(make_filter_data(), function(d) 1L)
+  })
+})
+
+test_that("filter rejects a character predicate result", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(make_filter_data(), function(d) c("TRUE", "FALSE", "TRUE", "FALSE"))
+  })
+})
+
+test_that("filter rejects a list predicate result", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(make_filter_data(), function(d) list(TRUE, FALSE, TRUE, FALSE))
+  })
+})
+
+test_that("filter rejects a matrix predicate result", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(make_filter_data(), function(d) {
+      matrix(c(TRUE, FALSE, TRUE, FALSE), ncol = 1L)
+    })
+  })
+})
+
+test_that("filter rejects a zero-length predicate result", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(make_filter_data(), function(d) logical())
+  })
+})
+
+test_that("filter rejects a length-one predicate result", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(make_filter_data(), function(d) TRUE)
+  })
+})
+
+test_that("filter rejects a short predicate result", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(make_filter_data(), function(d) rep(TRUE, 3))
+  })
+})
+
+test_that("filter rejects a long predicate result", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(make_filter_data(), function(d) rep(TRUE, 5))
+  })
+})
+
+test_that("filter reports one missing predicate value", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(make_filter_data(), function(d) c(TRUE, NA, FALSE, FALSE))
+  })
+})
+
+test_that("filter reports two missing predicate values", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(make_filter_data(), function(d) c(NA, TRUE, FALSE, NA))
+  })
 })
 
 test_that("filter propagates errors raised by the predicate", {
-  data <- make_filter_data()
-
-  expect_error(
-    filter(data, function(d) stop("predicate failed")),
-    "predicate failed",
-    fixed = TRUE
-  )
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(make_filter_data(), function(d) stop("predicate failed"))
+  })
 })
 
 test_that("filter and keep_rows select the expected IDs for every short mask", {
@@ -209,4 +249,249 @@ test_that("filter and keep_rows select the expected IDs for every short mask", {
     expect_identical(keep_rows(data, keep)$id, expected_ids)
     expect_identical(filter(data, function(d) keep)$id, expected_ids)
   }
+})
+
+make_grouped_filter_data <- function() {
+  data.frame(
+    id = 1:6,
+    group = c("b", "a", "b", "a", "c", "c"),
+    value = c(10, 20, 30, 40, 50, 60),
+    row.names = paste0("row-", 1:6)
+  )
+}
+
+test_that("filter calls its predicate once with each complete group", {
+  data <- make_grouped_filter_data()
+  observed <- new.env(parent = emptyenv())
+  observed$calls <- character()
+  observed$groups <- list()
+
+  result <- filter(
+    data,
+    function(d) {
+      key <- d$group[[1L]]
+      observed$calls <- c(observed$calls, key)
+      observed$groups[[key]] <- d
+      TRUE
+    },
+    by = "group"
+  )
+
+  expect_identical(result, data)
+  expect_length(observed$calls, 3L)
+  expect_setequal(observed$calls, c("a", "b", "c"))
+  expect_identical(observed$groups[["a"]], data[c(2L, 4L), , drop = FALSE])
+  expect_identical(observed$groups[["b"]], data[c(1L, 3L), , drop = FALSE])
+  expect_identical(observed$groups[["c"]], data[c(5L, 6L), , drop = FALSE])
+})
+
+test_that("filter keeps selected interleaved groups in original row order", {
+  data <- make_grouped_filter_data()
+
+  result <- filter(data, function(d) d$group[[1L]] == "a", by = "group")
+
+  expect_identical(result, data[c(2L, 4L), , drop = FALSE])
+})
+
+test_that("filter groups by combinations of columns", {
+  data <- make_grouped_filter_data()
+  data$group <- c("b", "a", "b", "a", "b", "a")
+  data$segment <- c("x", "x", "y", "x", "x", "y")
+
+  result <- filter(
+    data,
+    function(d) {
+      d$group[[1L]] == "b" && d$segment[[1L]] == "x"
+    },
+    by = c("group", "segment")
+  )
+
+  expect_identical(result, data[c(1L, 5L), , drop = FALSE])
+})
+
+test_that("filter ignores duplicate names in by", {
+  data <- data.frame(id = 1:4, group = c("a", "a", "b", "b"))
+  predicate <- function(d) d$group[[1L]] == "a"
+
+  expect_identical(
+    filter(data, predicate, by = c("group", "group")),
+    filter(data, predicate, by = "group")
+  )
+  expect_identical(
+    filter(data, predicate, by = "group"),
+    data[1:2, , drop = FALSE]
+  )
+})
+
+test_that("filter treats missing grouping keys as one group", {
+  data <- data.frame(
+    id = 1:5,
+    group = c("a", NA_character_, "a", NA_character_, "b")
+  )
+  observed <- new.env(parent = emptyenv())
+  observed$missing_group <- NULL
+
+  result <- filter(
+    data,
+    function(d) {
+      if (all(is.na(d$group))) {
+        observed$missing_group <- d
+        TRUE
+      } else {
+        FALSE
+      }
+    },
+    by = "group"
+  )
+
+  expect_identical(observed$missing_group, data[c(2L, 4L), , drop = FALSE])
+  expect_identical(result, data[c(2L, 4L), , drop = FALSE])
+})
+
+test_that("filter does not evaluate unused factor groups", {
+  data <- data.frame(
+    id = 1:4,
+    group = factor(c("b", "a", "b", "a"), levels = c("a", "b", "unused"))
+  )
+  observed <- new.env(parent = emptyenv())
+  observed$calls <- character()
+
+  result <- filter(
+    data,
+    function(d) {
+      observed$calls <- c(observed$calls, as.character(d$group[[1L]]))
+      TRUE
+    },
+    by = "group"
+  )
+
+  expect_identical(result, data)
+  expect_length(observed$calls, 2L)
+  expect_setequal(observed$calls, c("a", "b"))
+  expect_identical(levels(result$group), levels(data$group))
+})
+
+test_that("filter returns zero-row grouped data without calling the predicate", {
+  data <- make_grouped_filter_data()[FALSE, , drop = FALSE]
+  observed <- new.env(parent = emptyenv())
+  observed$calls <- 0L
+
+  result <- filter(
+    data,
+    function(d) {
+      observed$calls <- observed$calls + 1L
+      TRUE
+    },
+    by = "group"
+  )
+
+  expect_identical(result, data)
+  expect_identical(observed$calls, 0L)
+})
+
+test_that("filter rejects empty grouping columns before calling the predicate", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(
+      make_grouped_filter_data(),
+      function(d) stop("predicate was called"),
+      by = character()
+    )
+  })
+})
+
+test_that("filter rejects integer grouping columns before calling the predicate", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(
+      make_grouped_filter_data(),
+      function(d) stop("predicate was called"),
+      by = 1L
+    )
+  })
+})
+
+test_that("filter rejects logical grouping columns before calling the predicate", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(
+      make_grouped_filter_data(),
+      function(d) stop("predicate was called"),
+      by = TRUE
+    )
+  })
+})
+
+test_that("filter rejects factor grouping columns before calling the predicate", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(
+      make_grouped_filter_data(),
+      function(d) stop("predicate was called"),
+      by = factor("group")
+    )
+  })
+})
+
+test_that("filter rejects list grouping columns before calling the predicate", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(
+      make_grouped_filter_data(),
+      function(d) stop("predicate was called"),
+      by = list("group")
+    )
+  })
+})
+
+test_that("filter rejects unknown grouping columns before calling the predicate", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(
+      make_grouped_filter_data(),
+      function(d) stop("predicate was called"),
+      by = "missing"
+    )
+  })
+})
+
+test_that("grouped filter rejects an integer result", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(make_grouped_filter_data(), function(d) 1L, by = "group")
+  })
+})
+
+test_that("grouped filter rejects a zero-length result", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(make_grouped_filter_data(), function(d) logical(), by = "group")
+  })
+})
+
+test_that("grouped filter identifies the group with two results", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(
+      make_grouped_filter_data(),
+      function(d) if (d$group[[1L]] == "a") c(TRUE, FALSE) else TRUE,
+      by = "group"
+    )
+  })
+})
+
+test_that("grouped filter rejects missing predicate values", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(
+      make_grouped_filter_data(),
+      function(d) if (d$group[[1L]] == "a") NA else TRUE,
+      by = "group"
+    )
+  })
+})
+
+test_that("grouped filter errors identify multiple grouping values", {
+  data <- data.frame(
+    group = c("a", "a", "a", "b"),
+    segment = c("x", "y", "y", "x")
+  )
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(
+      data,
+      function(d) if (d$segment[[1L]] == "y") c(TRUE, FALSE) else TRUE,
+      by = c("group", "segment")
+    )
+  })
 })
