@@ -50,7 +50,8 @@ stop_because_of_invalid_group_decision <- function(data, by, row, decision) {
     collapse = ", "
   )
   n_values <- length(decision)
-  stop(
+
+  error_msg <- paste0(
     "`fun` must return exactly one logical value per group but instead returned ",
     n_values,
     " ",
@@ -61,4 +62,11 @@ stop_because_of_invalid_group_decision <- function(data, by, row, decision) {
     group_label,
     ")"
   )
+
+  # Make error message display the function call two calls up (the original filter function)
+  # I considered passing the call frame down as an argument but since this is an internal function exclusive
+  # to dfx::filter and always exactly two calls down from filter I think this is fine
+  error_call <- sys.call(sys.parent(2L))
+
+  stop(simpleError(message = error_msg, call = error_call))
 }

@@ -251,7 +251,7 @@
     Code
       filter(make_grouped_filter_data(), function(d) 1L, by = "group")
     Condition
-      Error in `stop_because_of_invalid_group_decision()`:
+      Error in `filter()`:
       ! `fun` must return exactly one logical value per group but instead returned 1 integer value for Group (`group` = "b")
 
 # grouped filter rejects a zero-length result
@@ -259,7 +259,7 @@
     Code
       filter(make_grouped_filter_data(), function(d) logical(), by = "group")
     Condition
-      Error in `stop_because_of_invalid_group_decision()`:
+      Error in `filter()`:
       ! `fun` must return exactly one logical value per group but instead returned 0 logical values for Group (`group` = "b")
 
 # grouped filter identifies the group with two results
@@ -268,7 +268,7 @@
       filter(make_grouped_filter_data(), function(d) if (d$group[[1L]] == "a") c(TRUE,
         FALSE) else TRUE, by = "group")
     Condition
-      Error in `stop_because_of_invalid_group_decision()`:
+      Error in `filter()`:
       ! `fun` must return exactly one logical value per group but instead returned 2 logical values for Group (`group` = "a")
 
 # grouped filter rejects missing predicate values
@@ -286,6 +286,6 @@
       filter(data, function(d) if (d$segment[[1L]] == "y") c(TRUE, FALSE) else TRUE,
       by = c("group", "segment"))
     Condition
-      Error in `stop_because_of_invalid_group_decision()`:
+      Error in `filter()`:
       ! `fun` must return exactly one logical value per group but instead returned 2 logical values for Group (`group` = "a", `segment` = "y")
 
