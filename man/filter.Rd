@@ -23,22 +23,22 @@ Pass the full data frame to a function that decides which rows to keep.
 \details{
 Differences from \code{dplyr::filter()} include:
 \itemize{
-\item \code{fun} receives the full data frame instead of evaluating a data-masked
-expression. Refer to columns with \code{$} inside the function.
+\item \code{fun} receives the full data frame instead of a data-masked
+expression.
 \item Missing values in the result of \code{fun} cause an error rather than dropping
 those rows.
 \item When \code{by} is supplied function must return EXACTLY 1 logical value per group whereas
-dplyr::filter allows can't set a grouping variable and then filter the data the same way.
-E.g. \code{iris[iris$Petal.Width > 0.4,] == dplyr::filter(iris, Petal.Width > 0.4, .by = Species)} whereas
-\verb{dfx::filter(iris, \\(x)\{x$Petal.Width > 0.4\}, by = "Species")} will error
+dplyr::filter allows it.
+E.g. \code{iris[iris$Petal.Width > 0.3,] == dplyr::filter(iris, Petal.Width > 0.4, .by = Species)} whereas
+\verb{dfx::filter(iris, \\(x)\{x$Petal.Width > 0.4\}, by = "Species")} will error.
 }
 }
 \examples{
 filter(mtcars, function(d) d$mpg > 20 & d$cyl == 6)
 
 # Filter for any plants whose species includes
-# at least one plant with Petl.Width > 0.4
-filter(head(iris), \(df){any(df$Petal.Width>0.4)}, by = "Species")
+# at least one plant with Petl.Width > 0.3
+filter(head(iris), \(df){any(df$Petal.Width>0.3)}, by = "Species")
 
 }
 \seealso{
