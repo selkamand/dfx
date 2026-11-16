@@ -54,6 +54,12 @@ rename(minicars, c("miles_per_gallon" = "mpg", "horsepower" = "hp"))
 # Count observations in data.frame column
 count(minicars, "cyl")
 
+# Filter data.frame using a function
+filter(minicars, function(d) { d$mpg > 20 & d$cyl == 6 })
+
+# Filter data.frame based on a logical vector
+keep_rows(minicars, minicars$mpg > 20 & minicars$cyl == 6)
+
 # Count unique levels in a vector
 n_distinct(mtcars)
 
