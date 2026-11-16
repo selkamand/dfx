@@ -246,6 +246,40 @@
       Error in `filter()`:
       ! `by` must be valid column names. Could not find column/s: missing in `data`
 
+# grouped filter reports an error from the first group
+
+    Code
+      filter(make_grouped_filter_data(), function(d) stop("first group failed"), by = "group")
+    Condition
+      Error in `filter()`:
+      ! `fun` threw an error when applied to the data in Group (`group` = "b"): first group failed
+
+# grouped filter reports an error from a later group
+
+    Code
+      filter(make_grouped_filter_data(), function(d) {
+        if (d$group[[1L]] == "a") {
+          stop("later group failed")
+        }
+        TRUE
+      }, by = "group")
+    Condition
+      Error in `filter()`:
+      ! `fun` threw an error when applied to the data in Group (`group` = "a"): later group failed
+
+# grouped filter reports an error with multiple grouping columns
+
+    Code
+      filter(data, function(d) {
+        if (d$group[[1L]] == "a" && d$segment[[1L]] == "y") {
+          stop("group combination failed")
+        }
+        TRUE
+      }, by = c("group", "segment"))
+    Condition
+      Error in `filter()`:
+      ! `fun` threw an error when applied to the data in Group (`group` = "a", `segment` = "y"): group combination failed
+
 # grouped filter rejects an integer result
 
     Code

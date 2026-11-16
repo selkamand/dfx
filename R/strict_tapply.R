@@ -19,9 +19,25 @@ tapply_for_dataframe_filter <- function(data, fun, by) {
   # Initialise the logical vector we'll return (1 element per data.frame row)
   keep <- rep(FALSE, nrow(data))
 
+  filter_call <- sys.call(sys.parent(1L))
+
   # For each group of rows, apply the function to decide whether they should be kept
   for (rows in groups) {
-    decision <- fun(data[rows, , drop = FALSE])
+    decision <- tryCatch(
+      fun(data[rows, , drop = FALSE]),
+      error = function(err) {
+        group_label <- format_filter_group_label(data, by, rows[[1L]])
+        stop(simpleError(
+          message = paste0(
+            "`fun` threw an error when applied to the data in Group (",
+            group_label,
+            "): ",
+            conditionMessage(err)
+          ),
+          call = filter_call
+        ))
+      }
+    )
     if (!is.logical(decision) || length(decision) != 1L) {
       stop_because_of_invalid_group_decision(data, by, rows[[1L]], decision)
     }
@@ -32,23 +48,7 @@ tapply_for_dataframe_filter <- function(data, fun, by) {
 }
 
 stop_because_of_invalid_group_decision <- function(data, by, row, decision) {
-  group_values <- vapply(
-    data[row, by, drop = FALSE],
-    function(value) {
-      if (is.atomic(value) && length(value) == 1L && is.na(value)) {
-        return("NA")
-      }
-      if (is.character(value) || is.factor(value)) {
-        return(encodeString(as.character(value), quote = '"'))
-      }
-      paste(format(value, trim = TRUE), collapse = ", ")
-    },
-    character(1)
-  )
-  group_label <- paste(
-    paste0("`", by, "` = ", group_values),
-    collapse = ", "
-  )
+  group_label <- format_filter_group_label(data, by, row)
   n_values <- length(decision)
 
   error_msg <- paste0(
@@ -69,4 +69,24 @@ stop_because_of_invalid_group_decision <- function(data, by, row, decision) {
   error_call <- sys.call(sys.parent(2L))
 
   stop(simpleError(message = error_msg, call = error_call))
+}
+
+format_filter_group_label <- function(data, by, row) {
+  group_values <- vapply(
+    data[row, by, drop = FALSE],
+    function(value) {
+      if (is.atomic(value) && length(value) == 1L && is.na(value)) {
+        return("NA")
+      }
+      if (is.character(value) || is.factor(value)) {
+        return(encodeString(as.character(value), quote = '"'))
+      }
+      paste(format(value, trim = TRUE), collapse = ", ")
+    },
+    character(1)
+  )
+  paste(
+    paste0("`", by, "` = ", group_values),
+    collapse = ", "
+  )
 }

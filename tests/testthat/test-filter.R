@@ -449,6 +449,51 @@ test_that("filter rejects unknown grouping columns before calling the predicate"
   })
 })
 
+test_that("grouped filter reports an error from the first group", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(
+      make_grouped_filter_data(),
+      function(d) stop("first group failed"),
+      by = "group"
+    )
+  })
+})
+
+test_that("grouped filter reports an error from a later group", {
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(
+      make_grouped_filter_data(),
+      function(d) {
+        if (d$group[[1L]] == "a") {
+          stop("later group failed")
+        }
+        TRUE
+      },
+      by = "group"
+    )
+  })
+})
+
+test_that("grouped filter reports an error with multiple grouping columns", {
+  data <- data.frame(
+    group = c("a", "a", "b"),
+    segment = c("x", "y", "x")
+  )
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(
+      data,
+      function(d) {
+        if (d$group[[1L]] == "a" && d$segment[[1L]] == "y") {
+          stop("group combination failed")
+        }
+        TRUE
+      },
+      by = c("group", "segment")
+    )
+  })
+})
+
 test_that("grouped filter rejects an integer result", {
   expect_snapshot(error = TRUE, cran = TRUE, {
     filter(make_grouped_filter_data(), function(d) 1L, by = "group")
