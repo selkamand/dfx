@@ -80,7 +80,7 @@ keep_rows <- function(data, keep) {
 #'
 #' # Filter for any plants whose species includes
 #' # at least one plant with Petl.Width > 0.3
-#' filter(head(iris), \(df){any(df$Petal.Width>0.3)}, by = "Species")
+#' filter(head(iris), function(df){ any(df$Petal.Width>0.3) }, by = "Species")
 #'
 #' @export
 #' @seealso [keep_rows()] [base::subset()]

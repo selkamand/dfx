@@ -38,7 +38,7 @@ filter(mtcars, function(d) d$mpg > 20 & d$cyl == 6)
 
 # Filter for any plants whose species includes
 # at least one plant with Petl.Width > 0.3
-filter(head(iris), \(df){any(df$Petal.Width>0.3)}, by = "Species")
+filter(head(iris), function(df){ any(df$Petal.Width>0.3) }, by = "Species")
 
 }
 \seealso{
