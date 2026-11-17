@@ -169,13 +169,30 @@ between_dates <- function(x, left, right) {
       }
     }
 
-    # Convert Dates to midnight in `tz`, letting the OS resolve whether that
-    # instant falls in daylight saving time. `as.POSIXlt()` can otherwise
-    # leave `isdst` as 0, which shifts the instant by an hour during DST.
+    # Convert Dates to midnight in `tz` without relying on `as.POSIXlt.Date()`'s
+    # `tz` argument, which is ignored before R 4.3.0 and treats Dates as UTC
+    # midnight. Reading the date components without a timezone gives the same
+    # civil date on every R version; attaching `zone` afterwards with `isdst`
+    # unset lets the OS resolve whether midnight falls in daylight saving time.
     date_to_posixct <- function(value, zone) {
-      converted <- as.POSIXlt(value, tz = zone)
-      converted$isdst <- -1L
-      as.POSIXct(converted)
+      converted <- as.POSIXct(
+        as.numeric(value) * 86400,
+        origin = "1970-01-01",
+        tz = zone
+      )
+
+      finite <- is.finite(value)
+      if (any(finite)) {
+        local <- as.POSIXlt(value[finite])
+        local$hour <- 0L
+        local$min <- 0L
+        local$sec <- 0
+        local$isdst <- -1L
+        attr(local, "tzone") <- zone
+        converted[finite] <- as.POSIXct(local)
+      }
+
+      converted
     }
 
     if (inherits(x, "Date")) {

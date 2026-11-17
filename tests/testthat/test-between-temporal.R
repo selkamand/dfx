@@ -318,6 +318,19 @@ test_that("between handles Date x with datetime bounds", {
   expect_identical(between(x, left, right), c(TRUE, TRUE, NA))
 })
 
+test_that("between converts Date x to local midnight outside UTC", {
+  # Before R 4.3.0, as.POSIXlt.Date() ignored its tz argument, shifting the
+  # Date by 13 hours in Auckland and placing it after the right bound.
+  x <- as.Date("2024-01-01")
+  left <- as.POSIXct("2024-01-01 00:00:00", tz = "Pacific/Auckland")
+  right <- as.POSIXct("2024-01-01 12:00:00", tz = "Pacific/Auckland")
+
+  expect_true(between(x, left, right))
+
+  reversed <- as.POSIXct("2024-01-01 00:30:00", tz = "Pacific/Auckland")
+  expect_true(between(reversed, as.Date("2024-01-01"), right))
+})
+
 test_that("between uses the first datetime bound timezone for Date x", {
   x <- as.Date(c("2024-01-01", "2024-01-02"))
   left <- as.POSIXct("2024-01-01 00:00:00", tz = "America/New_York")
