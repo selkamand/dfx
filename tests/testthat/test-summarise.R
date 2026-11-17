@@ -1,3 +1,34 @@
+# summarise ----------
+test_that("summarise happy path works (ungrouped)", {
+  dfx_summary <- summarise(mtcars, function(d) {
+    list(mean_mpg = round(mean(d$mpg), digits = 0), max_cyl = max(d$cyl))
+  })
+  expect_identical(dfx_summary, data.frame(mean_mpg = 20, max_cyl = 8))
+})
+
+test_that("summarise happy path works (grouped)", {
+  dfx_summary <- summarise(
+    iris,
+    function(df) {
+      list(
+        widest_petal = max(df$Petal.Width),
+        longest_petal = max(df$Petal.Length)
+      )
+    },
+    by = "Species"
+  )
+
+  expect_identical(
+    dfx_summary,
+    data.frame(
+      Species = factor(c("setosa", "versicolor", "virginica")),
+      widest_petal = c(0.6, 1.8, 2.5),
+      longest_petal = c(1.9, 5.1, 6.9)
+    )
+  )
+})
+
+
 # summarise_vector_by ----------
 
 test_that("summarise_vector_by follows factor order and drops unused levels", {

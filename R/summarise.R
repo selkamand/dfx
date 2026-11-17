@@ -1,3 +1,134 @@
+#' Summarise rows in a data.frame
+#'
+#' Pass the full data frame to a function that computes summary metrics.
+#'
+#' @param data A data frame to filter.
+#' @param fun A one-argument function that receives `data` and returns a logical
+#'   vector with one value per row, or if `by` is supplied, one value per group.
+#' @param by name of columns to group operations by.
+#'
+#' @return A data frame containing rows where `fun` returns `TRUE`.
+#'
+#' @details
+#' Differences from `dplyr::summarise()` include:
+#'
+#' @examples
+#' # summarise
+#' summarise(mtcars, function(d) {
+#'   list(mean_mpg = mean(d$mpg), max_cyl = max(d$cyl))
+#' })
+#'
+#' # summarise by group
+#' summarise(
+#'     iris,
+#'     function(df) {
+#'       list(
+#'         widest_petal = max(df$Petal.Width),
+#'         longest_petal = max(df$Petal.Length)
+#'       )
+#'     },
+#'     by = "Species"
+#'   )
+#'
+#'
+#' @export
+#' @seealso [summarise_vector_by()]
+summarise <- function(data, fun, by = NULL) {
+  # Assert `data` is data.frame
+  if (!is.data.frame(data)) {
+    stop(
+      "`data` must be a data.frame, not an object of class [",
+      toString(class(data)),
+      "]"
+    )
+  }
+
+  # Assert `fun` is a function
+  if (!is.function(fun)) {
+    stop(
+      "`fun` must be a function. Not an object of class [",
+      toString(class(fun)),
+      "]"
+    )
+  }
+
+  # Assert `fun` does not support variable arguments (`...`)
+  if (func_supports_variable_arguments(fun)) {
+    stop(
+      "`fun` supports variable arguments (has a `...` parameter). This is not permitted by the `summarise` function. All parameters must be explicit and named."
+    )
+  }
+
+  # Assert `fun` takes only one argument
+  if (func_arg_count(fun, dots = "count_as_0") != 1) {
+    stop(
+      "`fun` must have exactly one parameter (expecting a data.frame). Found ",
+      func_arg_count(fun, dots = "count_as_0")
+    )
+  }
+
+  # TODO: Figure out if we need to group application of fun.
+
+  # Apply function to data
+  ls_result <- fun(data)
+
+  # assert resulting list is sensible (a named list)
+  assert_summarise_function_return_is_sensible(
+    ls_result,
+    expected_rows = 1,
+    call = sys.call()
+  )
+
+  # Combine rows into data.frame
+  return(as.data.frame(ls_result))
+}
+
+assert_summarise_function_return_is_sensible <- function(
+  x,
+  expected_rows = 1,
+  call = NULL
+) {
+  xnames <- names(x)
+  error_message <- if (is.null(x)) {
+    paste0("`fun` must return a list, not NULL")
+  } else if (!is.list(x)) {
+    paste0(
+      "`fun` must return a list, not an object of class [",
+      toString(x),
+      "]."
+    )
+  } else if (is.null(xnames)) {
+    paste0("summarise `fun` must return a named list. No names found.")
+  } else if (anyNA(xnames)) {
+    paste0(
+      "`fun` must return a named list. ",
+      sum(is.na(xnames)),
+      "/",
+      length(xnames),
+      " elements are unnamed."
+    )
+  } else if (!all(lengths(x) == expected_rows)) {
+    dodgy <- lengths(x) != expected_rows
+    dodgy_entries <- x[dodgy]
+
+    paste0(
+      "`fun` returned an unexpected number of values for [",
+      names(dodgy_entries)[1],
+      "]. Expected ",
+      expected_rows,
+      " but found ",
+      lengths(dodgy_entries[1]),
+      "."
+    )
+  } else {
+    # TODO: add checks that each element of the list is a vector.
+    return(invisible(NULL))
+  }
+
+  stop(simpleError(error_message, call = call))
+}
+
+
 #' Split a vector by some other variable and summarise
 #'
 #' Apply a function to the values of `x` in each group of `by` and
