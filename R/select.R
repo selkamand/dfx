@@ -153,7 +153,7 @@ brename <- function(data, namemap) {
   warning(
     "`brename` has now been renamed to `rename` and will be removed from this package in an upcoming release"
   )
-  brename(data, namemap)
+  rename(data, namemap)
 }
 
 # Function returns only the named elements of a vector
