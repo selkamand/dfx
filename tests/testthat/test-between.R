@@ -8,30 +8,52 @@ test_that("between accepts scalar and elementwise numeric bounds", {
 
 test_that("between handles each numeric missing-bound type like dplyr", {
   x <- c(-1, 1, 3)
-  missing <- list(
-    logical = NA,
-    integer = NA_integer_,
-    double = NA_real_,
-    nan = NaN
-  )
 
   expect_identical(between(x, 0, 2), c(FALSE, TRUE, FALSE))
 
-  for (type in names(missing)) {
-    bound <- missing[[type]]
-    expect_identical(between(x, bound, 2), c(NA, NA, FALSE), info = type)
-    expect_identical(between(x, 0, bound), c(FALSE, NA, NA), info = type)
-  }
+  expect_identical(between(x, NA, 2), c(NA, NA, FALSE))
+  expect_identical(between(x, NA_integer_, 2), c(NA, NA, FALSE))
+  expect_identical(between(x, NA_real_, 2), c(NA, NA, FALSE))
+  expect_identical(between(x, NaN, 2), c(NA, NA, FALSE))
 
-  for (left_type in names(missing)) {
-    for (right_type in names(missing)) {
-      expect_identical(
-        between(x, missing[[left_type]], missing[[right_type]]),
-        c(NA, NA, NA),
-        info = paste(left_type, right_type)
-      )
-    }
-  }
+  expect_identical(between(x, 0, NA), c(FALSE, NA, NA))
+  expect_identical(between(x, 0, NA_integer_), c(FALSE, NA, NA))
+  expect_identical(between(x, 0, NA_real_), c(FALSE, NA, NA))
+  expect_identical(between(x, 0, NaN), c(FALSE, NA, NA))
+
+  expect_identical(between(x, NA, NA), c(NA, NA, NA))
+  expect_identical(between(x, NA, NA_integer_), c(NA, NA, NA))
+  expect_identical(between(x, NA, NA_real_), c(NA, NA, NA))
+  expect_identical(between(x, NA, NaN), c(NA, NA, NA))
+
+  expect_identical(between(x, NA_integer_, NA), c(NA, NA, NA))
+  expect_identical(between(x, NA_integer_, NA_integer_), c(NA, NA, NA))
+  expect_identical(between(x, NA_integer_, NA_real_), c(NA, NA, NA))
+  expect_identical(between(x, NA_integer_, NaN), c(NA, NA, NA))
+
+  expect_identical(between(x, NA_real_, NA), c(NA, NA, NA))
+  expect_identical(between(x, NA_real_, NA_integer_), c(NA, NA, NA))
+  expect_identical(between(x, NA_real_, NA_real_), c(NA, NA, NA))
+  expect_identical(between(x, NA_real_, NaN), c(NA, NA, NA))
+
+  expect_identical(between(x, NaN, NA), c(NA, NA, NA))
+  expect_identical(between(x, NaN, NA_integer_), c(NA, NA, NA))
+  expect_identical(between(x, NaN, NA_real_), c(NA, NA, NA))
+  expect_identical(between(x, NaN, NaN), c(NA, NA, NA))
+})
+
+test_that("between casts logical numeric bounds to numeric like dplyr", {
+  expect_identical(between(1:3, TRUE, 3), c(TRUE, TRUE, TRUE))
+  expect_identical(between(1:3, 0, TRUE), c(TRUE, FALSE, FALSE))
+  expect_identical(
+    between(1:3, c(NA, TRUE, FALSE), 3),
+    c(NA, TRUE, TRUE)
+  )
+  expect_identical(
+    between(1:3, 0, c(NA, FALSE, TRUE)),
+    c(NA, FALSE, FALSE)
+  )
+  expect_identical(between(numeric(), TRUE, 3), logical())
 })
 
 test_that("between handles elementwise and empty numeric missing bounds", {
@@ -116,17 +138,39 @@ test_that("between rejects numeric S3 classes in every argument", {
 
   expect_error(
     between(series, 1, 3),
-    "Numeric S3 classes are not supported for `x`.",
+    "Numeric S3 and S4 classes are not supported for `x`.",
     fixed = TRUE
   )
   expect_error(
     between(1:3, series, 3),
-    "Numeric S3 classes are not supported for `left`.",
+    "Numeric S3 and S4 classes are not supported for `left`.",
     fixed = TRUE
   )
   expect_error(
     between(1:3, 1, series),
-    "Numeric S3 classes are not supported for `right`.",
+    "Numeric S3 and S4 classes are not supported for `right`.",
+    fixed = TRUE
+  )
+})
+
+test_that("between rejects numeric S4 classes in every argument", {
+  methods::setClass("dfx_test_numeric_s4", contains = "numeric")
+  on.exit(methods::removeClass("dfx_test_numeric_s4"), add = TRUE)
+  series <- methods::new("dfx_test_numeric_s4", 1:3)
+
+  expect_error(
+    between(series, 1, 3),
+    "Numeric S3 and S4 classes are not supported for `x`.",
+    fixed = TRUE
+  )
+  expect_error(
+    between(1:3, series, 3),
+    "Numeric S3 and S4 classes are not supported for `left`.",
+    fixed = TRUE
+  )
+  expect_error(
+    between(1:3, 1, series),
+    "Numeric S3 and S4 classes are not supported for `right`.",
     fixed = TRUE
   )
 })
@@ -135,6 +179,11 @@ test_that("between rejects nonnumeric inputs and incompatible bound lengths", {
   expect_error(
     between("1", 1, 2),
     "`x` must be a numeric vector, not an object of class [character]",
+    fixed = TRUE
+  )
+  expect_error(
+    between(c(TRUE, FALSE), 0, 2),
+    "`x` must be a numeric vector, not an object of class [logical]",
     fixed = TRUE
   )
   expect_error(
@@ -166,6 +215,27 @@ test_that("between rejects nonnumeric inputs and incompatible bound lengths", {
   expect_error(
     between(1:3, 1, numeric()),
     "Length of `right`: [0]",
+    fixed = TRUE
+  )
+
+  expect_error(
+    between(1:3, character(), 3),
+    "`left` must be a numeric vector, not an object of class [character]",
+    fixed = TRUE
+  )
+  expect_error(
+    between(numeric(), character(), 3),
+    "`left` must be a numeric vector, not an object of class [character]",
+    fixed = TRUE
+  )
+  expect_error(
+    between(1:3, 1, character()),
+    "`right` must be a numeric vector, not an object of class [character]",
+    fixed = TRUE
+  )
+  expect_error(
+    between(1:3, structure(NA, class = "foo"), 3),
+    "`left` must be a numeric vector, not an object of class [foo]",
     fixed = TRUE
   )
 })

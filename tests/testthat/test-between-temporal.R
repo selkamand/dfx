@@ -1,6 +1,5 @@
 # Most expected values were checked against dplyr::between() 1.2.1. Tests for
-# unsupported input types and infinite Date bounds document intentional
-# differences. No test loads dplyr.
+# unsupported input types document intentional differences. No test loads dplyr.
 
 test_that("between includes Date endpoints and preserves missing values", {
   x <- as.Date(c("2024-01-01", "2024-01-02", "2024-01-03", NA))
@@ -90,6 +89,52 @@ test_that("between accepts bare missing bounds for temporal x", {
   expect_identical(
     between(times, NA, as.POSIXct("2024-01-02 00:00:00", tz = "UTC")),
     c(NA, FALSE)
+  )
+})
+
+test_that("between rejects classed logical missing temporal bounds", {
+  dates <- as.Date(c("2024-01-02", "2024-01-03"))
+  times <- as.POSIXct(
+    c("2024-01-02 12:00:00", "2024-01-03 12:00:00"),
+    tz = "UTC"
+  )
+  classed <- structure(NA, class = "foo")
+
+  expect_error(
+    between(dates, classed, as.Date("2024-01-03")),
+    "`left` must be Date or missing when `x` is Date.",
+    fixed = TRUE
+  )
+  expect_error(
+    between(times, classed, as.POSIXct("2024-01-03 00:00:00", tz = "UTC")),
+    "`left` must be POSIXt or missing when `x` is POSIXt.",
+    fixed = TRUE
+  )
+  expect_error(
+    between(dates, as.Date("2024-01-02"), classed),
+    "`right` must be Date or missing when `x` is Date.",
+    fixed = TRUE
+  )
+})
+
+test_that("between rejects S4 logical missing temporal bounds", {
+  methods::setClass("dfx_test_logical_s4", contains = "logical")
+  on.exit(methods::removeClass("dfx_test_logical_s4"), add = TRUE)
+  bound <- methods::new("dfx_test_logical_s4", NA)
+
+  expect_error(
+    between(as.Date("2024-01-02"), bound, as.Date("2024-01-03")),
+    "`left` must be Date or missing when `x` is Date.",
+    fixed = TRUE
+  )
+  expect_error(
+    between(
+      as.POSIXct("2024-01-02 12:00:00", tz = "UTC"),
+      as.POSIXct("2024-01-01 00:00:00", tz = "UTC"),
+      bound
+    ),
+    "`right` must be POSIXt or missing when `x` is POSIXt.",
+    fixed = TRUE
   )
 })
 

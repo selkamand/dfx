@@ -9,10 +9,11 @@ between(x, left, right)
 \arguments{
 \item{x}{A numeric, Date, or POSIXt vector.}
 
-\item{left, right}{Inclusive vector bounds, each of length 1 or \code{length(x)}.}
+\item{left, right}{Inclusive vector bounds. Must be length 1 or \code{length(x)}.}
 }
 \value{
-A logical vector describing whether each element of \code{x} is >= left and <= right.
+A logical vector the same length as \code{x}. Each element is \code{TRUE} when
+\code{left <= x} and \code{x <= right}, \code{FALSE} otherwise.
 }
 \description{
 Compare values with inclusive lower and upper bounds.
@@ -20,10 +21,9 @@ Compare values with inclusive lower and upper bounds.
 \details{
 Differences from \code{dplyr::between()} include:
 \itemize{
-\item Character vectors are not accepted by dfx.
-\item When Dates / datetimes are supplied, \code{Inf} and \code{-Inf} Dates are considered
-open-ended bounds. Dplyr casts them to missing.
-\item Matrices and arrays are not supported for \code{x} or either bound.
+\item Logical \code{x} vectors are rejected, while \code{dplyr::between()} casts them to
+numeric.
+\item Character vectors and matrices/arrays of any type are not supported.
 }
 }
 \examples{
@@ -35,5 +35,20 @@ between(x=1:5, left = 2, right = 7)
 
 # Vector `x`, `left`, `right`
 between(x=1:3, left = c(0, 0, 0), right = c(0, 5, 5))
+
+# Dates
+visits <- as.Date(c("2024-01-15", "2024-02-20", "2024-03-25"))
+between(x = visits, left = as.Date("2024-01-01"), right = as.Date("2024-02-29"))
+
+# Datetimes
+appointments <- as.POSIXct(
+  c("2024-01-15 09:00:00", "2024-01-15 13:30:00"),
+  tz = "UTC"
+)
+between(
+  x = appointments,
+  left = as.POSIXct("2024-01-15 12:00:00", tz = "UTC"),
+  right = as.POSIXct("2024-01-15 17:00:00", tz = "UTC")
+)
 
 }

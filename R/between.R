@@ -3,17 +3,17 @@
 #' Compare values with inclusive lower and upper bounds.
 #'
 #' @param x A numeric, Date, or POSIXt vector.
-#' @param left,right Inclusive vector bounds, each of length 1 or `length(x)`.
+#' @param left,right Inclusive vector bounds. Must be length 1 or `length(x)`.
 #'
-#' @return A logical vector describing whether each element of `x` is >= left and <= right.
+#' @return A logical vector the same length as `x`. Each element is `TRUE` when
+#'   `left <= x` and `x <= right`, `FALSE` otherwise.
 #'
 #' @details
 #'
 #' Differences from `dplyr::between()` include:
-#'  - Character vectors are not accepted by dfx.
-#'  - When Dates / datetimes are supplied, `Inf` and `-Inf` Dates are considered
-#'    open-ended bounds. Dplyr casts them to missing.
-#'  - Matrices and arrays are not supported for `x` or either bound.
+#'  - Logical `x` vectors are rejected, while `dplyr::between()` casts them to
+#'    numeric.
+#'  - Character vectors and matrices/arrays of any type are not supported.
 #'
 #' @examples
 #' # Scalar
@@ -25,8 +25,33 @@
 #' # Vector `x`, `left`, `right`
 #' between(x=1:3, left = c(0, 0, 0), right = c(0, 5, 5))
 #'
+#' # Dates
+#' visits <- as.Date(c("2024-01-15", "2024-02-20", "2024-03-25"))
+#' between(x = visits, left = as.Date("2024-01-01"), right = as.Date("2024-02-29"))
+#'
+#' # Datetimes
+#' appointments <- as.POSIXct(
+#'   c("2024-01-15 09:00:00", "2024-01-15 13:30:00"),
+#'   tz = "UTC"
+#' )
+#' between(
+#'   x = appointments,
+#'   left = as.POSIXct("2024-01-15 12:00:00", tz = "UTC"),
+#'   right = as.POSIXct("2024-01-15 17:00:00", tz = "UTC")
+#' )
+#'
 #' @export
 between <- function(x, left, right) {
+  # Assert neither `x` nor bounds are matrices/arrays.
+  #
+  # Why?
+  # We don't support matrices/arrays because we want to guarantee the returned
+  # value is a logical vector.
+  # While there are lots of ways we could turn multidimensional
+  # data into a single logical vector based on 'between-ness', that is
+  # exactly the problem. None are quite obvious enough that future me will
+  # remember which route we took. So we just won't support it at all.
+
   if (!is.null(dim(x))) {
     stop("`x` must be a vector, not a matrix or array.")
   }
@@ -68,8 +93,17 @@ between <- function(x, left, right) {
       "]"
     )
   }
-  if (is.object(x) && !isS4(x)) {
-    stop("Numeric S3 classes are not supported for `x`.")
+  if (is.object(x)) {
+    stop("Numeric S3 and S4 classes are not supported for `x`.")
+  }
+
+  # Match dplyr's coercion of logical bounds to numeric. Classed logicals are
+  # excluded so they still fail the S3 checks below.
+  if (is.logical(left) && !is.object(left)) {
+    left <- as.numeric(left)
+  }
+  if (is.logical(right) && !is.object(right)) {
+    right <- as.numeric(right)
   }
 
   # Assert bounds are numeric and have compatible lengths
@@ -80,8 +114,8 @@ between <- function(x, left, right) {
       "]"
     )
   }
-  if (is.object(left) && !isS4(left)) {
-    stop("Numeric S3 classes are not supported for `left`.")
+  if (is.object(left)) {
+    stop("Numeric S3 and S4 classes are not supported for `left`.")
   }
   if (length(left) != 1L && length(left) != length(x)) {
     stop(
@@ -100,8 +134,8 @@ between <- function(x, left, right) {
       "]"
     )
   }
-  if (is.object(right) && !isS4(right)) {
-    stop("Numeric S3 classes are not supported for `right`.")
+  if (is.object(right)) {
+    stop("Numeric S3 and S4 classes are not supported for `right`.")
   }
   if (length(right) != 1L && length(right) != length(x)) {
     stop(
@@ -136,20 +170,26 @@ between_dates <- function(x, left, right) {
       }
     }
 
+    # Convert Dates to midnight in `tz`, letting the OS resolve whether that
+    # instant falls in daylight saving time. `as.POSIXlt()` can otherwise
+    # leave `isdst` as 0, which shifts the instant by an hour during DST.
+    date_to_posixct <- function(value, zone) {
+      converted <- as.POSIXlt(value, tz = zone)
+      converted$isdst <- -1L
+      as.POSIXct(converted)
+    }
+
     if (inherits(x, "Date")) {
-      x <- as.POSIXct(as.POSIXlt(x, tz = tz))
+      x <- date_to_posixct(x, tz)
     }
     if (inherits(left, "Date")) {
-      left <- as.POSIXct(as.POSIXlt(left, tz = tz))
+      left <- date_to_posixct(left, tz)
     }
     if (inherits(right, "Date")) {
-      right <- as.POSIXct(as.POSIXlt(right, tz = tz))
+      right <- date_to_posixct(right, tz)
     }
   }
 
-  if (!inherits(x, c("Date", "POSIXt"))) {
-    stop("`x` must be a Date or datetime vector.")
-  }
   kind <- if (
     inherits(x, "POSIXt") ||
       inherits(left, "POSIXt") ||
@@ -161,8 +201,9 @@ between_dates <- function(x, left, right) {
   }
 
   check_bound <- function(bound, name) {
-    compatible <- inherits(bound, kind) ||
-      (is.logical(bound) && all(is.na(bound)))
+    # Only unclassed logical NAs count as missing; classed values are rejected.
+    missing <- is.logical(bound) && !is.object(bound) && all(is.na(bound))
+    compatible <- inherits(bound, kind) || missing
 
     if (!compatible) {
       stop("`", name, "` must be ", kind, " or missing when `x` is ", kind, ".")
