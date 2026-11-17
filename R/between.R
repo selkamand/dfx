@@ -97,8 +97,7 @@ between <- function(x, left, right) {
     stop("Numeric S3 and S4 classes are not supported for `x`.")
   }
 
-  # Match dplyr's coercion of logical bounds to numeric. Classed logicals are
-  # excluded so they still fail the S3 checks below.
+  # Match dplyr's coercion of logical bounds to numeric.
   if (is.logical(left) && !is.object(left)) {
     left <- as.numeric(left)
   }
