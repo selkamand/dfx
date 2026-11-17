@@ -3,6 +3,7 @@
 export(between)
 export(brename)
 export(bselect)
+export(column_to_rownames)
 export(count)
 export(fct_expand)
 export(fct_infreq)
