@@ -60,10 +60,15 @@ rownames_to_column <- function(data, column) {
     )
   }
 
+  # `[[<-` and `[.data.frame` make duplicate names unique ("x", "x" -> "x", "x.1"),
+  # so snapshot the originals and restore them after the reorder.
+  original_names <- names(data)
+
   data[[column]] <- row.names(data)
 
   # Reorder by position to put the new column first.
   data <- data[c(ncol(data), seq_len(ncol(data) - 1L))]
+  names(data) <- c(column, original_names)
 
   # Reset row names so the values live only in the new column.
   row.names(data) <- NULL
