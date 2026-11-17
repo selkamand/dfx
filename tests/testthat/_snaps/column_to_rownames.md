@@ -30,6 +30,14 @@
       Error in `column_to_rownames()`:
       ! `column` must be a single, non-missing column name
 
+# column_to_rownames rejects an empty string column name
+
+    Code
+      column_to_rownames(data, "")
+    Condition
+      Error in `column_to_rownames()`:
+      ! `column` must be a non-empty column name
+
 # column_to_rownames rejects multiple column names
 
     Code

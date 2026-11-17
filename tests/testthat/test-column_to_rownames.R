@@ -145,6 +145,14 @@ test_that("column_to_rownames requires a non-empty column name", {
   })
 })
 
+test_that("column_to_rownames rejects an empty string column name", {
+  data <- data.frame(id = c("a", "b"), value = 1:2)
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    column_to_rownames(data, "")
+  })
+})
+
 test_that("column_to_rownames rejects multiple column names", {
   data <- data.frame(id = c("a", "b"), value = 1:2)
 

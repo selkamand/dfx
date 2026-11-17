@@ -41,6 +41,10 @@ column_to_rownames <- function(data, column) {
     stop("`column` must be a single, non-missing column name")
   }
 
+  if (!nzchar(column)) {
+    stop("`column` must be a non-empty column name")
+  }
+
   # Assert column is a valid column name of data
   if (!column %in% colnames(data)) {
     stop(
