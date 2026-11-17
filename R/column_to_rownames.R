@@ -15,7 +15,7 @@
 #' )
 #' column_to_rownames(df, "id")
 #'
-#' @seealso [base::row.names()]
+#' @seealso [rownames_to_column()] [base::row.names()]
 #'
 #' @export
 column_to_rownames <- function(data, column) {

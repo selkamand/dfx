@@ -18,19 +18,6 @@ column_to_rownames(data, column)
 Move the values of a single column into the row names of a data frame,
 removing that column from the returned data frame.
 }
-\details{
-\code{column_to_rownames()} is a base-R equivalent of
-\code{tibble::column_to_rownames()} that does not use non-standard evaluation.
-Differences include:
-\itemize{
-\item \code{column} is a character string, rather than a data-masked column name.
-\item \code{data} must not already have row names. Remove existing row names before
-calling \code{column_to_rownames()}.
-\item Values are converted with \code{as.character()} before being used as row names,
-then checked for missing and duplicated values. Both cause an error with a
-message describing the problem.
-}
-}
 \examples{
 df <- data.frame(
   id = c("sample_1", "sample_2", "sample_3"),
@@ -40,5 +27,5 @@ column_to_rownames(df, "id")
 
 }
 \seealso{
-\code{\link[base:row.names]{base::row.names()}}
+\code{\link[=rownames_to_column]{rownames_to_column()}} \code{\link[base:row.names]{base::row.names()}}
 }
