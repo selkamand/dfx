@@ -124,6 +124,17 @@ test_that("rownames_to_column rejects list data", {
   })
 })
 
+test_that("rownames_to_column rejects data.table data", {
+  data <- structure(
+    data.frame(value = 1:2),
+    class = c("data.table", "data.frame")
+  )
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    rownames_to_column(data, "id")
+  })
+})
+
 test_that("rownames_to_column rejects an integer column name", {
   data <- data.frame(value = 1:2)
 

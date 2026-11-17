@@ -29,6 +29,13 @@ rownames_to_column <- function(data, column) {
     )
   }
 
+  # data.table's `[` treats a bare numeric vector as row indices, so the
+  # column reordering at the end would subset rows and leave the new column
+  # in the wrong position.
+  if (inherits(data, "data.table")) {
+    stop("`data.table` objects are not supported by `rownames_to_column()`")
+  }
+
   if (!is.character(column)) {
     stop(
       "`column` must be a character string, not an object of class [",
@@ -41,7 +48,7 @@ rownames_to_column <- function(data, column) {
     stop("`column` must be a single, non-missing column name")
   }
 
-  if (nchar(column) == 0L) {
+  if (!nzchar(column)) {
     stop("`column` must be a non-empty column name")
   }
 

@@ -30,6 +30,14 @@
       Error in `rownames_to_column()`:
       ! `data` must be a data.frame, not an object of class [list]
 
+# rownames_to_column rejects data.table data
+
+    Code
+      rownames_to_column(data, "id")
+    Condition
+      Error in `rownames_to_column()`:
+      ! `data.table` objects are not supported by `rownames_to_column()`
+
 # rownames_to_column rejects an integer column name
 
     Code
