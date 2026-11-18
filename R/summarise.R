@@ -67,20 +67,96 @@ summarise <- function(data, fun, by = NULL) {
     )
   }
 
-  # TODO: Figure out if we need to group application of fun.
+  # Save calling environment so errors thrown in internal helpers show
+  # `error in summarise()` not `error in internal_helper()`
+  call <- sys.call()
 
-  # Apply function to data
-  ls_result <- fun(data)
+  # Simple case: `by` is null so we just apply the function to whole data.frame
+  if (is.null(by)) {
+    # Apply function to whole dataset, catching and adding error message
+    # when fun fails using a tryCatch
+    ls_result <- tryCatch(
+      fun(data),
+      error = function(err) {
+        stop(simpleError(
+          message = paste0(
+            "`fun` threw an error when applied to the data: ",
+            conditionMessage(err)
+          ),
+          call = call
+        ))
+      }
+    )
 
-  # assert resulting list is sensible (a named list)
-  assert_summarise_function_return_is_sensible(
-    ls_result,
-    expected_rows = 1,
-    call = sys.call()
-  )
+    # assert resulting list is sensible (a named list)
+    assert_summarise_function_return_is_sensible(
+      ls_result,
+      expected_rows = 1,
+      call = call
+    )
 
-  # Combine rows into data.frame
-  return(as.data.frame(ls_result))
+    # Combine rows into data.frame
+    return(as.data.frame(ls_result))
+  }
+
+  # Grouping columns were supplied (`by`) so we now apply
+  # Group application of fun `by`
+  # But first we have to ensure `by` key columns are sensible
+  by <- ensure_by_is_sensible(data = data, by = by, call = call)
+
+  # Then we generate a key (unique combination of grouping column levels)
+  # assigned to each row
+  key <- generate_unique_keys(data = data, by = by)
+
+  # Generate a list with one vector per unique key, describing all row indices
+  # belonging to that group. Groups are kept in first-appearance order.
+  groups <- split(seq_len(nrow(data)), factor(key, levels = unique(key)))
+
+  # Loop through each group to get a vector of row_ids.
+  # For loop is used over apply to get better control of error messages when
+  # function fails.
+  # Result ls_result gets returned
+  container <- list()
+  i <- 0
+  for (rows in groups) {
+    i <- i + 1
+
+    # Grab just the rows in current group
+    group_data <- data[rows, , drop = FALSE]
+
+    # Apply function to the group, error-ing if function throws an error
+    ls_result_group <- tryCatch(
+      fun(group_data),
+      error = function(err) {
+        stop(simpleError(
+          message = paste0(
+            "`fun` threw an error when applied to the data: ", #TODO: make this error message mention the group where the function failed
+            conditionMessage(err)
+          ),
+          call = call
+        ))
+      }
+    )
+
+    # assert resulting list is sensible (a named list)
+    # TODO: make this function inform user which group failed
+    assert_summarise_function_return_is_sensible(
+      ls_result_group,
+      expected_rows = 1,
+      call = call
+    )
+
+    # Combine rows into data.frame and save to container under 'key'.
+    container[[i]] <- as.data.frame(ls_result_group)
+  }
+
+  # After summary for all groups have been computed, combine the results
+  df_collated_summary <- do.call(rbind, container)
+
+  # Add each unique combination of levels as separate columns
+  df_collated_summary[["key"]] <- unique(key)
+
+  return(df_collated_summary)
 }
 
 assert_summarise_function_return_is_sensible <- function(
