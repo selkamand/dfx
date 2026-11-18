@@ -153,10 +153,20 @@ summarise <- function(data, fun, by = NULL) {
   # After summary for all groups have been computed, combine the results
   df_collated_summary <- do.call(rbind, container)
 
-  # Add each unique combination of levels as separate columns
-  df_collated_summary[["key"]] <- unique(key)
+  # Create a data.frame where cols = grouping cols specified by `by`
+  # and rows represent the unique combination of grouping column values
+  # that correspond to that key
+  first_row_per_group <- vapply(
+    groups,
+    function(rows) rows[[1L]],
+    integer(1),
+    USE.NAMES = FALSE
+  )
+  df_group_keys <- data[first_row_per_group, by, drop = FALSE]
+  rownames(df_group_keys) <- NULL
 
-  return(df_collated_summary)
+  # Add grouping column information before metric columns
+  return(cbind(df_group_keys, df_collated_summary))
 }
 
 assert_summarise_function_return_is_sensible <- function(
