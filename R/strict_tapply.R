@@ -91,3 +91,58 @@ format_filter_group_label <- function(data, by, row) {
     collapse = ", "
   )
 }
+
+# Return a sensible `by` vector for grouped operations OR an error if it is not
+# appropriate.
+# data must be the grouping data.frame
+# This helper function was created since both `filter` and `summarise` use the
+# same `by` argument with the same constraints
+ensure_by_is_sensible <- function(data, by, call) {
+  # Ensure `by` is unique by removing dups
+  # If unique `by` vector passess all the assertions, it will be returned
+  by <- unique(by)
+
+  # Assert `by` argument is a character vector
+  error_message <- if (!is.character(by)) {
+    paste0(
+      "`by` must be a character vector. Not an object of class [",
+      toString(class(by)),
+      "]"
+    )
+  } else if (length(by) == 0L) {
+    # Ensure `by` is non-empty
+    "`by` must be NULL or a non-empty vector. Found a zero-length vector."
+  } else if (!all(by %in% colnames(data))) {
+    # Assert `by` describes names of columns in `data`
+    paste0(
+      "`by` must be valid column names. Could not find column/s: ",
+      toString(setdiff(by, colnames(data))),
+      " in `data`"
+    )
+  } else if (any(vapply(data[by], is.matrix, logical(1)))) {
+    # Ensure columns specified in `by` are not matrix-columns
+    matrix_by <- by[vapply(data[by], is.matrix, logical(1))]
+    paste0(
+      "`by` cannot include matrix-valued columns: ",
+      paste0("`", matrix_by, "`", collapse = ", ")
+    )
+  } else {
+    # Passed all checks, so return by
+    return(by)
+  }
+
+  # Throw error
+  stop(simpleError(error_message, call = call))
+}
+
+generate_unique_keys <- function(data, by) {
+  # Implementation Approach:
+  # 1. Generate a new key vector that has a unique value for every unique combination of values across
+  # columns in `by`.
+  # We do this by asssigning an integer code to each unique value of the grouping columns and concatenate IDs into a `:` sepearated key.
+  # The conversion into an integer ensures character values don't mess up concatination.
+  codes <- lapply(data[by], function(x) match(x, unique(x)))
+  key <- do.call(paste, c(unname(codes), list(sep = ":")))
+
+  return(key)
+}

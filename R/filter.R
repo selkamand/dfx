@@ -120,9 +120,14 @@ filter <- function(data, fun, by = NULL) {
     )
   }
 
+  # Save caller info for later
+  #(so error message can say `Error in filter(...)`
+  call <- sys.call()
+
   # Create logical filter mask based on `by` if supplied
   bool_vector <- if (is.null(by)) {
-    filter_call <- sys.call() # Save caller info for later (so error message can say `Error in filter(...)`
+    # Apply function to whole dataset, catching and adding error message
+    # when fun fails using a tryCatch
     tryCatch(
       fun(data),
       error = function(err) {
@@ -131,46 +136,13 @@ filter <- function(data, fun, by = NULL) {
             "`fun` threw an error when applied to the data: ",
             conditionMessage(err)
           ),
-          call = filter_call
+          call = call
         ))
       }
     )
   } else {
-    # Assert `by` argument is a character vector
-    if (!is.character(by)) {
-      stop(
-        "`by` must be a character vector. Not an object of class [",
-        toString(class(by)),
-        "]"
-      )
-    }
-
-    # Ensure `by` is unique by removing dups
-    by <- unique(by)
-
-    # Ensure `by` is non-empty
-    if (length(by) == 0L) {
-      stop(
-        "`by` must be NULL or a non-empty vector. Found a zero-length vector."
-      )
-    }
-
-    # Assert `by` describes names of columns in `data`
-    if (!all(by %in% colnames(data))) {
-      stop(
-        "`by` must be valid column names. Could not find column/s: ",
-        toString(setdiff(by, colnames(data))),
-        " in `data`"
-      )
-    }
-
-    matrix_by <- by[vapply(data[by], is.matrix, logical(1))]
-    if (length(matrix_by) > 0L) {
-      stop(
-        "`by` cannot include matrix-valued columns: ",
-        paste0("`", matrix_by, "`", collapse = ", ")
-      )
-    }
+    # Assert `by` key columns are sensible
+    by <- ensure_by_is_sensible(data = data, by = by, call = call)
 
     # Apply function to groups specified by 'by'
     tapply_for_dataframe_filter(data, fun, by)
