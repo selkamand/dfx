@@ -110,14 +110,9 @@ summarise <- function(data, fun, by = NULL) {
   # belonging to that group. Groups are kept in first-appearance order.
   groups <- split(seq_len(nrow(data)), factor(key, levels = unique(key)))
 
-  # Loop through each group to get a vector of row_ids.
+  # Loop through each group to get a vector of row_ids (rows).
   # TODO: is there any benefit to for loop vs lapply here?
-  # Result ls_result gets returned
-  container <- list()
-  i <- 0
-  for (rows in groups) {
-    i <- i + 1
-
+  ls_metrics <- lapply(X = unname(groups), function(rows) {
     # Grab just the rows in current group
     group_data <- data[rows, , drop = FALSE]
 
@@ -145,11 +140,11 @@ summarise <- function(data, fun, by = NULL) {
     )
 
     # Combine rows into data.frame and save to container under 'key'.
-    container[[i]] <- as.data.frame(ls_result_group)
-  }
+    as.data.frame(ls_result_group)
+  })
 
   # After summary for all groups have been computed, combine the results
-  df_collated_summary <- do.call(rbind, container)
+  df_collated_summary <- do.call(rbind, ls_metrics)
 
   # Create a data.frame where cols = grouping cols specified by `by`
   # and rows represent the unique combination of grouping column values
