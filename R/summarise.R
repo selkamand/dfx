@@ -189,11 +189,11 @@ assert_summarise_function_return_is_sensible <- function(
       "`fun` must return a named list. No names found.",
       call = call
     ))
-  } else if (anyNA(xnames)) {
+  } else if (any(!nzchar(xnames)) || anyNA(xnames)) {
     stop(simpleError(
       paste0(
         "`fun` must return a named list. ",
-        sum(is.na(xnames)),
+        sum(!nzchar(xnames) | is.na(xnames)),
         "/",
         length(xnames),
         " elements are unnamed."
