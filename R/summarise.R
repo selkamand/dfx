@@ -2,15 +2,13 @@
 #'
 #' Pass the full data frame to a function that computes summary metrics.
 #'
-#' @param data A data frame to filter.
-#' @param fun A one-argument function that receives `data` and returns a logical
-#'   vector with one value per row, or if `by` is supplied, one value per group.
-#' @param by name of columns to group operations by.
+#' @param data A data frame
+#' @param fun A one-argument function that receives `data` and computes
+#' summary metrics (a named list of computed scalar values).
+#'
+#' @param by Name of columns to group operations by.
 #'
 #' @return A data frame containing rows where `fun` returns `TRUE`.
-#'
-#' @details
-#' Differences from `dplyr::summarise()` include:
 #'
 #' @examples
 #' # summarise
