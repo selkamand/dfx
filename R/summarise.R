@@ -205,7 +205,7 @@ assert_summarise_function_return_is_sensible <- function(
     dodgy_entries <- x[dodgy]
 
     msg <- paste0(
-      "`fun` returned an unexpected number of values for [",
+      "`fun` returned an unexpected number of values when calculating [",
       names(dodgy_entries)[1],
       "]. Expected ",
       expected_rows,
@@ -219,12 +219,12 @@ assert_summarise_function_return_is_sensible <- function(
     any(vapply(
       X = x,
       FUN = function(res) {
-        is.list(res) || is.atomic(res)
+        is.list(res) || !is.atomic(res)
       },
       FUN.VALUE = logical(1)
     ))
   ) {
-    is_atomic_vector <- !vapply(
+    is_atomic_vector <- vapply(
       X = x,
       FUN = function(res) {
         !is.list(res) & is.atomic(res)
@@ -234,12 +234,14 @@ assert_summarise_function_return_is_sensible <- function(
 
     dodgy_entries <- x[!is_atomic_vector]
     msg <- paste0(
-      "`fun` returned an an object of class: [",
+      "`fun` returned an object of class: [",
       toString(class(x)),
-      "] for [",
-      dodgy_entries[1],
-      "]. Expected an atomic vector"
+      "] when calculating [",
+      names(dodgy_entries)[1],
+      "]. Expected an atomic vector."
     )
+
+    stop(simpleError(msg, call = call))
   }
 
   return(invisible(NULL))

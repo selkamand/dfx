@@ -103,7 +103,7 @@ ensure_by_is_sensible <- function(data, by, call) {
   by <- unique(by)
 
   # Assert `by` argument is a character vector
-  error_message <- if (!is.character(by)) {
+  error_message <- if (!is.character(by) || !is.vector(by)) {
     paste0(
       "`by` must be a character vector. Not an object of class [",
       toString(class(by)),
