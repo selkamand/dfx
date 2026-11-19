@@ -214,6 +214,32 @@ assert_summarise_function_return_is_sensible <- function(
       "."
     )
     stop(simpleError(msg, call = call))
+  } else if (
+    # Assert `fun` returns atomic vectors
+    any(vapply(
+      X = x,
+      FUN = function(res) {
+        is.list(res) || is.atomic(res)
+      },
+      FUN.VALUE = logical(1)
+    ))
+  ) {
+    is_atomic_vector <- !vapply(
+      X = x,
+      FUN = function(res) {
+        !is.list(res) & is.atomic(res)
+      },
+      FUN.VALUE = logical(1)
+    )
+
+    dodgy_entries <- x[!is_atomic_vector]
+    msg <- paste0(
+      "`fun` returned an an object of class: [",
+      toString(class(x)),
+      "] for [",
+      dodgy_entries[1],
+      "]. Expected an atomic vector"
+    )
   }
 
   return(invisible(NULL))
