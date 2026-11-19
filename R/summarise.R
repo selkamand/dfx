@@ -113,8 +113,7 @@ summarise <- function(data, fun, by = NULL) {
   groups <- split(seq_len(nrow(data)), factor(key, levels = unique(key)))
 
   # Loop through each group to get a vector of row_ids.
-  # For loop is used over apply to get better control of error messages when
-  # function fails.
+  # TODO: is there any benefit to for loop vs lapply here?
   # Result ls_result gets returned
   container <- list()
   i <- 0
@@ -130,7 +129,8 @@ summarise <- function(data, fun, by = NULL) {
       error = function(err) {
         stop(simpleError(
           message = paste0(
-            "`fun` threw an error when applied to the data: ", #TODO: make this error message mention the group where the function failed
+            "`fun` threw an error when applied to the data: ",
+            #TODO: make this error message mention the group where the function failed
             conditionMessage(err)
           ),
           call = call
@@ -175,29 +175,36 @@ assert_summarise_function_return_is_sensible <- function(
   call = NULL
 ) {
   xnames <- names(x)
-  error_message <- if (is.null(x)) {
-    paste0("`fun` must return a list, not NULL")
+  if (is.null(x)) {
+    stop(simpleError("`fun` must return a list, not NULL", call = call))
   } else if (!is.list(x)) {
-    paste0(
+    msg <- paste0(
       "`fun` must return a list, not an object of class [",
       toString(x),
       "]."
     )
+    stop(simpleError(msg, call = call))
   } else if (is.null(xnames)) {
-    paste0("summarise `fun` must return a named list. No names found.")
+    stop(simpleError(
+      "`fun` must return a named list. No names found.",
+      call = call
+    ))
   } else if (anyNA(xnames)) {
-    paste0(
-      "`fun` must return a named list. ",
-      sum(is.na(xnames)),
-      "/",
-      length(xnames),
-      " elements are unnamed."
-    )
+    stop(simpleError(
+      paste0(
+        "`fun` must return a named list. ",
+        sum(is.na(xnames)),
+        "/",
+        length(xnames),
+        " elements are unnamed."
+      ),
+      call = call
+    ))
   } else if (!all(lengths(x) == expected_rows)) {
     dodgy <- lengths(x) != expected_rows
     dodgy_entries <- x[dodgy]
 
-    paste0(
+    msg <- paste0(
       "`fun` returned an unexpected number of values for [",
       names(dodgy_entries)[1],
       "]. Expected ",
@@ -206,14 +213,11 @@ assert_summarise_function_return_is_sensible <- function(
       lengths(dodgy_entries[1]),
       "."
     )
-  } else {
-    # TODO: add checks that each element of the list is a vector.
-    return(invisible(NULL))
+    stop(simpleError(msg, call = call))
   }
 
-  stop(simpleError(error_message, call = call))
+  return(invisible(NULL))
 }
-
 
 #' Split a vector by some other variable and summarise
 #'
