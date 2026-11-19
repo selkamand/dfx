@@ -111,7 +111,6 @@ summarise <- function(data, fun, by = NULL) {
   groups <- split(seq_len(nrow(data)), factor(key, levels = unique(key)))
 
   # Loop through each group to get a vector of row_ids (rows).
-  # TODO: is there any benefit to for loop vs lapply here?
   ls_metrics <- lapply(X = unname(groups), function(rows) {
     # Grab just the rows in current group
     group_data <- data[rows, , drop = FALSE]
