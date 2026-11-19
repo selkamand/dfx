@@ -110,44 +110,11 @@ summarise <- function(data, fun, by = NULL) {
   # belonging to that group. Groups are kept in first-appearance order.
   groups <- split(seq_len(nrow(data)), factor(key, levels = unique(key)))
 
-  # Loop through each group to get a vector of row_ids (rows).
-  ls_metrics <- lapply(X = unname(groups), function(rows) {
-    # Grab just the rows in current group
-    group_data <- data[rows, , drop = FALSE]
-
-    # Apply function to the group, error-ing if function throws an error
-    ls_result_group <- tryCatch(
-      fun(group_data),
-      error = function(err) {
-        stop(simpleError(
-          message = paste0(
-            "`fun` threw an error when applied to the data: ",
-            #TODO: make this error message mention the group where the function failed
-            conditionMessage(err)
-          ),
-          call = call
-        ))
-      }
-    )
-
-    # assert resulting list is sensible (a named list)
-    # TODO: make this function inform user which group failed
-    assert_summarise_function_return_is_sensible(
-      ls_result_group,
-      expected_rows = 1,
-      call = call
-    )
-
-    # Combine rows into data.frame and save to container under 'key'.
-    as.data.frame(ls_result_group)
-  })
-
-  # After summary for all groups have been computed, combine the results
-  df_collated_summary <- do.call(rbind, ls_metrics)
-
   # Create a data.frame where cols = grouping cols specified by `by`
   # and rows represent the unique combination of grouping column values
-  # that correspond to that key
+  # that correspond to that key. This will be used at the end to add
+  # grouping column values to the resulting code but also
+  # to make errors more understandable
   first_row_per_group <- vapply(
     groups,
     function(rows) rows[[1L]],
@@ -156,6 +123,53 @@ summarise <- function(data, fun, by = NULL) {
   )
   df_group_keys <- data[first_row_per_group, by, drop = FALSE]
   rownames(df_group_keys) <- NULL
+
+  # Loop through each group to get a vector of row_ids (rows).
+  ls_metrics <- lapply(X = seq_along((groups)), function(i) {
+    rows <- unname(groups[[i]])
+
+    # Grab just the rows in current group
+    group_data <- data[rows, , drop = FALSE]
+
+    # Apply function to the group, error-ing if function throws an error
+    ls_result_group <- tryCatch(
+      fun(group_data),
+      error = function(err) {
+        # Get grouping value here
+        msg_groupinfo <- paste0(
+          paste(by, df_group_keys[i, , drop = TRUE], sep = "="),
+          collapse = " & "
+        )
+        message <- paste0(
+          "`fun` threw an error when applied to the data in group ",
+          i,
+          " [",
+          msg_groupinfo,
+          "]"
+        )
+
+        stop(simpleError(
+          message = paste0(message, ": ", conditionMessage(err)),
+          call = call
+        ))
+      }
+    )
+
+    # Assert resulting list is sensible (a named list).
+    # TODO: make this function inform user which group failed
+    assert_summarise_function_return_is_sensible(
+      ls_result_group,
+      expected_rows = 1,
+      call = call
+    )
+
+    # Turn named list of scalar atomics into data.frame
+    # with 1 column per metric calculated
+    as.data.frame(ls_result_group)
+  })
+
+  # After summary for all groups have been computed, combine the results
+  df_collated_summary <- do.call(rbind, ls_metrics)
 
   # Add grouping column information before metric columns
   return(cbind(df_group_keys, df_collated_summary))

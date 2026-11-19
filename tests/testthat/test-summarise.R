@@ -291,6 +291,25 @@ test_that("summarise stops processing groups after a callback error", {
   expect_identical(observed$keys, c("b", "a"))
 })
 
+test_that("summarise reports all three grouping values when fun errors", {
+  data <- data.frame(
+    site = c("west", "east", "east"),
+    year = c(2024L, 2025L, 2025L),
+    active = c(FALSE, TRUE, TRUE),
+    value = c(1L, 2L, NA_integer_)
+  )
+  fun <- function(d) {
+    if (anyNA(d$value)) {
+      stop("cannot compute group total")
+    }
+    list(total = sum(d$value))
+  }
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, fun, by = c("site", "year", "active"))
+  })
+})
+
 test_that("summarise requires fun to return a list", {
   data <- data.frame(value = 1L)
 

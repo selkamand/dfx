@@ -108,7 +108,15 @@
       summarise(data, fun, by = "key")
     Condition
       Error in `summarise()`:
-      ! `fun` threw an error when applied to the data: cannot compute group total
+      ! `fun` threw an error when applied to the data in group 2 [key=a]: cannot compute group total
+
+# summarise reports all three grouping values when fun errors
+
+    Code
+      summarise(data, fun, by = c("site", "year", "active"))
+    Condition
+      Error in `summarise()`:
+      ! `fun` threw an error when applied to the data in group 2 [site=east & year=2025 & active=TRUE]: cannot compute group total
 
 # summarise requires fun to return a list
 
