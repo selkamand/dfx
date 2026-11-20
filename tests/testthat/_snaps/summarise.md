@@ -174,7 +174,16 @@
       summarise(data, function(d) list(total = d$value), by = "key")
     Condition
       Error in `summarise()`:
-      ! `fun` returned an unexpected number of values when calculating [total]. Expected 1 but found 2.
+      ! In group 2 [key=a]: `fun` returned an unexpected number of values when calculating [total]. Expected 1 but found 2.
+
+# summarise reports all three grouping values for an invalid return
+
+    Code
+      summarise(data, function(d) list(total = d$value), by = c("site", "year",
+        "active"))
+    Condition
+      Error in `summarise()`:
+      ! In group 2 [site=east & year=2025 & active=TRUE]: `fun` returned an unexpected number of values when calculating [total]. Expected 1 but found 2.
 
 # summarise rejects inconsistent metric sets across groups
 
@@ -206,7 +215,7 @@
       summarise(data, function(d) list(total = data.frame(value = 1:2)), by = "key")
     Condition
       Error in `summarise()`:
-      ! `fun` returned an object of class: [list] when calculating [total]. Expected an atomic vector.
+      ! In group 1 [key=b]: `fun` returned an object of class: [list] when calculating [total]. Expected an atomic vector.
 
 # summarise rejects a character matrix as by
 

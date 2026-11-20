@@ -358,6 +358,23 @@ test_that("summarise validates results from later groups", {
   })
 })
 
+test_that("summarise reports all three grouping values for an invalid return", {
+  data <- data.frame(
+    site = c("west", "east", "east"),
+    year = c(2024L, 2025L, 2025L),
+    active = c(FALSE, TRUE, TRUE),
+    value = 1:3
+  )
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(
+      data,
+      function(d) list(total = d$value),
+      by = c("site", "year", "active")
+    )
+  })
+})
+
 test_that("summarise rejects inconsistent metric sets across groups", {
   data <- data.frame(key = c("b", "a"), value = c(2L, 7L))
   metrics <- function(d) setNames(list(sum(d$value)), d$key[[1L]])

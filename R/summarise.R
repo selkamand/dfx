@@ -115,6 +115,8 @@ summarise <- function(data, fun, by = NULL) {
   # that correspond to that key. This will be used at the end to add
   # grouping column values to the resulting code but also
   # to make errors more understandable
+
+  # TODO: investigate performance. Run profiling.
   first_row_per_group <- vapply(
     groups,
     function(rows) rows[[1L]],
@@ -131,36 +133,39 @@ summarise <- function(data, fun, by = NULL) {
     # Grab just the rows in current group
     group_data <- data[rows, , drop = FALSE]
 
+    group_label <- function() {
+      values <- paste(by, df_group_keys[i, , drop = TRUE], sep = "=")
+      paste0("group ", i, " [", paste(values, collapse = " & "), "]")
+    }
+
     # Apply function to the group, error-ing if function throws an error
     ls_result_group <- tryCatch(
       fun(group_data),
       error = function(err) {
-        # Get grouping value here
-        msg_groupinfo <- paste0(
-          paste(by, df_group_keys[i, , drop = TRUE], sep = "="),
-          collapse = " & "
-        )
-        message <- paste0(
-          "`fun` threw an error when applied to the data in group ",
-          i,
-          " [",
-          msg_groupinfo,
-          "]"
-        )
-
         stop(simpleError(
-          message = paste0(message, ": ", conditionMessage(err)),
+          message = paste0(
+            "`fun` threw an error when applied to the data in ",
+            group_label(),
+            ": ",
+            conditionMessage(err)
+          ),
           call = call
         ))
       }
     )
 
-    # Assert resulting list is sensible (a named list).
-    # TODO: make this function inform user which group failed
-    assert_summarise_function_return_is_sensible(
-      ls_result_group,
-      expected_rows = 1,
-      call = call
+    tryCatch(
+      assert_summarise_function_return_is_sensible(
+        ls_result_group,
+        expected_rows = 1,
+        call = call
+      ),
+      error = function(err) {
+        stop(simpleError(
+          message = paste0("In ", group_label(), ": ", conditionMessage(err)),
+          call = call
+        ))
+      }
     )
 
     # Turn named list of scalar atomics into data.frame
