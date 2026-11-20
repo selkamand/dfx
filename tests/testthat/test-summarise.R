@@ -495,6 +495,42 @@ test_that("summarise does not do name repair on metric names", {
     )
   )
 })
+
+
+test_that("summarise rejects metric names that match grouping columns", {
+  data <- data.frame(group = c("a", "b"), value = c(1, 2))
+  metrics <- function(d) {
+    list(group = sum(d$value))
+  }
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, metrics, by = "group")
+  })
+})
+
+test_that("summarise rejects duplicate metric names (ungrouped)", {
+  data <- data.frame(group = c("a", "b"), value = c(1, 2))
+
+  metrics <- function(d) {
+    setNames(list(sum(d$value), mean(d$value)), c("total", "total"))
+  }
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, metrics)
+  })
+})
+
+test_that("summarise rejects duplicate metric names (grouped)", {
+  data <- data.frame(group = c("a", "b"), value = c(1, 2))
+
+  metrics <- function(d) {
+    setNames(list(sum(d$value), mean(d$value)), c("total", "total"))
+  }
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, metrics, by = "group")
+  })
+})
 # summarise_vector_by ----------
 
 test_that("summarise_vector_by follows factor order and drops unused levels", {

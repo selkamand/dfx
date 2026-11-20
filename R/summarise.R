@@ -10,6 +10,11 @@
 #'
 #' @return A data frame containing rows where `fun` returns `TRUE`.
 #'
+#' @details
+#' Differences to dplyr summarise include:
+#' - The summary function can NOT try and compute the same metric twice.
+#'
+#'
 #' @examples
 #' # summarise
 #' summarise(mtcars, function(d) {
@@ -94,7 +99,13 @@ summarise <- function(data, fun, by = NULL) {
     )
 
     # Combine rows into data.frame
-    return(as.data.frame(ls_result, check.names = FALSE))
+    df_metrics <- as.data.frame(ls_result, check.names = FALSE)
+
+    # Check all columns are unique
+    # (& `fun` doesn't return two metrics with the same name)
+    assert_no_duplicates_in_metric_names(colnames(df_metrics), call = call)
+
+    return(df_metrics)
   }
 
   # Grouping columns were supplied (`by`) so we now apply
@@ -178,8 +189,47 @@ summarise <- function(data, fun, by = NULL) {
   # After summary for all groups have been computed, combine the results
   df_collated_summary <- do.call(rbind, ls_metrics)
 
+  # Check for duplicate column names
+  assert_no_duplicates_in_metric_names(
+    colnames(df_collated_summary),
+    call = call
+  )
+
+  # Check metric column names do not overlap with grouping column names
+  shared <- intersect(colnames(df_collated_summary), colnames(df_group_keys))
+  if (length(shared) != 0) {
+    stop(
+      "the names of metrics computed by `fun` must not match the name of grouping columns. Found [",
+      length(shared),
+      "] shared names: [",
+      toString(shared),
+      "]"
+    )
+  }
+
   # Add grouping column information before metric columns
   return(cbind(df_group_keys, df_collated_summary))
+}
+
+# Take a set of column names (from metric data.frame) and assert there are no
+# duplicates
+assert_no_duplicates_in_metric_names <- function(cols, call) {
+  # Check for duplicate column names
+  if (anyDuplicated(cols)) {
+    duplicated_cols <- cols[duplicated(cols)]
+    stop(
+      simpleError(
+        message = paste0(
+          "`fun` returned ",
+          sum(duplicated(cols)),
+          " metrics with the same name: [",
+          toString(duplicated_cols),
+          "]"
+        ),
+        call = call
+      )
+    )
+  }
 }
 
 assert_summarise_function_return_is_sensible <- function(

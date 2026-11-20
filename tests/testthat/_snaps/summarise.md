@@ -273,3 +273,27 @@
       Error in `summarise()`:
       ! `by` must be a character vector. Not an object of class [matrix, array]
 
+# summarise rejects metric names that match grouping columns
+
+    Code
+      summarise(data, metrics, by = "group")
+    Condition
+      Error in `summarise()`:
+      ! the names of metrics computed by `fun` must not match the name of grouping columns. Found [1] shared names: [group]
+
+# summarise rejects duplicate metric names (ungrouped)
+
+    Code
+      summarise(data, metrics)
+    Condition
+      Error in `summarise()`:
+      ! `fun` returned 1 metrics with the same name: [total]
+
+# summarise rejects duplicate metric names (grouped)
+
+    Code
+      summarise(data, metrics, by = "group")
+    Condition
+      Error in `summarise()`:
+      ! `fun` returned 1 metrics with the same name: [total]
+

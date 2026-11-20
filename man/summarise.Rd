@@ -20,6 +20,12 @@ A data frame containing rows where \code{fun} returns \code{TRUE}.
 \description{
 Pass the full data frame to a function that computes summary metrics.
 }
+\details{
+Differences to dplyr summarise include:
+\itemize{
+\item The summary function can NOT try and compute the same metric twice.
+}
+}
 \examples{
 # summarise
 summarise(mtcars, function(d) {
