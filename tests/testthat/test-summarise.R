@@ -350,6 +350,60 @@ test_that("summarise rejects metrics that have zero or multiple values", {
   })
 })
 
+test_that("summarise rejects a NULL return from a group", {
+  data <- data.frame(key = "a")
+  fun <- function(d) NULL
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, fun, by = "key")
+  })
+})
+
+test_that("summarise rejects a non-list return from a group", {
+  data <- data.frame(key = "a")
+  fun <- function(d) 42L
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, fun, by = "key")
+  })
+})
+
+test_that("summarise rejects a list without names from a group", {
+  data <- data.frame(key = "a")
+  fun <- function(d) list(1L)
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, fun, by = "key")
+  })
+})
+
+test_that("summarise rejects an empty metric name in a group", {
+  data <- data.frame(key = "a")
+  fun <- function(d) list(a = 1L, 2L)
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, fun, by = "key")
+  })
+})
+
+test_that("summarise rejects a missing metric name in a group", {
+  data <- data.frame(key = "a")
+  fun <- function(d) setNames(list(1L), NA_character_)
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, fun, by = "key")
+  })
+})
+
+test_that("summarise rejects a zero-length metric in a group", {
+  data <- data.frame(key = "a")
+  fun <- function(d) list(total = integer())
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, fun, by = "key")
+  })
+})
+
 test_that("summarise validates results from later groups", {
   data <- data.frame(key = c("b", "a", "a"), value = 1:3)
 

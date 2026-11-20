@@ -168,6 +168,54 @@
       Error in `summarise()`:
       ! `fun` returned an unexpected number of values when calculating [bounds]. Expected 1 but found 2.
 
+# summarise rejects a NULL return from a group
+
+    Code
+      summarise(data, fun, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! In group 1 [key=a]: `fun` must return a list, not NULL
+
+# summarise rejects a non-list return from a group
+
+    Code
+      summarise(data, fun, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! In group 1 [key=a]: `fun` must return a list, not an object of class [42].
+
+# summarise rejects a list without names from a group
+
+    Code
+      summarise(data, fun, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! In group 1 [key=a]: `fun` must return a named list. No names found.
+
+# summarise rejects an empty metric name in a group
+
+    Code
+      summarise(data, fun, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! In group 1 [key=a]: `fun` must return a named list. 1/2 elements are unnamed.
+
+# summarise rejects a missing metric name in a group
+
+    Code
+      summarise(data, fun, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! In group 1 [key=a]: `fun` must return a named list. 1/1 elements are unnamed.
+
+# summarise rejects a zero-length metric in a group
+
+    Code
+      summarise(data, fun, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! In group 1 [key=a]: `fun` returned an unexpected number of values when calculating [total]. Expected 1 but found 0.
+
 # summarise validates results from later groups
 
     Code

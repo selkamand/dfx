@@ -154,6 +154,8 @@ summarise <- function(data, fun, by = NULL) {
       }
     )
 
+    # When `fun` succeeds, is its output sensible:
+    # We expect a named list of scalar atomic vectors
     tryCatch(
       assert_summarise_function_return_is_sensible(
         ls_result_group,
