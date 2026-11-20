@@ -470,6 +470,31 @@ test_that("summarise rejects a character matrix as by", {
   })
 })
 
+test_that("summarise does not do name repair on metric names", {
+  data <- data.frame(group = c("a", "b"))
+  metrics <- function(d) {
+    list(`mean mpg` = 10)
+  }
+
+  # Test without grouping
+  expect_identical(
+    summarise(data, metrics),
+    data.frame(
+      `mean mpg` = c(10, 10),
+      check.names = FALSE
+    )
+  )
+
+  # Test when grouping
+  expect_identical(
+    summarise(data, metrics, by = "group"),
+    data.frame(
+      group = c("a", "b"),
+      `mean mpg` = c(10, 10),
+      check.names = FALSE
+    )
+  )
+})
 # summarise_vector_by ----------
 
 test_that("summarise_vector_by follows factor order and drops unused levels", {
