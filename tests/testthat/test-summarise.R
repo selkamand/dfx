@@ -480,7 +480,7 @@ test_that("summarise does not do name repair on metric names", {
   expect_identical(
     summarise(data, metrics),
     data.frame(
-      `mean mpg` = c(10, 10),
+      `mean mpg` = 10,
       check.names = FALSE
     )
   )

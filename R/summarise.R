@@ -94,7 +94,7 @@ summarise <- function(data, fun, by = NULL) {
     )
 
     # Combine rows into data.frame
-    return(as.data.frame(ls_result))
+    return(as.data.frame(ls_result, check.names = FALSE))
   }
 
   # Grouping columns were supplied (`by`) so we now apply
@@ -172,7 +172,7 @@ summarise <- function(data, fun, by = NULL) {
 
     # Turn named list of scalar atomics into data.frame
     # with 1 column per metric calculated
-    as.data.frame(ls_result_group)
+    as.data.frame(ls_result_group, check.names = FALSE)
   })
 
   # After summary for all groups have been computed, combine the results
