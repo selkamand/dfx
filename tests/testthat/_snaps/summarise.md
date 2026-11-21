@@ -22,6 +22,19 @@
       Error in `summarise()`:
       ! Metric `total` has type integer (value = 1) in group 1 [key=b], but had type double (value = 2) in group 2 [key=a].
 
+# summarise rejects mixed storage within the same metric class
+
+    Code
+      summarise(data, metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! Metric `score` has type score:integer (value = 1) in group 1 [key=a], but had type score:double (value = 2) in group 2 [key=b].
+    Code
+      summarise(data[2:1, , drop = FALSE], metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! Metric `score` has type score:double (value = 2) in group 1 [key=b], but had type score:integer (value = 1) in group 2 [key=a].
+
 # summarise rejects different metric counts across groups
 
     Code

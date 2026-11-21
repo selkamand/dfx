@@ -349,6 +349,48 @@ test_that("summarise rejects integer and double metrics across groups", {
   )
 })
 
+test_that("summarise rejects mixed metric classes backed by doubles", {
+  values <- list(
+    double = 5,
+    Date = as.Date("1970-01-02"),
+    POSIXct = as.POSIXct("1970-01-02", tz = "UTC"),
+    difftime = as.difftime(2, units = "hours")
+  )
+  metrics <- function(d) list(value = values[[d$key]])
+  pairs <- list(
+    c("double", "Date"),
+    c("double", "POSIXct"),
+    c("double", "difftime"),
+    c("Date", "POSIXct")
+  )
+  group_orders <- c(pairs, lapply(pairs, rev), list(
+    c("difftime", "Date"),
+    c("difftime", "POSIXct")
+  ))
+
+  for (keys in group_orders) {
+    expect_error(
+      summarise(data.frame(key = keys), metrics, by = "key"),
+      "Metric `value`",
+      info = paste(keys, collapse = " followed by ")
+    )
+  }
+})
+
+test_that("summarise rejects mixed storage within the same metric class", {
+  data <- data.frame(key = c("a", "b"))
+  scores <- list(
+    a = structure(1L, class = "score"),
+    b = structure(2, class = "score")
+  )
+  metrics <- function(d) list(score = scores[[d$key]])
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, metrics, by = "key")
+    summarise(data[2:1, , drop = FALSE], metrics, by = "key")
+  })
+})
+
 test_that("summarise rejects different metric counts across groups", {
   data <- data.frame(key = c("b", "a"), value = 1:2)
   metrics <- function(d) {

@@ -434,7 +434,19 @@ metric_type <- function(x) {
     return("factor")
   }
 
-  typeof(x)
+  # When a class attribute is supplied we
+  # add that to storage_type (typeof)
+  # to make sure that calling functions can distinguish cases where
+  # custom class attributes differ but they share the same underlying
+  # storage_type (or the reverse)
+  explicit_class <- attr(x, "class", exact = TRUE)
+  storage_type <- typeof(x)
+
+  if (is.null(explicit_class)) {
+    return(storage_type)
+  }
+
+  paste0(paste(explicit_class, collapse = "/"), ":", storage_type, "")
 }
 
 assert_summarise_function_return_is_sensible <- function(
