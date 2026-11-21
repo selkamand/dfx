@@ -119,12 +119,19 @@ ensure_by_is_sensible <- function(data, by, call) {
       toString(setdiff(by, colnames(data))),
       " in `data`"
     )
+  } else if (anyNA(by) || any(!nzchar(by))) {
+    "`by` cannot contain empty or missing column names."
   } else if (any(vapply(data[by], is.matrix, logical(1)))) {
     # Ensure columns specified in `by` are not matrix-columns
     matrix_by <- by[vapply(data[by], is.matrix, logical(1))]
     paste0(
       "`by` cannot include matrix-valued columns: ",
       paste0("`", matrix_by, "`", collapse = ", ")
+    )
+  } else if (any((array_columns <- lengths(lapply(data[by], dim)) >= 3L))) {
+    paste0(
+      "`by` cannot include array-valued columns with three or more dimensions: ",
+      paste0("`", by[array_columns], "`", collapse = ", ")
     )
   } else {
     # Passed all checks, so return by
