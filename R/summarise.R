@@ -189,7 +189,27 @@ summarise <- function(data, fun, by = NULL) {
   })
 
   # Perform strict assertions on the list of single row data.frames
-  # (descirbed by comments in helper function)
+  # (described by comments in helper function).
+  #
+  # NOTE: it may seem weird to do more assertions when we already run
+  # `assert_summarise_function_return_is_sensible` above. However the assertion
+  # below checks properties that are hard to validate from within the body of a
+  # per-group loop.
+  #
+  # For example, say you want to compare whether the number, types, and orders
+  # of metrics computed per group match the very first row. This is not possible
+  # in above loop without running the `fun` on first group outside of the
+  # lapply.
+  #
+  # Personally I think just doing these checks after the computation is
+  # cleaner.
+  #
+  # The real question is whether some (or all) of the checks we do in
+  # assert_summarise_function_return_is_sensible or even the as.data.frame call
+  # should be moved out of the per-group lapply and placed here after the
+  # initial loop. Would let us keep more assertion logic together. Not doing
+  # this now because the code works as is and would have to change below code.
+  # to expect a list of lists instead of a list of single-row data.frames.
   assert_list_of_metric_dataframes_are_sensible(
     ls_metrics,
     group_label, # function to help make error messages more beautiful
