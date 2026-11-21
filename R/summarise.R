@@ -376,19 +376,19 @@ assert_list_of_metric_dataframes_are_sensible <- function(
         paste0(
           "Metric `",
           metric_names[[j]],
-          "` has type ",
-          expected_types[[j]],
-          " (value = ",
-          first_row_value,
-          ") in ",
+          "` has incompatible types across groups.\n  ",
           group_label(1L),
-          ", but had type ",
-          actual_types[[j]],
-          " (value = ",
-          current_row_value,
-          ") in ",
+          ": ",
+          expected_types[[j]],
+          " [value = ",
+          first_row_value,
+          "]\n  ",
           group_label(i),
-          "."
+          ": ",
+          actual_types[[j]],
+          " [value = ",
+          current_row_value,
+          "]"
         ),
         call = call
       ))

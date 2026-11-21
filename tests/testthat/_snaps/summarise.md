@@ -12,7 +12,9 @@
       summarise(data, metrics, by = "key")
     Condition
       Error in `summarise()`:
-      ! Metric `total` has type integer (value = 1) in group 1 [key=a], but had type character (value = b) in group 2 [key=b].
+      ! Metric `total` has incompatible types across groups.
+        group 1 [key=a]: integer [value = 1]
+        group 2 [key=b]: character [value = b]
 
 # summarise rejects integer and double metrics across groups
 
@@ -20,7 +22,9 @@
       summarise(data, metrics, by = "key")
     Condition
       Error in `summarise()`:
-      ! Metric `total` has type integer (value = 1) in group 1 [key=b], but had type double (value = 2) in group 2 [key=a].
+      ! Metric `total` has incompatible types across groups.
+        group 1 [key=b]: integer [value = 1]
+        group 2 [key=a]: double [value = 2]
 
 # summarise rejects mixed storage within the same metric class
 
@@ -28,12 +32,16 @@
       summarise(data, metrics, by = "key")
     Condition
       Error in `summarise()`:
-      ! Metric `score` has type score:integer (value = 1) in group 1 [key=a], but had type score:double (value = 2) in group 2 [key=b].
+      ! Metric `score` has incompatible types across groups.
+        group 1 [key=a]: score:integer [value = 1]
+        group 2 [key=b]: score:double [value = 2]
     Code
       summarise(data[2:1, , drop = FALSE], metrics, by = "key")
     Condition
       Error in `summarise()`:
-      ! Metric `score` has type score:double (value = 2) in group 1 [key=b], but had type score:integer (value = 1) in group 2 [key=a].
+      ! Metric `score` has incompatible types across groups.
+        group 1 [key=b]: score:double [value = 2]
+        group 2 [key=a]: score:integer [value = 1]
 
 # summarise rejects different metric counts across groups
 
@@ -57,7 +65,9 @@
       summarise(data, metrics, by = "key")
     Condition
       Error in `summarise()`:
-      ! Metric `risk` has type factor (value = low) in group 1 [key=b], but had type integer (value = 3) in group 3 [key=c].
+      ! Metric `risk` has incompatible types across groups.
+        group 1 [key=b]: factor [value = low]
+        group 3 [key=c]: integer [value = 3]
 
 # summarise rejects factor and ordered factor metrics across groups
 
@@ -65,7 +75,9 @@
       summarise(data, metrics, by = "key")
     Condition
       Error in `summarise()`:
-      ! Metric `risk` has type factor (value = low) in group 1 [key=a], but had type ordered_factor (value = low) in group 2 [key=b].
+      ! Metric `risk` has incompatible types across groups.
+        group 1 [key=a]: factor [value = low]
+        group 2 [key=b]: ordered_factor [value = low]
 
 ---
 
@@ -73,7 +85,9 @@
       summarise(data[2:1, , drop = FALSE], metrics, by = "key")
     Condition
       Error in `summarise()`:
-      ! Metric `risk` has type ordered_factor (value = low) in group 1 [key=b], but had type factor (value = low) in group 2 [key=a].
+      ! Metric `risk` has incompatible types across groups.
+        group 1 [key=b]: ordered_factor [value = low]
+        group 2 [key=a]: factor [value = low]
 
 # summarise rejects ordered factors with different level orders
 
