@@ -261,6 +261,22 @@ test_that("summarise rejects different metric counts across groups", {
   })
 })
 
+test_that("summarise combines unordered factor metrics by label and unions levels", {
+  data <- data.frame(key = c("a", "b", "c"))
+  risk_by_key <- list(
+    a = factor("low", levels = c("low", "moderate")),
+    b = factor("high", levels = c("high", "low")),
+    c = factor("low", levels = c("high", "low", "critical"))
+  )
+  metrics <- function(d) list(risk = risk_by_key[[d$key]])
+
+  result <- summarise(data, metrics, by = "key")
+
+  expect_identical(class(result$risk), "factor")
+  expect_identical(as.character(result$risk), c("low", "high", "low"))
+  expect_setequal(levels(result$risk), c("low", "moderate", "high", "critical"))
+})
+
 test_that("summarise rejects a non-factor metric after a factor metric", {
   data <- data.frame(key = c("b", "a", "c"), value = 1:3)
   metrics <- function(d) {
