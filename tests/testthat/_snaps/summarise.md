@@ -46,6 +46,22 @@
       Error in `summarise()`:
       ! Metric `risk` has type factor (value = low) in group 1 [key=b], but had type integer (value = 3) in group 3 [key=c].
 
+# summarise rejects factor and ordered factor metrics across groups
+
+    Code
+      summarise(data, metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! Metric `risk` has type factor (value = low) in group 1 [key=a], but had type ordered_factor (value = low) in group 2 [key=b].
+
+---
+
+    Code
+      summarise(data[2:1, , drop = FALSE], metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! Metric `risk` has type ordered_factor (value = low) in group 1 [key=b], but had type factor (value = low) in group 2 [key=a].
+
 # summarise requires data and fun to be supplied
 
     Code
