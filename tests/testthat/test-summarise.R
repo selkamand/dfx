@@ -227,6 +227,68 @@ test_that("summarise errors when metric type changes between groups", {
   })
 })
 
+test_that("summarise rejects integer and double metrics across groups", {
+  data <- data.frame(key = c("b", "a"), value = 1:2)
+  metrics <- function(d) {
+    if (d$key == "b") {
+      list(total = sum(d$value))
+    } else {
+      list(total = mean(d$value))
+    }
+  }
+
+  expect_snapshot(
+    summarise(data, metrics, by = "key"),
+    error = TRUE,
+    cran = TRUE,
+    transform = function(lines) trimws(lines, which = "right")
+  )
+})
+
+test_that("summarise rejects different metric counts across groups", {
+  data <- data.frame(key = c("b", "a"), value = 1:2)
+  metrics <- function(d) {
+    if (d$key == "b") {
+      list(total = sum(d$value))
+    } else {
+      list(total = sum(d$value), rows = nrow(d))
+    }
+  }
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, metrics, by = "key")
+  })
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data[2:1, ], metrics, by = "key")
+  })
+})
+
+test_that("summarise rejects factor and integer metrics across groups", {
+  data <- data.frame(key = c("b", "a"), value = 1:2)
+  metrics <- function(d) {
+    if (d$key == "b") {
+      list(total = factor("low"))
+    } else {
+      list(total = sum(d$value))
+    }
+  }
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, metrics, by = "key")
+  })
+})
+
+test_that("summarise requires data and fun to be supplied", {
+  data <- data.frame(value = 1L)
+  fun <- function(d) list(rows = nrow(d))
+
+  expect_snapshot(error = TRUE, {
+    summarise(fun = fun)
+  })
+  expect_snapshot(error = TRUE, {
+    summarise(data)
+  })
+})
 
 test_that("summarise rejects invalid data before calling fun", {
   fun <- function(d) stop("callback was called")
@@ -278,6 +340,28 @@ test_that("summarise validates grouping columns before calling fun", {
   })
   expect_snapshot(error = TRUE, cran = TRUE, {
     summarise(data, fun, by = c("key", "matrix_key"))
+  })
+})
+
+test_that("summarise rejects array-valued grouping columns", {
+  data <- data.frame(key = c("b", "a"))
+  data$array_key <- array(1:4, dim = c(2L, 1L, 2L))
+  fun <- function(d) stop("callback was called")
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, fun, by = c("key", "array_key"))
+  })
+})
+
+test_that("summarise rejects blank and missing grouping column names", {
+  data <- setNames(data.frame(value = 1:2, other = 3:4), c("", NA_character_))
+  fun <- function(d) stop("callback was called")
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, fun, by = "")
+  })
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, fun, by = NA_character_)
   })
 })
 

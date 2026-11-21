@@ -14,6 +14,46 @@
       Error in `summarise()`:
       ! Metric `total` has type integer (value = 1) in group 1 [key=a], but had type character (value = b) in group 2 [key=b]. 
 
+# summarise rejects integer and double metrics across groups
+
+    Code
+      summarise(data, metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! Metric `total` has type integer (value = 1) in group 1 [key=b], but had type double (value = 2) in group 2 [key=a].
+
+# summarise rejects different metric counts across groups
+
+    Code
+      summarise(data, metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! `fun` must return the same number of metrics for every group. It returned 1 metric for group 1 [key=b] and 2 metrics for group 2 [key=a].
+
+---
+
+    Code
+      summarise(data[2:1, ], metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! `fun` must return the same number of metrics for every group. It returned 2 metrics for group 1 [key=a] and 1 metric for group 2 [key=b].
+
+# summarise requires data and fun to be supplied
+
+    Code
+      summarise(fun = fun)
+    Condition
+      Error in `summarise()`:
+      ! argument "data" is missing, with no default
+
+---
+
+    Code
+      summarise(data)
+    Condition
+      Error in `summarise()`:
+      ! argument "fun" is missing, with no default
+
 # summarise rejects invalid data before calling fun
 
     Code
@@ -109,6 +149,30 @@
     Condition
       Error in `summarise()`:
       ! `by` cannot include matrix-valued columns: `matrix_key`
+
+# summarise rejects array-valued grouping columns
+
+    Code
+      summarise(data, fun, by = c("key", "array_key"))
+    Condition
+      Error in `summarise()`:
+      ! `by` cannot include array-valued columns with three or more dimensions: `array_key`
+
+# summarise rejects blank and missing grouping column names
+
+    Code
+      summarise(data, fun, by = "")
+    Condition
+      Error in `summarise()`:
+      ! `by` cannot contain empty or missing column names.
+
+---
+
+    Code
+      summarise(data, fun, by = NA_character_)
+    Condition
+      Error in `summarise()`:
+      ! `by` cannot contain empty or missing column names.
 
 # summarise preserves the message of an ungrouped callback error
 
