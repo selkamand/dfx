@@ -1,14 +1,17 @@
-#' Summarise rows in a data.frame
+#' Summarise a data.frame into a single row
 #'
-#' Pass the full data frame to a function that computes summary metrics.
+#' Summarise many rows of a data frame down into a single row of summary metrics
+#' by applying a custom function (`fun`) that computes them.
+#' Can create a row of summary metrics per group using `by`.
+#'
 #'
 #' @param data A data frame
 #' @param fun A one-argument function that receives `data` and computes
 #' summary metrics (a named list of computed scalar values).
-#'
 #' @param by Name of columns to group operations by.
 #'
-#' @return A data frame containing rows where `fun` returns `TRUE`.
+#' @return A new data frame with one column per computed summary metric and one
+#' row per unique combination of groups. Also includes the grouping columns.
 #'
 #' @details
 #' Differences to dplyr summarise include:
@@ -19,6 +22,7 @@
 #'   rather than casting. For example:
 #'   - integers are not be cast to doubles
 #'   - ordered factors are not compatible with unordered factors
+#' - dfx `by` does not support grouping by matrices or 3d-arrays
 #'
 #' @examples
 #' # summarise

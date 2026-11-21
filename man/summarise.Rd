@@ -2,7 +2,7 @@
 % Please edit documentation in R/summarise.R
 \name{summarise}
 \alias{summarise}
-\title{Summarise rows in a data.frame}
+\title{Summarise a data.frame into a single row}
 \usage{
 summarise(data, fun, by = NULL)
 }
@@ -15,10 +15,13 @@ summary metrics (a named list of computed scalar values).}
 \item{by}{Name of columns to group operations by.}
 }
 \value{
-A data frame containing rows where \code{fun} returns \code{TRUE}.
+A new data frame with one column per computed summary metric and one
+row per unique combination of groups. Also includes the grouping columns.
 }
 \description{
-Pass the full data frame to a function that computes summary metrics.
+Summarise many rows of a data frame down into a single row of summary metrics
+by applying a custom function (\code{fun}) that computes them.
+Can create a row of summary metrics per group using \code{by}.
 }
 \details{
 Differences to dplyr summarise include:
@@ -32,6 +35,7 @@ rather than casting. For example:
 \item integers are not be cast to doubles
 \item ordered factors are not compatible with unordered factors
 }
+\item dfx \code{by} does not support grouping by matrices or 3d-arrays
 }
 }
 \examples{
