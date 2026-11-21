@@ -216,7 +216,8 @@ summarise <- function(data, fun, by = NULL) {
     call = call
   )
 
-  # After summary for all groups have been computed, combine the results
+  # After 1-row summary data.frames for all groups have been computed,
+  # combine the results with rbind.
   df_collated_summary <- do.call(rbind, ls_metrics)
 
   # Check for duplicate column names
