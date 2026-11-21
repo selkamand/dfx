@@ -188,9 +188,11 @@ summarise <- function(data, fun, by = NULL) {
     as.data.frame(ls_result_group, check.names = FALSE)
   })
 
+  # Perform strict assertions on the list of single row data.frames
+  # (descirbed by comments in helper function)
   assert_list_of_metric_dataframes_are_sensible(
     ls_metrics,
-    group_label,
+    group_label, # function to help make error messages more beautiful
     call = call
   )
 
@@ -260,11 +262,37 @@ assert_list_of_metric_dataframes_are_sensible <- function(
   # Did the summarise `fun` generate the same number of 'rows' (different metrics)
   # for all groups? If not we throw an error.
   # Here we use `lengths()` which for a list of data.frames returns a vector of
-  # column numbers for each data.frame
+  # column numbers for each data.frame.
   n_cols_per_group <- lengths(ls_metrics)
   if (length(unique(n_cols_per_group)) != 1) {
+    # We now know we have to error. The rest of this closure is just
+    # crafting the nicest error message possible.
+
+    # Set our expected number of metrics based on first group
+    expected_count <- n_cols_per_group[[1L]]
+
+    # How which indices have aare mismatched
+    count_mismatches <- which(n_cols_per_group != expected_count)
+    i <- count_mismatches[[1L]]
+    actual_count <- n_cols_per_group[[i]]
+
     stop(simpleError(
-      message = "`fun` must compute the exact same number of metrics per group.",
+      message = paste0(
+        "`fun` must return the same number of metrics for every group. ",
+        "It returned ",
+        expected_count,
+        " ",
+        ngettext(expected_count, "metric", "metrics"),
+        " for ",
+        group_label(1L),
+        " and ",
+        actual_count,
+        " ",
+        ngettext(actual_count, "metric", "metrics"),
+        " for ",
+        group_label(i),
+        "."
+      ),
       call = call
     ))
   }
