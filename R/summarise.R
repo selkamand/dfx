@@ -12,8 +12,11 @@
 #'
 #' @details
 #' Differences to dplyr summarise include:
-#' - The summary function can NOT try and compute the same metric twice.
-#'
+#' - dfx throws an error if you try and compute two metrics with the same name.
+#' - dfx throws an error if a metric returned by `fun` is not a scalar atomic
+#'   vector.
+#' - dfx throws an error if for grouped summaries `fun` returns a different type
+#'   rather than casting (e.g. integers will not be cast to doubles).
 #'
 #' @examples
 #' # summarise
@@ -32,7 +35,6 @@
 #'     },
 #'     by = "Species"
 #'   )
-#'
 #'
 #' @export
 #' @seealso [summarise_vector_by()]
@@ -137,17 +139,17 @@ summarise <- function(data, fun, by = NULL) {
   df_group_keys <- data[first_row_per_group, by, drop = FALSE]
   rownames(df_group_keys) <- NULL
 
+  group_label <- function(i) {
+    values <- paste(by, df_group_keys[i, , drop = TRUE], sep = "=")
+    paste0("group ", i, " [", paste(values, collapse = " & "), "]")
+  }
+
   # Loop through each group to get a vector of row_ids (rows).
   ls_metrics <- lapply(X = seq_along((groups)), function(i) {
     rows <- unname(groups[[i]])
 
     # Grab just the rows in current group
     group_data <- data[rows, , drop = FALSE]
-
-    group_label <- function() {
-      values <- paste(by, df_group_keys[i, , drop = TRUE], sep = "=")
-      paste0("group ", i, " [", paste(values, collapse = " & "), "]")
-    }
 
     # Apply function to the group, error-ing if function throws an error
     ls_result_group <- tryCatch(
@@ -156,7 +158,7 @@ summarise <- function(data, fun, by = NULL) {
         stop(simpleError(
           message = paste0(
             "`fun` threw an error when applied to the data in ",
-            group_label(),
+            group_label(i),
             ": ",
             conditionMessage(err)
           ),
@@ -175,7 +177,7 @@ summarise <- function(data, fun, by = NULL) {
       ),
       error = function(err) {
         stop(simpleError(
-          message = paste0("In ", group_label(), ": ", conditionMessage(err)),
+          message = paste0("In ", group_label(i), ": ", conditionMessage(err)),
           call = call
         ))
       }
@@ -185,6 +187,12 @@ summarise <- function(data, fun, by = NULL) {
     # with 1 column per metric calculated
     as.data.frame(ls_result_group, check.names = FALSE)
   })
+
+  assert_list_of_metric_dataframes_are_sensible(
+    ls_metrics,
+    group_label,
+    call = call
+  )
 
   # After summary for all groups have been computed, combine the results
   df_collated_summary <- do.call(rbind, ls_metrics)
@@ -230,6 +238,104 @@ assert_no_duplicates_in_metric_names <- function(cols, call) {
       )
     )
   }
+}
+
+# Goal of this function is to take a list of 1-row data.frames
+# and return an error if:
+#  1) the data.frames have inconsistent widths (ncol)
+#  2) their metric names or types returned by `fun` changes compared to the
+#  result from the first group.
+assert_list_of_metric_dataframes_are_sensible <- function(
+  ls_metrics,
+  group_label,
+  call
+) {
+  # All of the following checks only make sense when there are multiple groups.
+  # So if we only have metrics calculated for one group we just do an
+  # early return
+  if (length(ls_metrics) < 2L) {
+    return(invisible(NULL))
+  }
+
+  # Did the summarise `fun` generate the same number of 'rows' (different metrics)
+  # for all groups? If not we throw an error.
+  # Here we use `lengths()` which for a list of data.frames returns a vector of
+  # column numbers for each data.frame
+  n_cols_per_group <- lengths(ls_metrics)
+  if (length(unique(n_cols_per_group)) != 1) {
+    stop(simpleError(
+      message = "`fun` must compute the exact same number of metrics per group.",
+      call = call
+    ))
+  }
+
+  # Grab the names and types of the first row of metrics calculated.
+  # These will be our reference to compare subsequent results to.
+  expected_types <- vapply(ls_metrics[[1L]], typeof, character(1))
+  metric_names <- colnames(ls_metrics[[1L]])
+
+  for (i in seq_along(ls_metrics)[-1L]) {
+    actual_types <- vapply(ls_metrics[[i]], typeof, character(1))
+
+    # The names of metrics must be the same as the first row,
+    # Otherwise throw an error.
+    actual_metric_names <- colnames(ls_metrics[[i]])
+    if (!identical(metric_names, actual_metric_names)) {
+      # This != is only legal here because we guarantee our
+      mismatched_names_lgl <- metric_names != actual_metric_names
+      mismatch_description <- paste(
+        metric_names[mismatched_names_lgl],
+        actual_metric_names[mismatched_names_lgl],
+        sep = "!=",
+        collapse = " & "
+      )
+
+      stop(simpleError(
+        paste0(
+          "`fun` returns summary metrics in a different order between ",
+          group_label(1L),
+          " and ",
+          group_label(i),
+          ". ",
+          mismatch_description,
+          "."
+        ),
+        call = call
+      ))
+    }
+
+    # Are there any mismatches in type?
+    mismatch <- which(actual_types != expected_types)
+
+    # If so throw an informative error
+    if (length(mismatch)) {
+      j <- mismatch[[1L]]
+      current_row_value <- ls_metrics[[i]][[j]]
+      first_row_value <- ls_metrics[[1L]][[j]]
+      stop(simpleError(
+        paste0(
+          "Metric `",
+          metric_names[[j]],
+          "` has type ",
+          expected_types[[j]],
+          " (value = ",
+          first_row_value,
+          ") in ",
+          group_label(1L),
+          ", but had type ",
+          actual_types[[j]],
+          " (value = ",
+          current_row_value,
+          ") in ",
+          group_label(i),
+          ". "
+        ),
+        call = call
+      ))
+    }
+  }
+
+  invisible(NULL)
 }
 
 assert_summarise_function_return_is_sensible <- function(

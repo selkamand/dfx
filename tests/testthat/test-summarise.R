@@ -195,21 +195,38 @@ test_that("summarise returns empty grouping columns when there are no groups", {
   )
 })
 
-test_that("summarise aligns metrics by name across groups", {
-  data <- data.frame(key = c("b", "a", "b"), value = c(2L, 7L, 11L))
+test_that("summarise errors when metric order changes across groups", {
+  data <- data.frame(key = c("a", "b"))
+  # We flip the order of metrics `total` and `label` across different groups
+  # to test whether dfx catches this error.
   metrics <- function(d) {
-    if (d$key[[1L]] == "b") {
-      list(total = sum(d$value), rows = nrow(d))
+    if (d$key == "a") {
+      list(total = 1L, label = "a")
     } else {
-      list(rows = nrow(d), total = sum(d$value))
+      list(label = "b", total = 2)
     }
   }
 
-  expect_identical(
-    summarise(data, metrics, by = "key"),
-    data.frame(key = c("b", "a"), total = c(13L, 7L), rows = c(2L, 1L))
-  )
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, metrics, by = "key")
+  })
 })
+
+test_that("summarise errors when metric type changes between groups", {
+  data <- data.frame(key = c("a", "b"))
+  metrics <- function(d) {
+    if (d$key == "a") {
+      list(total = 1L, label = "a")
+    } else {
+      list(total = "b", label = 2)
+    }
+  }
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, metrics, by = "key")
+  })
+})
+
 
 test_that("summarise rejects invalid data before calling fun", {
   fun <- function(d) stop("callback was called")

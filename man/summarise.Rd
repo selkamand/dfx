@@ -23,7 +23,11 @@ Pass the full data frame to a function that computes summary metrics.
 \details{
 Differences to dplyr summarise include:
 \itemize{
-\item The summary function can NOT try and compute the same metric twice.
+\item dfx throws an error if you try and compute two metrics with the same name.
+\item dfx throws an error if a metric returned by \code{fun} is not a scalar atomic
+vector.
+\item dfx throws an error if for grouped summaries \code{fun} returns a different type
+rather than casting (e.g. integers will not be cast to doubles).
 }
 }
 \examples{
@@ -43,7 +47,6 @@ summarise(
     },
     by = "Species"
   )
-
 
 }
 \seealso{

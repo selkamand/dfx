@@ -1,3 +1,19 @@
+# summarise errors when metric order changes across groups
+
+    Code
+      summarise(data, metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! `fun` returns summary metrics in a different order between group 1 [key=a] and group 2 [key=b]. total!=label & label!=total.
+
+# summarise errors when metric type changes between groups
+
+    Code
+      summarise(data, metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! Metric `total` has type integer (value = 1) in group 1 [key=a], but had type character (value = b) in group 2 [key=b]. 
+
 # summarise rejects invalid data before calling fun
 
     Code
@@ -238,8 +254,8 @@
     Code
       summarise(data, metrics, by = "key")
     Condition
-      Error in `match.names()`:
-      ! names do not match previous names
+      Error in `summarise()`:
+      ! `fun` returns summary metrics in a different order between group 1 [key=b] and group 2 [key=a]. b!=a.
 
 # summarise rejects empty metric names
 
