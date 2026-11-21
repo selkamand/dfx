@@ -16,7 +16,9 @@
 #' - dfx throws an error if a metric returned by `fun` is not a scalar atomic
 #'   vector.
 #' - dfx throws an error if for grouped summaries `fun` returns a different type
-#'   rather than casting (e.g. integers will not be cast to doubles).
+#'   rather than casting. For example:
+#'   - integers are not be cast to doubles
+#'   - ordered factors are not compatible with unordered factors
 #'
 #' @examples
 #' # summarise

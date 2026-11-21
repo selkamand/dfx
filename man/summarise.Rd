@@ -27,7 +27,11 @@ Differences to dplyr summarise include:
 \item dfx throws an error if a metric returned by \code{fun} is not a scalar atomic
 vector.
 \item dfx throws an error if for grouped summaries \code{fun} returns a different type
-rather than casting (e.g. integers will not be cast to doubles).
+rather than casting. For example:
+\itemize{
+\item integers are not be cast to doubles
+\item ordered factors are not compatible with unordered factors
+}
 }
 }
 \examples{
