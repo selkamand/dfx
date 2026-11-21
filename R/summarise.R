@@ -376,7 +376,7 @@ assert_list_of_metric_dataframes_are_sensible <- function(
           current_row_value,
           ") in ",
           group_label(i),
-          ". "
+          "."
         ),
         call = call
       ))

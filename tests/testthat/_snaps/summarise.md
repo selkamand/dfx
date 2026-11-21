@@ -12,7 +12,7 @@
       summarise(data, metrics, by = "key")
     Condition
       Error in `summarise()`:
-      ! Metric `total` has type integer (value = 1) in group 1 [key=a], but had type character (value = b) in group 2 [key=b]. 
+      ! Metric `total` has type integer (value = 1) in group 1 [key=a], but had type character (value = b) in group 2 [key=b].
 
 # summarise rejects integer and double metrics across groups
 
