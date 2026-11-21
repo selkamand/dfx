@@ -240,8 +240,7 @@ test_that("summarise rejects integer and double metrics across groups", {
   expect_snapshot(
     summarise(data, metrics, by = "key"),
     error = TRUE,
-    cran = TRUE,
-    transform = function(lines) trimws(lines, which = "right")
+    cran = TRUE
   )
 })
 
@@ -263,19 +262,21 @@ test_that("summarise rejects different metric counts across groups", {
   })
 })
 
-test_that("summarise rejects factor and integer metrics across groups", {
-  data <- data.frame(key = c("b", "a"), value = 1:2)
+test_that("summarise rejects a non-factor metric after a factor metric", {
+  data <- data.frame(key = c("b", "a", "c"), value = 1:3)
   metrics <- function(d) {
-    if (d$key == "b") {
-      list(total = factor("low"))
+    if (d$key == "c") {
+      list(risk = d$value)
     } else {
-      list(total = sum(d$value))
+      list(risk = factor("low", levels = c("low", "high")))
     }
   }
 
-  expect_snapshot(error = TRUE, cran = TRUE, {
-    summarise(data, metrics, by = "key")
-  })
+  expect_snapshot(
+    error = TRUE,
+    cran = TRUE,
+    summarise(data, metrics, by = "key"),
+  )
 })
 
 test_that("summarise requires data and fun to be supplied", {

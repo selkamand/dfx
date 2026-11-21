@@ -319,11 +319,11 @@ assert_list_of_metric_dataframes_are_sensible <- function(
 
   # Grab the names and types of the first row of metrics calculated.
   # These will be our reference to compare subsequent results to.
-  expected_types <- vapply(ls_metrics[[1L]], typeof, character(1))
+  expected_types <- vapply(ls_metrics[[1L]], metric_type, character(1))
   metric_names <- colnames(ls_metrics[[1L]])
 
   for (i in seq_along(ls_metrics)[-1L]) {
-    actual_types <- vapply(ls_metrics[[i]], typeof, character(1))
+    actual_types <- vapply(ls_metrics[[i]], metric_type, character(1))
 
     # The names of metrics must be the same as the first row,
     # Otherwise throw an error.
@@ -384,6 +384,18 @@ assert_list_of_metric_dataframes_are_sensible <- function(
   }
 
   invisible(NULL)
+}
+
+metric_type <- function(x) {
+  if (is.ordered(x)) {
+    return("ordered_factor")
+  }
+
+  if (is.factor(x)) {
+    return("factor")
+  }
+
+  typeof(x)
 }
 
 assert_summarise_function_return_is_sensible <- function(

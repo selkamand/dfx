@@ -38,6 +38,14 @@
       Error in `summarise()`:
       ! `fun` must return the same number of metrics for every group. It returned 2 metrics for group 1 [key=a] and 1 metric for group 2 [key=b].
 
+# summarise rejects a non-factor metric after a factor metric
+
+    Code
+      summarise(data, metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! Metric `risk` has type factor (value = low) in group 1 [key=b], but had type integer (value = 3) in group 3 [key=c].
+
 # summarise requires data and fun to be supplied
 
     Code
