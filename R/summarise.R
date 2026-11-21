@@ -267,7 +267,9 @@ assert_no_duplicates_in_metric_names <- function(cols, call) {
 # and return an error if:
 #  1) the data.frames have inconsistent widths (ncol)
 #  2) their metric names or types returned by `fun` changes compared to the
-#  result from the first group.
+#     result from the first group.
+#  3) if first group metrics include an ordered factor, ensure all subsequent
+#     ordered factors have identical levels (order preserved)
 assert_list_of_metric_dataframes_are_sensible <- function(
   ls_metrics,
   group_label,
@@ -321,8 +323,11 @@ assert_list_of_metric_dataframes_are_sensible <- function(
   # Grab the names and types of the first row of metrics calculated.
   # These will be our reference to compare subsequent results to.
   expected_types <- vapply(ls_metrics[[1L]], metric_type, character(1))
+  ordered_factor_cols <- which(expected_types == "ordered_factor")
   metric_names <- colnames(ls_metrics[[1L]])
 
+  # Starting from the second group, go through the summarised data.frame and
+  # compare types & metric names to original
   for (i in seq_along(ls_metrics)[-1L]) {
     actual_types <- vapply(ls_metrics[[i]], metric_type, character(1))
 
@@ -381,6 +386,33 @@ assert_list_of_metric_dataframes_are_sensible <- function(
         ),
         call = call
       ))
+    }
+
+    # If there are any ordered factor columns loop through and check levels are
+    # identical
+    for (j in ordered_factor_cols) {
+      expected_levels <- levels(ls_metrics[[1L]][[j]])
+      actual_levels <- levels(ls_metrics[[i]][[j]])
+
+      if (!identical(expected_levels, actual_levels)) {
+        stop(simpleError(
+          paste0(
+            "Ordered factor metric `",
+            metric_names[[j]],
+            "` must have identical levels (in the same order) across groups. ",
+            "Found [",
+            toString(expected_levels),
+            "] in ",
+            group_label(1L),
+            " and [",
+            toString(actual_levels),
+            "] in ",
+            group_label(i),
+            "."
+          ),
+          call = call
+        ))
+      }
     }
   }
 

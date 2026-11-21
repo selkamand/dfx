@@ -62,6 +62,14 @@
       Error in `summarise()`:
       ! Metric `risk` has type ordered_factor (value = low) in group 1 [key=b], but had type factor (value = low) in group 2 [key=a].
 
+# summarise rejects ordered factors with different level orders
+
+    Code
+      summarise(data, metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! Ordered factor metric `risk` must have identical levels (in the same order) across groups. Found [low, high] in group 1 [key=a] and [high, low] in group 2 [key=b].
+
 # summarise requires data and fun to be supplied
 
     Code

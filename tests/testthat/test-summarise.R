@@ -298,6 +298,21 @@ test_that("summarise rejects factor and ordered factor metrics across groups", {
   })
 })
 
+test_that("summarise rejects ordered factors with different level orders", {
+  data <- data.frame(key = c("a", "b"))
+  metrics <- function(d) {
+    levels <- c("low", "high")
+    if (d$key == "b") {
+      levels <- rev(levels)
+    }
+    list(risk = ordered("low", levels = levels))
+  }
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, metrics, by = "key")
+  })
+})
+
 test_that("summarise requires data and fun to be supplied", {
   data <- data.frame(value = 1L)
   fun <- function(d) list(rows = nrow(d))
