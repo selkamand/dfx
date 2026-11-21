@@ -27,6 +27,112 @@ test_that("summarise happy path works (grouped)", {
   )
 })
 
+test_that("summarise returns one ungrouped integer metric", {
+  data <- data.frame(value = c(2L, NA_integer_, 5L))
+
+  result <- summarise(data, function(d) {
+    list(total = sum(d$value, na.rm = TRUE))
+  })
+
+  expect_identical(result, data.frame(total = 7L))
+})
+
+test_that("summarise preserves mixed metrics for one observed factor group", {
+  data <- data.frame(
+    key = factor(rep("observed", 3), levels = c("observed", "unused")),
+    value = c(2L, 4L, 6L),
+    date = as.Date("2024-01-01") + 0:2
+  )
+
+  result <- summarise(
+    data,
+    function(d) {
+      list(
+        rows = nrow(d),
+        average = mean(d$value),
+        has_large_value = any(d$value > 5L),
+        label = paste(d$value, collapse = ","),
+        rating = factor("low", levels = c("low", "high")),
+        latest = max(d$date),
+        span = as.difftime(diff(range(d$value)), units = "mins"),
+        byte = as.raw(max(d$value))
+      )
+    },
+    by = "key"
+  )
+
+  expect_identical(
+    result,
+    data.frame(
+      key = factor("observed", levels = c("observed", "unused")),
+      rows = 3L,
+      average = 4,
+      has_large_value = TRUE,
+      label = "2,4,6",
+      rating = factor("low", levels = c("low", "high")),
+      latest = as.Date("2024-01-03"),
+      span = as.difftime(4, units = "mins"),
+      byte = as.raw(6)
+    )
+  )
+})
+
+test_that("summarise returns mixed metrics for observed Date and factor groups", {
+  data <- data.frame(
+    date = as.Date("2024-01-01") + c(1, 0, 1, 1),
+    key = factor(c("b", "b", "b", "a"), levels = c("a", "b", "unused")),
+    value = c(2L, 6L, 4L, 8L)
+  )
+
+  result <- summarise(
+    data,
+    function(d) {
+      list(
+        rows = nrow(d),
+        average = mean(d$value),
+        has_large_value = any(d$value > 5L),
+        label = paste(d$value, collapse = ","),
+        total = complex(real = sum(d$value), imaginary = nrow(d))
+      )
+    },
+    by = c("key", "date")
+  )
+
+  expect_identical(
+    result,
+    data.frame(
+      key = factor(c("b", "b", "a"), levels = c("a", "b", "unused")),
+      date = as.Date("2024-01-01") + c(1, 0, 1),
+      rows = c(2L, 1L, 1L),
+      average = c(3, 6, 8),
+      has_large_value = c(FALSE, TRUE, TRUE),
+      label = c("2,4", "6", "8"),
+      total = c(6 + 2i, 6 + 1i, 8 + 1i)
+    )
+  )
+})
+
+test_that("summarise preserves ordered levels and typed missing metrics", {
+  data <- data.frame(
+    key = c("a", "b"),
+    rating = ordered(c("high", NA_character_), levels = c("low", "high"))
+  )
+
+  result <- summarise(
+    data,
+    function(d) list(peak = max(d$rating)),
+    by = "key"
+  )
+
+  expect_identical(
+    result,
+    data.frame(
+      key = c("a", "b"),
+      peak = ordered(c("high", NA_character_), levels = c("low", "high"))
+    )
+  )
+})
+
 test_that("summarise calls fun once with the whole data frame", {
   data <- data.frame(
     id = 1:3,
