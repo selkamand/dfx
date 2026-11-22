@@ -99,12 +99,26 @@ summarise <- function(data, fun, by = NULL) {
       }
     )
 
-    # assert resulting list is sensible (a named list)
+    # assert resulting list is sensible (a named list with one entry per metric)
     assert_summarise_function_return_is_sensible(
       ls_result,
       expected_rows = 1,
       call = call
     )
+
+    # Why do we expect 1 row even if input data.frame has zero rows? (see above
+    # assertion is set for expected_rows = 1)
+    #
+    # There are 3 main reasons:
+    #
+    # 1) Some summary functions make sense for an empty data.frame. For example
+    #    a count of row numbers (dplyr::n()) or factor levels is useful even
+    #    when the entire data.frame is empty.
+    # 2) It matches how dplyr::summarise works.
+    # 3) Upstream filters will often create a zero-row data.frame that gets fed
+    #    into a summarise function. Forcing the summarise contract to always
+    #    produces the same set of columns makes downstream code easier to reason
+    #    about and simplify attempts to chain filter -> summarise.
 
     # Combine rows into data.frame
     df_metrics <- as.data.frame(ls_result, check.names = FALSE)
@@ -116,10 +130,38 @@ summarise <- function(data, fun, by = NULL) {
     return(df_metrics)
   }
 
-  # Grouping columns were supplied (`by`) so we now apply
-  # Group application of fun `by`
-  # But first we have to ensure `by` key columns are sensible
+  # Deal with the more complex case:
+  # Grouping columns were supplied (`by`) so we now apply `fun` over each group.
+  # But first we must ensure `by` key columns are sensible
   by <- ensure_by_is_sensible(data = data, by = by, call = call)
+
+  # If there are no rows in `data` we still want to return a 0-row data.frame
+  # with both grouping columns and metric columns (with sensible types).
+  #
+  # This behaviour might seem weird since this same input will return a 1-row
+  # data.frame if no grouping variables are supplied. Why change this?
+  # Well if you say 'summarise data frame by group' and there are no groups
+  # but you still want to return a 1-row data.frame - what do you put in the
+  # grouping columns of the output? There can be no observed unique combination
+  # of grouping variables if there are no rows. So there must be no entries.
+  #
+  # Note the only way to create those sensibly typed metrics columns is to run
+  # the function on the empty dataframe.
+  # This introduces a constraint on summary functions. They must work even
+  # when input is length-0.
+  if (nrow(data) == 0L) {
+    df_metrics <- summarise(data, fun)
+    assert_metric_names_do_not_overlap_groups(
+      names(df_metrics),
+      by,
+      call = call
+    )
+
+    return(cbind(
+      data[, by, drop = FALSE],
+      df_metrics[integer(), , drop = FALSE]
+    ))
+  }
 
   # Then we generate a key (unique combination of grouping column levels)
   # assigned to each row
@@ -129,13 +171,13 @@ summarise <- function(data, fun, by = NULL) {
   # belonging to that group. Groups are kept in first-appearance order.
   groups <- split(seq_len(nrow(data)), factor(key, levels = unique(key)))
 
-  # Create a data.frame where cols = grouping cols specified by `by`
-  # and rows represent the unique combination of grouping column values
-  # that correspond to that key. This will be used at the end to add
-  # grouping column values to the resulting code but also
-  # to make errors more understandable
-
-  # TODO: investigate performance. Run profiling.
+  # Create a data.frame with one column for each grouping col specified by `by`
+  # and 1 row per unique combination of grouping column values
+  # (nuique key). This data.frame is saved as df_group_keys.
+  #
+  # The reason we create it is to help us later:
+  # 1. Add  grouping column values to the returned summary table
+  # 2. to make errors mention group information (see group_label() helper below)
   first_row_per_group <- vapply(
     groups,
     function(rows) rows[[1L]],
@@ -233,16 +275,11 @@ summarise <- function(data, fun, by = NULL) {
   )
 
   # Check metric column names do not overlap with grouping column names
-  shared <- intersect(colnames(df_collated_summary), colnames(df_group_keys))
-  if (length(shared) != 0) {
-    stop(
-      "the names of metrics computed by `fun` must not match the name of grouping columns. Found [",
-      length(shared),
-      "] shared names: [",
-      toString(shared),
-      "]"
-    )
-  }
+  assert_metric_names_do_not_overlap_groups(
+    names(df_collated_summary),
+    names(df_group_keys),
+    call = call
+  )
 
   # Add grouping column information before metric columns
   return(cbind(df_group_keys, df_collated_summary))
@@ -266,6 +303,26 @@ assert_no_duplicates_in_metric_names <- function(cols, call) {
         call = call
       )
     )
+  }
+}
+
+assert_metric_names_do_not_overlap_groups <- function(
+  metric_names,
+  group_names,
+  call
+) {
+  shared <- intersect(metric_names, group_names)
+  if (length(shared) != 0L) {
+    stop(simpleError(
+      message = paste0(
+        "the names of metrics computed by `fun` must not match the name of grouping columns. Found [",
+        length(shared),
+        "] shared names: [",
+        toString(shared),
+        "]"
+      ),
+      call = call
+    ))
   }
 }
 

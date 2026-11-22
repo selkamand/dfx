@@ -307,6 +307,14 @@
       Error in `summarise()`:
       ! `fun` returned an unexpected number of values when calculating [bounds]. Expected 1 but found 2.
 
+# summarise rejects a zero-length metric from zero-row input
+
+    Code
+      summarise(data, function(d) list(raw = d$value))
+    Condition
+      Error in `summarise()`:
+      ! `fun` returned an unexpected number of values when calculating [raw]. Expected 1 but found 0.
+
 # summarise rejects a NULL return from a group
 
     Code

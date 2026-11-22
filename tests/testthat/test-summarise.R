@@ -172,6 +172,13 @@ test_that("summarise passes empty rows or columns to an ungrouped callback", {
   )
 })
 
+test_that("summarise counts rows in a data frame with no rows or columns", {
+  expect_identical(
+    summarise(data.frame(), function(d) list(rows = nrow(d))),
+    data.frame(rows = 0L)
+  )
+})
+
 test_that("summarise preserves atomic metric types and attributes", {
   dates <- as.Date("2024-01-01") + 0:2
   data <- data.frame(
@@ -283,7 +290,7 @@ test_that("summarise passes one-column groups as data frames", {
   )
 })
 
-test_that("summarise returns empty grouping columns when there are no groups", {
+test_that("summarise preserves Date, factor, and metric types with no groups", {
   data <- data.frame(
     key = factor(character(), levels = c("a", "b")),
     date = as.Date(character()),
@@ -293,10 +300,39 @@ test_that("summarise returns empty grouping columns when there are no groups", {
   expect_identical(
     summarise(
       data,
-      function(d) stop("callback was called"),
+      function(d) list(total = sum(d$value)),
       by = c("date", "key")
     ),
-    data[c("date", "key")]
+    data.frame(date = data$date, key = data$key, total = integer())
+  )
+})
+
+test_that("summarise preserves metric columns for zero rows grouped by character", {
+  data <- data.frame(g = character(), value = integer())
+
+  result <- summarise(
+    data,
+    function(d) list(n = nrow(d), total = sum(d$value)),
+    by = "g"
+  )
+
+  expect_identical(
+    result,
+    data.frame(g = character(), n = integer(), total = integer())
+  )
+})
+
+test_that("summarise propagates callback errors for zero rows grouped by character", {
+  data <- data.frame(g = character())
+
+  expect_error(
+    summarise(
+      data,
+      function(d) stop("summary callback was evaluated"),
+      by = "g"
+    ),
+    "summary callback was evaluated",
+    fixed = TRUE
   )
 })
 
@@ -647,6 +683,14 @@ test_that("summarise rejects metrics that have zero or multiple values", {
   })
   expect_snapshot(error = TRUE, cran = TRUE, {
     summarise(data, function(d) list(rows = nrow(d), bounds = range(d$value)))
+  })
+})
+
+test_that("summarise rejects a zero-length metric from zero-row input", {
+  data <- data.frame(value = integer())
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, function(d) list(raw = d$value))
   })
 })
 
