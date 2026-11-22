@@ -1,6 +1,6 @@
-#' Summarise a data.frame into a single row
+#' Summarise a data frame into a single row
 #'
-#' Summarise many rows of a data frame down into a single row of summary metrics
+#' Aggregate many rows of a data frame down into a single row of summary metrics
 #' by applying a custom function (`fun`) that computes them.
 #' Can create a row of summary metrics per group using `by`.
 #'
@@ -12,17 +12,37 @@
 #'
 #' @return A new data frame with one column per computed summary metric and one
 #' row per unique combination of groups. Also includes the grouping columns.
+#' Note summarising an empty data frame will produce a single-row data.frame
+#' if `by=NULL` but a zero-row data frame if grouping columns are supplied.
 #'
 #' @details
 #' Differences to dplyr summarise include:
 #' - dfx throws an error if you try and compute two metrics with the same name.
 #' - dfx throws an error if a metric returned by `fun` is not a scalar atomic
 #'   vector.
-#' - dfx throws an error if for grouped summaries `fun` returns a different type
-#'   rather than casting. For example:
+#' - dfx throws an error if for grouped summaries `fun` returns different types
+#'   between groups, rather than casting. For example:
 #'   - integers are not be cast to doubles
 #'   - ordered factors are not compatible with unordered factors
+#'   - Date objects are not compatible with unclassed doubles
 #' - dfx `by` does not support grouping by matrices or 3d-arrays
+#'
+#' ## Zero-row inputs
+#'
+#' Performing an **ungrouped** summarisation always returns a one-row
+#' data.frame, even when the input `data` has zero rows. There are three
+#' primary justifications:
+#'
+#' 1. Some summary functions make sense for an empty data frame for example
+#'    counting the number of rows or the number of levels of factor variables.
+#' 2. It makes it easier to chain a data frame filter into a summarise without
+#'    having to worry about whether at least one row is retained.
+#' 3. Feature parity with dplyr and data.table equivalents.
+#'
+#' In contrast, performing a **grouped** summarisation on a zero-row dataframe
+#' will produce a zero-row data.frame. Why? Well a grouped summary returns one
+#' row per **observed** combination of grouping values. With zero input rows
+#' there are no observed unique combinations, so the result has zero rows.
 #'
 #' @examples
 #' # summarise
@@ -42,6 +62,7 @@
 #'     by = "Species"
 #'   )
 #'
+#' @md
 #' @export
 #' @seealso [summarise_vector_by()]
 summarise <- function(data, fun, by = NULL) {

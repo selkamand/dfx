@@ -2,7 +2,7 @@
 % Please edit documentation in R/summarise.R
 \name{summarise}
 \alias{summarise}
-\title{Summarise a data.frame into a single row}
+\title{Summarise a data frame into a single row}
 \usage{
 summarise(data, fun, by = NULL)
 }
@@ -17,9 +17,11 @@ summary metrics (a named list of computed scalar values).}
 \value{
 A new data frame with one column per computed summary metric and one
 row per unique combination of groups. Also includes the grouping columns.
+Note summarising an empty data frame will produce a single-row data.frame
+if \code{by=NULL} but a zero-row data frame if grouping columns are supplied.
 }
 \description{
-Summarise many rows of a data frame down into a single row of summary metrics
+Aggregate many rows of a data frame down into a single row of summary metrics
 by applying a custom function (\code{fun}) that computes them.
 Can create a row of summary metrics per group using \code{by}.
 }
@@ -29,13 +31,32 @@ Differences to dplyr summarise include:
 \item dfx throws an error if you try and compute two metrics with the same name.
 \item dfx throws an error if a metric returned by \code{fun} is not a scalar atomic
 vector.
-\item dfx throws an error if for grouped summaries \code{fun} returns a different type
-rather than casting. For example:
+\item dfx throws an error if for grouped summaries \code{fun} returns different types
+between groups, rather than casting. For example:
 \itemize{
 \item integers are not be cast to doubles
 \item ordered factors are not compatible with unordered factors
+\item Date objects are not compatible with unclassed doubles
 }
 \item dfx \code{by} does not support grouping by matrices or 3d-arrays
+}
+\subsection{Zero-row inputs}{
+
+Performing an \strong{ungrouped} summarisation always returns a one-row
+data.frame, even when the input \code{data} has zero rows. There are three
+primary justifications:
+\enumerate{
+\item Some summary functions make sense for an empty data frame for example
+counting the number of rows or the number of levels of factor variables.
+\item It makes it easier to chain a data frame filter into a summarise without
+having to worry about whether at least one row is retained.
+\item Feature parity with dplyr and data.table equivalents.
+}
+
+In contrast, performing a \strong{grouped} summarisation on a zero-row dataframe
+will produce a zero-row data.frame. Why? Well a grouped summary returns one
+row per \strong{observed} combination of grouping values. With zero input rows
+there are no observed unique combinations, so the result has zero rows.
 }
 }
 \examples{
