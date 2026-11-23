@@ -290,6 +290,13 @@ summarise <- function(data, fun, by = NULL) {
   # combine the results with rbind.
   df_collated_summary <- do.call(rbind, ls_metrics)
 
+  # rbind() can replace a missing factor value with the explicit NA level.
+  # We can restore these values based on the original metrics list.
+  df_collated_summary <- restore_missing_factor_codes(
+    df_collated_summary,
+    ls_metrics
+  )
+
   # Check for duplicate column names
   assert_no_duplicates_in_metric_names(
     colnames(df_collated_summary),
@@ -305,6 +312,29 @@ summarise <- function(data, fun, by = NULL) {
 
   # Add grouping column information before metric columns
   return(cbind(df_group_keys, df_collated_summary))
+}
+
+restore_missing_factor_codes <- function(summary, group_metrics) {
+  for (j in seq_along(summary)) {
+    metric <- summary[[j]]
+    if (is.factor(metric) && anyNA(levels(metric))) {
+      # rbind() can turn missing codes into the explicit NA level. It binds
+      # one row per group in order, so use the original codes to restore
+      # missing values in this column.
+      missing_code <- vapply(
+        group_metrics,
+        function(row) {
+          is.na(unclass(row[[j]]))
+        },
+        logical(1)
+      )
+
+      is.na(metric)[missing_code] <- TRUE
+      summary[[j]] <- metric
+    }
+  }
+
+  summary
 }
 
 # Take a set of column names (from metric data.frame) and assert there are no

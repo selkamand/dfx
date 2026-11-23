@@ -1018,6 +1018,21 @@ test_that("ungrouped summarise throws error if fun returns named empty list", {
   )
 })
 
+test_that("summarise distinguishes an NA metric level from a missing code", {
+  # Row binding can turn a missing code into the explicit NA level. Compare
+  # the factors directly because the missing code and the level print alike.
+  metric <- factor(c(NA, NA), exclude = NULL)
+  is.na(metric)[2L] <- TRUE
+  data <- data.frame(key = c("a", "b"), metric = metric)
+  metrics <- function(d) list(metric = d$metric[1L])
+
+  expect_identical(summarise(data, metrics, by = "key"), data)
+
+  ordered_data <- data
+  ordered_data$metric <- structure(metric, class = c("ordered", "factor"))
+  expect_identical(summarise(ordered_data, metrics, by = "key"), ordered_data)
+})
+
 test_that("grouped summarise throws error if fun returns elmpty list", {
   data <- data.frame(key = c("b", "a", "b"))
   # Each observed group contributes a row even with zero metrics. Binding a
