@@ -9,8 +9,7 @@ tapply_for_dataframe_filter <- function(data, fun, by) {
   # columns in `by`.
   # We do this by asssigning an integer code to each unique value of the grouping columns and concatenate IDs into a `:` sepearated key.
   # The conversion into an integer ensures character values don't mess up concatination.
-  codes <- lapply(data[by], function(x) match(x, unique(x)))
-  key <- do.call(paste, c(unname(codes), list(sep = ":")))
+  key <- generate_unique_keys(data, by)
 
   # Generate a list with one vector per unique key, describing all row indices belonging to that group.
   # Groups are kept in first-appearance order.
@@ -133,6 +132,17 @@ ensure_by_is_sensible <- function(data, by, call) {
       "`by` cannot include array-valued columns with three or more dimensions: ",
       paste0("`", by[array_columns], "`", collapse = ", ")
     )
+  } else if (
+    any(vapply(
+      data[by],
+      function(column) {
+        # Preserve support for POSIXlt datetime vectors, which use list storage.
+        is.list(column) && !inherits(column, "POSIXlt")
+      },
+      logical(1)
+    ))
+  ) {
+    "`by` cannot include list-valued or data-frame columns."
   } else {
     # Passed all checks, so return by
     return(by)
@@ -148,7 +158,14 @@ generate_unique_keys <- function(data, by) {
   # columns in `by`.
   # We do this by asssigning an integer code to each unique value of the grouping columns and concatenate IDs into a `:` sepearated key.
   # The conversion into an integer ensures character values don't mess up concatination.
-  codes <- lapply(data[by], function(x) match(x, unique(x)))
+  codes <- lapply(data[by], function(x) {
+    if (is.factor(x)) {
+      # match() compares factor labels, which merges an explicit NA level
+      # with a missing code. The underlying integers distinguish them.
+      x <- as.integer(unclass(x))
+    }
+    match(x, unique(x))
+  })
   key <- do.call(paste, c(unname(codes), list(sep = ":")))
 
   return(key)

@@ -434,7 +434,7 @@
       summarise(data, metrics)
     Condition
       Error in `summarise()`:
-      ! `fun` returned 1 metrics with the same name: [total]
+      ! Each summary metric must have a unique name. The name "total" was returned more than once.
 
 # summarise rejects duplicate metric names (grouped)
 
@@ -442,5 +442,77 @@
       summarise(data, metrics, by = "group")
     Condition
       Error in `summarise()`:
-      ! `fun` returned 1 metrics with the same name: [total]
+      ! In group 1 [group=a]: Each summary metric must have a unique name. The name "total" was returned more than once.
+
+# summarise rejects list-valued grouping columns before calling fun
+
+    Code
+      summarise(data, function(d) stop("callback was called"), by = "key")
+    Condition
+      Error in `summarise()`:
+      ! `by` cannot include list-valued or data-frame columns.
+
+# summarise rejects nested data frame grouping columns before calling fun
+
+    Code
+      summarise(data, function(d) stop("callback was called"), by = "key")
+    Condition
+      Error in `summarise()`:
+      ! `by` cannot include list-valued or data-frame columns.
+
+# summarise rejects incompatible attributes on custom metrics
+
+    Code
+      summarise(data.frame(key = c("a", "b")), metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! Metric `distance` has incompatible attributes (unit) between group 1 [key=a] and group 2 [key=b].
+
+---
+
+    Code
+      summarise(data.frame(key = c("b", "a")), metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! Metric `distance` has incompatible attributes (unit) between group 1 [key=b] and group 2 [key=a].
+
+# summarise detects duplicate row.names metrics before conversion
+
+    Code
+      summarise(data, metrics)
+    Condition
+      Error in `summarise()`:
+      ! Each summary metric must have a unique name. The name "row.names" was returned more than once.
+
+---
+
+    Code
+      summarise(data, metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! In group 1 [key=a]: Each summary metric must have a unique name. The name "row.names" was returned more than once.
+
+---
+
+    Code
+      summarise(empty, metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! Each summary metric must have a unique name. The name "row.names" was returned more than once.
+
+# ungrouped summarise throws error if fun returns named empty list
+
+    Code
+      summarise(data, metrics)
+    Condition
+      Error in `summarise()`:
+      ! `fun` must return at least one metric.
+
+# grouped summarise throws error if fun returns elmpty list
+
+    Code
+      summarise(data, metrics)
+    Condition
+      Error in `summarise()`:
+      ! `fun` must return at least one metric.
 

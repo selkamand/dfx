@@ -12,7 +12,7 @@ filter(data, fun, by = NULL)
 \item{fun}{A one-argument function that receives \code{data} and returns a logical
 vector with one value per row, or if \code{by} is supplied, one value per group.}
 
-\item{by}{name of columns to group operations by.}
+\item{by}{Names of columns to group operations by.}
 }
 \value{
 A data frame containing rows where \code{fun} returns \code{TRUE}.
@@ -31,8 +31,8 @@ those rows.
 dplyr::filter allows it.
 E.g. \code{iris[iris$Petal.Width > 0.3,] == dplyr::filter(iris, Petal.Width > 0.4, .by = Species)} whereas
 \verb{dfx::filter(iris, \\(x)\{x$Petal.Width > 0.4\}, by = "Species")} will error.
-\item Matrix-valued columns cannot be used in \code{by}; \code{dplyr::filter()} supports
-grouping by them.
+\item \code{by} does not support grouping by list columns, nested data frames,
+matrices, or multidimensional arrays.
 }
 }
 \examples{

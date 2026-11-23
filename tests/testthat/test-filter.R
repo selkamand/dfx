@@ -337,6 +337,38 @@ test_that("filter ignores duplicate names in by", {
   )
 })
 
+test_that("filter rejects list and nested data frame grouping columns before calling fun", {
+  data <- data.frame(group = c("a", "b", "a"))
+  data$list_key <- list(1L, "1", 1)
+  data$nested_key <- data.frame(
+    region = c("north", "north", "south"),
+    site = 1:3
+  )
+  predicate <- function(d) stop("predicate was called")
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    filter(data, predicate, by = c("group", "list_key"))
+    filter(data, predicate, by = "nested_key")
+  })
+
+  expect_identical(
+    filter(data, function(d) nrow(d) > 1L, by = "group"),
+    data[c(1L, 3L), , drop = FALSE]
+  )
+})
+
+test_that("filter groups by POSIXlt datetime columns", {
+  data <- data.frame(value = c(2L, 3L, 5L))
+  data$key <- as.POSIXlt(
+    as.POSIXct("2024-01-01", tz = "UTC") + c(3600, 0, 3600)
+  )
+
+  expect_identical(
+    filter(data, function(d) nrow(d) > 1L, by = "key"),
+    data[c(1L, 3L), , drop = FALSE]
+  )
+})
+
 test_that("filter treats missing grouping keys as one group", {
   data <- data.frame(
     id = 1:5,

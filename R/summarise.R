@@ -25,7 +25,8 @@
 #'   - integers are not be cast to doubles
 #'   - ordered factors are not compatible with unordered factors
 #'   - Date objects are not compatible with unclassed doubles
-#' - dfx `by` does not support grouping by matrices or 3d-arrays
+#' - `by` does not support grouping by list columns, nested data frames,
+#'     matrices, or multidimensional arrays.
 #'
 #' ## Zero-row inputs
 #'
@@ -311,16 +312,33 @@ summarise <- function(data, fun, by = NULL) {
 assert_no_duplicates_in_metric_names <- function(cols, call) {
   # Check for duplicate column names
   if (anyDuplicated(cols)) {
+    ndups <- sum(duplicated(cols))
     duplicated_cols <- cols[duplicated(cols)]
+
+    msg <- paste(
+      "Each summary metric must have a unique name. "
+    )
+    if (ndups != 1) {
+      msg <- paste(
+        msg,
+        "The names ",
+        quote_and_collapse(duplicated_cols),
+        " were returned more than once.",
+        sep = ""
+      )
+    } else {
+      msg <- paste(
+        msg,
+        "The name ",
+        quote_and_collapse(duplicated_cols),
+        " was returned more than once.",
+        sep = ""
+      )
+    }
+
     stop(
       simpleError(
-        message = paste0(
-          "`fun` returned ",
-          sum(duplicated(cols)),
-          " metrics with the same name: [",
-          toString(duplicated_cols),
-          "]"
-        ),
+        message = msg,
         call = call
       )
     )
@@ -498,6 +516,36 @@ assert_list_of_metric_dataframes_are_sensible <- function(
         ))
       }
     }
+
+    # Check that the attributes of each calculated value match the first
+    for (j in seq_along(metric_names)) {
+      first <- ls_metrics[[1L]][[j]]
+      current <- ls_metrics[[i]][[j]]
+
+      # Most metrics have no attributes or share the same attributes across
+      # groups. Only mismatches need the slower per-attribute compatibility check.
+      if (identical(attributes(first), attributes(current))) {
+        next
+      }
+
+      differing <- differing_metric_attributes(first, current)
+      if (length(differing)) {
+        stop(simpleError(
+          paste0(
+            "Metric `",
+            metric_names[[j]],
+            "` has incompatible attributes (",
+            toString(differing),
+            ") between ",
+            group_label(1L),
+            " and ",
+            group_label(i),
+            "."
+          ),
+          call = call
+        ))
+      }
+    }
   }
 
   invisible(NULL)
@@ -525,6 +573,40 @@ metric_type <- function(x) {
   }
 
   paste0(paste(explicit_class, collapse = "/"), ":", storage_type, "")
+}
+
+differing_metric_attributes <- function(x, y) {
+  ignored <- "names"
+
+  # Unordered factors can combine levels. Ordered factor levels have
+  # already been checked for equality.
+  if (is.factor(x) && is.factor(y)) {
+    ignored <- c(ignored, "levels")
+  }
+
+  # Base row binding converts difftime units and preserves POSIXct instants.
+  # These exceptions apply only to the base classes because subclasses can
+  # give the same attributes different meanings.
+  if (identical(class(x), "difftime") && identical(class(y), "difftime")) {
+    ignored <- c(ignored, "units")
+  }
+  if (
+    identical(class(x), c("POSIXct", "POSIXt")) &&
+      identical(class(y), c("POSIXct", "POSIXt"))
+  ) {
+    ignored <- c(ignored, "tzone")
+  }
+
+  fields <- setdiff(union(names(attributes(x)), names(attributes(y))), ignored)
+  same <- vapply(
+    fields,
+    function(field) {
+      identical(attr(x, field, exact = TRUE), attr(y, field, exact = TRUE))
+    },
+    logical(1)
+  )
+
+  fields[!same]
 }
 
 assert_summarise_function_return_is_sensible <- function(
@@ -558,6 +640,8 @@ assert_summarise_function_return_is_sensible <- function(
       ),
       call = call
     ))
+  } else if (length(x) == 0L) {
+    stop(simpleError("`fun` must return at least one metric.", call = call))
   } else if (!all(lengths(x) == expected_rows)) {
     dodgy <- lengths(x) != expected_rows
     dodgy_entries <- x[dodgy]
@@ -601,6 +685,33 @@ assert_summarise_function_return_is_sensible <- function(
 
     stop(simpleError(msg, call = call))
   }
+
+  # A one-cell matrix can sneak pass the length check.
+  # Reject dimensions here because implicit data-frame conversion can expand
+  # the metric or replace its name.
+  dimensioned <- which(vapply(
+    x,
+    function(metric) {
+      !is.null(dim(metric))
+    },
+    logical(1)
+  ))
+
+  if (length(dimensioned)) {
+    metric_name <- xnames[[dimensioned[[1L]]]]
+    stop(simpleError(
+      paste0(
+        "Metric `",
+        metric_name,
+        "` must be a length-one atomic vector without dimensions."
+      ),
+      call = call
+    ))
+  }
+
+  # Data-frame conversion can consume a metric named row.names as row
+  # metadata. So this checks the callback's original names before that can happen.
+  assert_no_duplicates_in_metric_names(xnames, call = call)
 
   return(invisible(NULL))
 }

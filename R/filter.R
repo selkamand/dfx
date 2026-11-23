@@ -60,7 +60,7 @@ keep_rows <- function(data, keep) {
 #' @param data A data frame to filter.
 #' @param fun A one-argument function that receives `data` and returns a logical
 #'   vector with one value per row, or if `by` is supplied, one value per group.
-#' @param by name of columns to group operations by.
+#' @param by Names of columns to group operations by.
 #'
 #' @return A data frame containing rows where `fun` returns `TRUE`.
 #'
@@ -74,8 +74,8 @@ keep_rows <- function(data, keep) {
 #'    dplyr::filter allows it.
 #'    E.g. `iris[iris$Petal.Width > 0.3,] == dplyr::filter(iris, Petal.Width > 0.4, .by = Species)` whereas
 #'    `dfx::filter(iris, \(x){x$Petal.Width > 0.4}, by = "Species")` will error.
-#'  - Matrix-valued columns cannot be used in `by`; `dplyr::filter()` supports
-#'    grouping by them.
+#'  - `by` does not support grouping by list columns, nested data frames,
+#'     matrices, or multidimensional arrays.
 #'
 #' @examples
 #' filter(mtcars, function(d) d$mpg > 20 & d$cyl == 6)

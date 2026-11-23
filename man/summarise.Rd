@@ -38,7 +38,8 @@ between groups, rather than casting. For example:
 \item ordered factors are not compatible with unordered factors
 \item Date objects are not compatible with unclassed doubles
 }
-\item dfx \code{by} does not support grouping by matrices or 3d-arrays
+\item \code{by} does not support grouping by list columns, nested data frames,
+matrices, or multidimensional arrays.
 }
 \subsection{Zero-row inputs}{
 

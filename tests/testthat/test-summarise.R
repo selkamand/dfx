@@ -399,10 +399,14 @@ test_that("summarise rejects mixed metric classes backed by doubles", {
     c("double", "difftime"),
     c("Date", "POSIXct")
   )
-  group_orders <- c(pairs, lapply(pairs, rev), list(
-    c("difftime", "Date"),
-    c("difftime", "POSIXct")
-  ))
+  group_orders <- c(
+    pairs,
+    lapply(pairs, rev),
+    list(
+      c("difftime", "Date"),
+      c("difftime", "POSIXct")
+    )
+  )
 
   for (keys in group_orders) {
     expect_error(
@@ -791,7 +795,6 @@ test_that("summarise rejects empty metric names", {
 })
 
 test_that("summarise rejects non-atomic metrics in both modes", {
-  # skip("The atomic metric check currently allows list and data frame values")
   data <- data.frame(key = c("b", "a"), value = 1:2)
 
   expect_snapshot(error = TRUE, cran = TRUE, {
@@ -874,4 +877,156 @@ test_that("summarise rejects duplicate metric names (grouped)", {
   expect_snapshot(error = TRUE, cran = TRUE, {
     summarise(data, metrics, by = "group")
   })
+})
+
+test_that("summarise rejects list-valued grouping columns before calling fun", {
+  data <- data.frame(value = 1:3)
+  data$key <- list(1L, "1", 1)
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, function(d) stop("callback was called"), by = "key")
+  })
+})
+
+test_that("summarise separates an NA factor level from missing factor values", {
+  key <- factor(c("observed", NA, NA, NA), exclude = NULL)
+  # The third row has a missing factor code. The second and fourth rows have
+  # a valid code for the explicit NA level. Both forms print as missing.
+  is.na(key)[3L] <- TRUE
+  data <- data.frame(key = key)
+
+  expect_identical(
+    summarise(data, function(d) list(rows = nrow(d)), by = "key"),
+    data.frame(key = key[1:3], rows = c(1L, 2L, 1L))
+  )
+})
+
+test_that("summarise rejects nested data frame grouping columns before calling fun", {
+  data <- data.frame(value = 1:3)
+  data$key <- data.frame(region = c("north", "north", "south"), site = 1:3)
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, function(d) stop("callback was called"), by = "key")
+  })
+})
+
+test_that("summarise groups by POSIXlt datetime columns", {
+  data <- data.frame(value = c(2L, 3L, 5L))
+  data$key <- as.POSIXlt(
+    as.POSIXct("2024-01-01", tz = "UTC") + c(3600, 0, 3600)
+  )
+  expected <- data[1:2, "key", drop = FALSE]
+  expected$total <- c(7L, 3L)
+
+  expect_identical(
+    summarise(data, function(d) list(total = sum(d$value)), by = "key"),
+    expected
+  )
+})
+
+test_that("summarise rejects incompatible attributes on custom metrics", {
+  distances <- list(
+    a = structure(1, class = "distance", unit = "m"),
+    b = structure(2, class = "distance", unit = "km")
+  )
+  metrics <- function(d) list(distance = distances[[d$key]])
+
+  # Binding keeps the first group's unit without converting the other value.
+  # Either group order would silently change the meaning of one distance.
+  expect_snapshot(
+    cran = TRUE,
+    error = TRUE,
+    summarise(data.frame(key = c("a", "b")), metrics, by = "key")
+  )
+  # Dplyr equivalent to above:
+  # dplyr::summarise(
+  #  data.frame(key = c("a", "b")),
+  #  distance = distances[[key[[1L]]]],
+  #  .by = key
+  # )
+  expect_snapshot(
+    cran = TRUE,
+    error = TRUE,
+    summarise(data.frame(key = c("b", "a")), metrics, by = "key"),
+  )
+})
+
+test_that("summarise rejects mixing a factor subclass and a plain factor", {
+  risk <- factor("low", levels = c("low", "high"))
+  risks <- list(
+    a = structure(risk, class = c("risk_rating", "factor")),
+    b = risk
+  )
+  metrics <- function(d) list(risk = risks[[d$key]])
+
+  # The factor levels agree across groups. Row binding can still strip the
+  # risk_rating subclass, changing which methods dispatch on the metric column.
+  expect_error(
+    summarise(data.frame(key = c("a", "b")), metrics, by = "key"),
+    "Metric `risk`"
+  )
+  expect_error(
+    summarise(data.frame(key = c("b", "a")), metrics, by = "key"),
+    "Metric `risk`"
+  )
+})
+
+test_that("summarise rejects a one-cell matrix as a scalar metric", {
+  data <- data.frame(key = c("a", "b"))
+  empty <- data[integer(), , drop = FALSE]
+  # A one-cell matrix passes a length check. Data-frame conversion can then
+  # use its column name in place of the callback's metric name.
+  metrics <- function(d) {
+    list(total = matrix(1L, dimnames = list(NULL, "renamed")))
+  }
+
+  expect_error(summarise(data, metrics), "scalar|vector|dimension")
+  expect_error(summarise(data, metrics, by = "key"), "scalar|vector|dimension")
+  expect_error(summarise(empty, metrics, by = "key"), "scalar|vector|dimension")
+})
+
+test_that("summarise detects duplicate row.names metrics before conversion", {
+  data <- data.frame(key = c("a", "b"))
+  empty <- data[integer(), , drop = FALSE]
+  # Data-frame conversion can use one of these metrics as the row.names
+  # argument. A duplicate-name check after conversion misses the lost value.
+  metrics <- function(d) setNames(list(1L, 2L), rep("row.names", 2L))
+
+  expect_snapshot(error = TRUE, cran = TRUE, summarise(data, metrics))
+  expect_snapshot(
+    error = TRUE,
+    cran = TRUE,
+    summarise(data, metrics, by = "key")
+  )
+  expect_snapshot(
+    error = TRUE,
+    cran = TRUE,
+    summarise(empty, metrics, by = "key")
+  )
+})
+
+test_that("ungrouped summarise throws error if fun returns named empty list", {
+  data <- data.frame(value = 1:2)
+  # An explicitly named empty list describes a zero-column summary. The
+  # callback runs once for the whole input, so the summary still has one row.
+  metrics <- function(d) setNames(list(), character())
+
+  expect_snapshot(
+    error = TRUE,
+    cran = TRUE,
+    summarise(data, metrics)
+  )
+})
+
+test_that("grouped summarise throws error if fun returns elmpty list", {
+  data <- data.frame(key = c("b", "a", "b"))
+  # Each observed group contributes a row even with zero metrics. Binding a
+  # zero-row metric frame to nonempty keys fails because the row counts differ.
+  metrics <- function(d) setNames(list(), character())
+
+  expect_snapshot(
+    error = TRUE,
+    cran = TRUE,
+    summarise(data, metrics)
+  )
 })
