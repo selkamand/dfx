@@ -22,8 +22,10 @@ assert_dataframe <- function(data, call) {
 # - character vector
 # - unique
 # - present as a column name of `data`
+# - not NA
+# - non-zero characters
 assert_columns_sensible <- function(columns, data, call) {
-  # Check its a character vector
+  # Assert its a character type
   if (!is.character(columns)) {
     stop(
       simpleError(
@@ -37,6 +39,7 @@ assert_columns_sensible <- function(columns, data, call) {
     )
   }
 
+  # Assert vector
   if (!is.vector(columns)) {
     stop(simpleError(
       "`columns` must be a character vector with no attributes other than names",
@@ -44,6 +47,7 @@ assert_columns_sensible <- function(columns, data, call) {
     ))
   }
 
+  # Assert no missing
   if (anyNA(columns)) {
     stop(simpleError(
       "`columns` must not contain missing values",
@@ -51,6 +55,7 @@ assert_columns_sensible <- function(columns, data, call) {
     ))
   }
 
+  # Assert values are all non-empty (i.e. error if "")
   if (any(!nzchar(columns))) {
     stop(simpleError(
       "`columns` must not contain empty strings",
