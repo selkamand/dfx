@@ -17,6 +17,8 @@ summary metrics (a named list of computed scalar values).}
 \value{
 A new data frame with one column per computed summary metric and one
 row per unique combination of groups. Also includes the grouping columns.
+Since summarise creates a new data frame, it will only have default attributes
+and row names.
 Note summarising an empty data frame will produce a single-row data.frame
 if \code{by=NULL} but a zero-row data frame if grouping columns are supplied.
 }
@@ -97,6 +99,11 @@ summarise(
     },
     by = "Species"
   )
+
+# `fun` can also return metrics as a one-row data frame
+summarise(mtcars, function(d) {
+  data.frame(mean_mpg = mean(d$mpg), rows = nrow(d))
+})
 
 }
 \seealso{
