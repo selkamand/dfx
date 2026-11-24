@@ -9,8 +9,7 @@ tapply_for_dataframe_filter <- function(data, fun, by) {
   # columns in `by`.
   # We do this by asssigning an integer code to each unique value of the grouping columns and concatenate IDs into a `:` sepearated key.
   # The conversion into an integer ensures character values don't mess up concatination.
-  codes <- lapply(data[by], function(x) match(x, unique(x)))
-  key <- do.call(paste, c(unname(codes), list(sep = ":")))
+  key <- generate_unique_keys(data, by)
 
   # Generate a list with one vector per unique key, describing all row indices belonging to that group.
   # Groups are kept in first-appearance order.
@@ -90,4 +89,84 @@ format_filter_group_label <- function(data, by, row) {
     paste0("`", by, "` = ", group_values),
     collapse = ", "
   )
+}
+
+# Return a sensible `by` vector for grouped operations OR an error if it is not
+# appropriate.
+# data must be the grouping data.frame
+# This helper function was created since both `filter` and `summarise` use the
+# same `by` argument with the same constraints
+ensure_by_is_sensible <- function(data, by, call) {
+  # Ensure `by` is unique by removing dups
+  # If unique `by` vector passess all the assertions, it will be returned
+  by <- unique(by)
+
+  # Assert `by` argument is a character vector
+  error_message <- if (!is.character(by) || !is.vector(by)) {
+    paste0(
+      "`by` must be a character vector. Not an object of class [",
+      toString(class(by)),
+      "]"
+    )
+  } else if (length(by) == 0L) {
+    # Ensure `by` is non-empty
+    "`by` must be NULL or a non-empty vector. Found a zero-length vector."
+  } else if (!all(by %in% colnames(data))) {
+    # Assert `by` describes names of columns in `data`
+    paste0(
+      "`by` must be valid column names. Could not find column/s: ",
+      toString(setdiff(by, colnames(data))),
+      " in `data`"
+    )
+  } else if (anyNA(by) || any(!nzchar(by))) {
+    "`by` cannot contain empty or missing column names."
+  } else if (any(vapply(data[by], is.matrix, logical(1)))) {
+    # Ensure columns specified in `by` are not matrix-columns
+    matrix_by <- by[vapply(data[by], is.matrix, logical(1))]
+    paste0(
+      "`by` cannot include matrix-valued columns: ",
+      paste0("`", matrix_by, "`", collapse = ", ")
+    )
+  } else if (any((array_columns <- lengths(lapply(data[by], dim)) >= 3L))) {
+    paste0(
+      "`by` cannot include array-valued columns with three or more dimensions: ",
+      paste0("`", by[array_columns], "`", collapse = ", ")
+    )
+  } else if (
+    any(vapply(
+      data[by],
+      function(column) {
+        # Preserve support for POSIXlt datetime vectors, which use list storage.
+        is.list(column) && !inherits(column, "POSIXlt")
+      },
+      logical(1)
+    ))
+  ) {
+    "`by` cannot include list-valued or data-frame columns."
+  } else {
+    # Passed all checks, so return by
+    return(by)
+  }
+
+  # Throw error
+  stop(simpleError(error_message, call = call))
+}
+
+generate_unique_keys <- function(data, by) {
+  # Implementation Approach:
+  # 1. Generate a new key vector that has a unique value for every unique combination of values across
+  # columns in `by`.
+  # We do this by asssigning an integer code to each unique value of the grouping columns and concatenate IDs into a `:` sepearated key.
+  # The conversion into an integer ensures character values don't mess up concatination.
+  codes <- lapply(data[by], function(x) {
+    if (is.factor(x)) {
+      # match() compares factor labels, which merges an explicit NA level
+      # with a missing code. The underlying integers distinguish them.
+      x <- as.integer(unclass(x))
+    }
+    match(x, unique(x))
+  })
+  key <- do.call(paste, c(unname(codes), list(sep = ":")))
+
+  return(key)
 }

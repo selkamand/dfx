@@ -208,6 +208,19 @@
       Error in `filter()`:
       ! `by` cannot include matrix-valued columns: `key`
 
+# filter rejects list and nested data frame grouping columns before calling fun
+
+    Code
+      filter(data, predicate, by = c("group", "list_key"))
+    Condition
+      Error in `filter()`:
+      ! `by` cannot include list-valued or data-frame columns.
+    Code
+      filter(data, predicate, by = "nested_key")
+    Condition
+      Error in `filter()`:
+      ! `by` cannot include list-valued or data-frame columns.
+
 # filter rejects empty grouping columns before calling the predicate
 
     Code

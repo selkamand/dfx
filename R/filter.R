@@ -60,7 +60,7 @@ keep_rows <- function(data, keep) {
 #' @param data A data frame to filter.
 #' @param fun A one-argument function that receives `data` and returns a logical
 #'   vector with one value per row, or if `by` is supplied, one value per group.
-#' @param by name of columns to group operations by.
+#' @param by Names of columns to group operations by.
 #'
 #' @return A data frame containing rows where `fun` returns `TRUE`.
 #'
@@ -74,8 +74,8 @@ keep_rows <- function(data, keep) {
 #'    dplyr::filter allows it.
 #'    E.g. `iris[iris$Petal.Width > 0.3,] == dplyr::filter(iris, Petal.Width > 0.4, .by = Species)` whereas
 #'    `dfx::filter(iris, \(x){x$Petal.Width > 0.4}, by = "Species")` will error.
-#'  - Matrix-valued columns cannot be used in `by`; `dplyr::filter()` supports
-#'    grouping by them.
+#'  - `by` does not support grouping by list columns, nested data frames,
+#'     matrices, or multidimensional arrays.
 #'
 #' @examples
 #' filter(mtcars, function(d) d$mpg > 20 & d$cyl == 6)
@@ -120,9 +120,14 @@ filter <- function(data, fun, by = NULL) {
     )
   }
 
+  # Save caller info for later
+  #(so error message can say `Error in filter(...)`
+  call <- sys.call()
+
   # Create logical filter mask based on `by` if supplied
   bool_vector <- if (is.null(by)) {
-    filter_call <- sys.call() # Save caller info for later (so error message can say `Error in filter(...)`
+    # Apply function to whole dataset, catching and adding error message
+    # when fun fails using a tryCatch
     tryCatch(
       fun(data),
       error = function(err) {
@@ -131,46 +136,13 @@ filter <- function(data, fun, by = NULL) {
             "`fun` threw an error when applied to the data: ",
             conditionMessage(err)
           ),
-          call = filter_call
+          call = call
         ))
       }
     )
   } else {
-    # Assert `by` argument is a character vector
-    if (!is.character(by)) {
-      stop(
-        "`by` must be a character vector. Not an object of class [",
-        toString(class(by)),
-        "]"
-      )
-    }
-
-    # Ensure `by` is unique by removing dups
-    by <- unique(by)
-
-    # Ensure `by` is non-empty
-    if (length(by) == 0L) {
-      stop(
-        "`by` must be NULL or a non-empty vector. Found a zero-length vector."
-      )
-    }
-
-    # Assert `by` describes names of columns in `data`
-    if (!all(by %in% colnames(data))) {
-      stop(
-        "`by` must be valid column names. Could not find column/s: ",
-        toString(setdiff(by, colnames(data))),
-        " in `data`"
-      )
-    }
-
-    matrix_by <- by[vapply(data[by], is.matrix, logical(1))]
-    if (length(matrix_by) > 0L) {
-      stop(
-        "`by` cannot include matrix-valued columns: ",
-        paste0("`", matrix_by, "`", collapse = ", ")
-      )
-    }
+    # Assert `by` key columns are sensible
+    by <- ensure_by_is_sensible(data = data, by = by, call = call)
 
     # Apply function to groups specified by 'by'
     tapply_for_dataframe_filter(data, fun, by)
