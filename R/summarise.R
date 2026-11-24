@@ -157,7 +157,7 @@ summarise <- function(data, fun, by = NULL) {
     #    about and simplify attempts to chain filter -> summarise.
 
     # Combine rows into data.frame
-    df_metrics <- as.data.frame(ls_result, check.names = FALSE)
+    df_metrics <- metrics_to_data_frame(ls_result)
 
     # Check all columns are unique
     # (& `fun` doesn't return two metrics with the same name)
@@ -269,7 +269,7 @@ summarise <- function(data, fun, by = NULL) {
 
     # Turn named list of scalar atomics into data.frame
     # with 1 column per metric calculated
-    as.data.frame(ls_result_group, check.names = FALSE)
+    metrics_to_data_frame(ls_result_group)
   })
 
   # Perform strict assertions on the list of single row data.frames
@@ -745,4 +745,20 @@ assert_summarise_function_return_is_sensible <- function(
   }
 
   return(invisible(NULL))
+}
+
+# Turn a named list of scalar values into a data.frame
+# in a way that doesn't let internal R weirdness silently change column names
+# See test "summarise preserves names that overlap conversion internals" for
+# details
+metrics_to_data_frame <- function(metrics) {
+  metric_names <- names(metrics)
+
+  # Drop the list's attributes before conversion so its names cannot match
+  # data.frame() arguments. Keep the attributes on each metric value.
+  attributes(metrics) <- NULL
+  result <- as.data.frame(metrics, check.names = FALSE)
+  names(result) <- metric_names
+
+  result
 }

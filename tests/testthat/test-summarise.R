@@ -1050,8 +1050,11 @@ test_that("summarise rejects custom attributes on supported metric types", {
 test_that("summarise preserves names that overlap conversion internals", {
   data <- data.frame(key = c("a", "b"))
   empty <- data[integer(), , drop = FALSE]
-  # as.data.frame() temporarily prefixes the check.names metric. Removing
-  # that prefix can also rename the user-supplied ..adfl.other metric.
+  # R temporarily renames that metric to ..adfl.check.names.
+  # After conversion, R strips the ..adfl. prefix from every column that starts with it.
+  # That restores check.names and accidentally renames ..adfl.other to other.
+  # This test confirms our summarise function doesn't let the internal R
+  # data.frame conversion silently change the column names.
   metric_names <- c("check.names", "..adfl.other")
   metrics <- function(d) setNames(list(1L, 2L), metric_names)
 
