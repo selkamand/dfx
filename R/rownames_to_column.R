@@ -21,13 +21,7 @@
 #'
 #' @export
 rownames_to_column <- function(data, column) {
-  if (!is.data.frame(data)) {
-    stop(
-      "`data` must be a data.frame, not an object of class [",
-      toString(class(data)),
-      "]"
-    )
-  }
+  assert_dataframe(data, call = sys.call())
 
   # data.table's `[` treats a bare numeric vector as row indices, so the
   # column reordering at the end would subset rows and leave the new column

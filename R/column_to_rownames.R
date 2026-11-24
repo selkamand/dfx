@@ -19,14 +19,7 @@
 #'
 #' @export
 column_to_rownames <- function(data, column) {
-  # Assert data is a dataframe
-  if (!is.data.frame(data)) {
-    stop(
-      "`data` must be a data.frame, not an object of class [",
-      toString(class(data)),
-      "]"
-    )
-  }
+  assert_dataframe(data, call = sys.call())
 
   # Assert column is a string
   if (!is.character(column)) {
