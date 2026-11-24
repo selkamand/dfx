@@ -393,35 +393,31 @@ test_that("summarise rejects mixed metric classes backed by doubles", {
     difftime = as.difftime(2, units = "hours")
   )
   metrics <- function(d) list(value = values[[d$key]])
-  pairs <- list(
-    c("double", "Date"),
-    c("double", "POSIXct"),
-    c("double", "difftime"),
-    c("Date", "POSIXct")
-  )
-  group_orders <- c(
-    pairs,
-    lapply(pairs, rev),
-    list(
-      c("difftime", "Date"),
-      c("difftime", "POSIXct")
-    )
-  )
-
-  for (keys in group_orders) {
+  expect_incompatible <- function(first, second) {
     expect_error(
-      summarise(data.frame(key = keys), metrics, by = "key"),
+      summarise(data.frame(key = c(first, second)), metrics, by = "key"),
       "Metric `value`",
-      info = paste(keys, collapse = " followed by ")
+      info = paste(first, "followed by", second)
     )
   }
+
+  expect_incompatible("double", "Date")
+  expect_incompatible("Date", "double")
+  expect_incompatible("double", "POSIXct")
+  expect_incompatible("POSIXct", "double")
+  expect_incompatible("double", "difftime")
+  expect_incompatible("difftime", "double")
+  expect_incompatible("Date", "POSIXct")
+  expect_incompatible("POSIXct", "Date")
+  expect_incompatible("difftime", "Date")
+  expect_incompatible("difftime", "POSIXct")
 })
 
 test_that("summarise rejects mixed storage within the same metric class", {
   data <- data.frame(key = c("a", "b"))
   scores <- list(
-    a = structure(1L, class = "score"),
-    b = structure(2, class = "score")
+    a = structure(1L, class = "Date"),
+    b = structure(2, class = "Date")
   )
   metrics <- function(d) list(score = scores[[d$key]])
 
@@ -924,26 +920,18 @@ test_that("summarise groups by POSIXlt datetime columns", {
   )
 })
 
-test_that("summarise rejects incompatible attributes on custom metrics", {
+test_that("summarise rejects custom metric classes", {
   distances <- list(
     a = structure(1, class = "distance", unit = "m"),
     b = structure(2, class = "distance", unit = "km")
   )
   metrics <- function(d) list(distance = distances[[d$key]])
 
-  # Binding keeps the first group's unit without converting the other value.
-  # Either group order would silently change the meaning of one distance.
   expect_snapshot(
     cran = TRUE,
     error = TRUE,
     summarise(data.frame(key = c("a", "b")), metrics, by = "key")
   )
-  # Dplyr equivalent to above:
-  # dplyr::summarise(
-  #  data.frame(key = c("a", "b")),
-  #  distance = distances[[key[[1L]]]],
-  #  .by = key
-  # )
   expect_snapshot(
     cran = TRUE,
     error = TRUE,
@@ -1032,6 +1020,52 @@ test_that("summarise distinguishes an NA metric level from a missing code", {
   ordered_data$metric <- structure(metric, class = c("ordered", "factor"))
   expect_identical(summarise(ordered_data, metrics, by = "key"), ordered_data)
 })
+
+test_that("summarise rejects factor subclasses even when groups agree", {
+  metric <- structure(factor(c("a", "b")), class = c("rating", "factor"))
+  data <- data.frame(key = c("a", "b"))
+  metrics <- function(d) list(metric = metric[match(d$key, data$key)])
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data[1L, , drop = FALSE], metrics)
+    summarise(data, metrics, by = "key")
+  })
+})
+
+test_that("summarise rejects custom attributes on supported metric types", {
+  data <- data.frame(key = c("a", "b"))
+  empty <- data[integer(), , drop = FALSE]
+  tagged_integer <- function(d) list(value = structure(1L, unit = "m"))
+  tagged_date <- function(d) {
+    list(day = structure(as.Date("2024-01-01"), source = "manual"))
+  }
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, tagged_integer)
+    summarise(data, tagged_date, by = "key")
+    summarise(empty, tagged_integer, by = "key")
+  })
+})
+
+test_that("summarise preserves names that overlap conversion internals", {
+  data <- data.frame(key = c("a", "b"))
+  empty <- data[integer(), , drop = FALSE]
+  # as.data.frame() temporarily prefixes the check.names metric. Removing
+  # that prefix can also rename the user-supplied ..adfl.other metric.
+  metric_names <- c("check.names", "..adfl.other")
+  metrics <- function(d) setNames(list(1L, 2L), metric_names)
+
+  expect_identical(names(summarise(data, metrics)), metric_names)
+  expect_identical(
+    names(summarise(data, metrics, by = "key")),
+    c("key", metric_names)
+  )
+  expect_identical(
+    names(summarise(empty, metrics, by = "key")),
+    c("key", metric_names)
+  )
+})
+
 
 test_that("grouped summarise throws error if fun returns elmpty list", {
   data <- data.frame(key = c("b", "a", "b"))

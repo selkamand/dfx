@@ -33,15 +33,15 @@
     Condition
       Error in `summarise()`:
       ! Metric `score` has incompatible types across groups.
-        group 1 [key=a]: score:integer [value = 1]
-        group 2 [key=b]: score:double [value = 2]
+        group 1 [key=a]: Date:integer [value = 1970-01-02]
+        group 2 [key=b]: Date:double [value = 1970-01-03]
     Code
       summarise(data[2:1, , drop = FALSE], metrics, by = "key")
     Condition
       Error in `summarise()`:
       ! Metric `score` has incompatible types across groups.
-        group 1 [key=b]: score:double [value = 2]
-        group 2 [key=a]: score:integer [value = 1]
+        group 1 [key=b]: Date:double [value = 1970-01-03]
+        group 2 [key=a]: Date:integer [value = 1970-01-02]
 
 # summarise rejects different metric counts across groups
 
@@ -460,13 +460,13 @@
       Error in `summarise()`:
       ! `by` cannot include list-valued or data-frame columns.
 
-# summarise rejects incompatible attributes on custom metrics
+# summarise rejects custom metric classes
 
     Code
       summarise(data.frame(key = c("a", "b")), metrics, by = "key")
     Condition
       Error in `summarise()`:
-      ! Metric `distance` has incompatible attributes (unit) between group 1 [key=a] and group 2 [key=b].
+      ! In group 1 [key=a]: Metric `distance` has unsupported class [distance].
 
 ---
 
@@ -474,7 +474,7 @@
       summarise(data.frame(key = c("b", "a")), metrics, by = "key")
     Condition
       Error in `summarise()`:
-      ! Metric `distance` has incompatible attributes (unit) between group 1 [key=b] and group 2 [key=a].
+      ! In group 1 [key=b]: Metric `distance` has unsupported class [distance].
 
 # summarise detects duplicate row.names metrics before conversion
 
@@ -507,6 +507,37 @@
     Condition
       Error in `summarise()`:
       ! `fun` must return at least one metric.
+
+# summarise rejects factor subclasses even when groups agree
+
+    Code
+      summarise(data[1L, , drop = FALSE], metrics)
+    Condition
+      Error in `summarise()`:
+      ! Metric `metric` has unsupported class [rating, factor].
+    Code
+      summarise(data, metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! In group 1 [key=a]: Metric `metric` has unsupported class [rating, factor].
+
+# summarise rejects custom attributes on supported metric types
+
+    Code
+      summarise(data, tagged_integer)
+    Condition
+      Error in `summarise()`:
+      ! Metric `value` has unsupported attributes [unit].
+    Code
+      summarise(data, tagged_date, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! In group 1 [key=a]: Metric `day` has unsupported attributes [source].
+    Code
+      summarise(empty, tagged_integer, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! Metric `value` has unsupported attributes [unit].
 
 # grouped summarise throws error if fun returns elmpty list
 

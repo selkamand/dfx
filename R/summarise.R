@@ -28,6 +28,20 @@
 #' - `by` does not support grouping by list columns, nested data frames,
 #'     matrices, or multidimensional arrays.
 #'
+#' ##  Summarisation functions
+#' `fun` must return a nonempty named list of length-one atomic vectors.
+#' Each name should describe the metric being calculated.
+#' Metrics must be either unclassed or use one of the base R classes:
+#' - `factor`
+#' - `ordered`
+#' - `Date`
+#' - `POSIXct`
+#' - `difftime`
+#'
+#' We throw an error when custom classes and attributes are present.
+#' Computed metrics may have names and the standard attributes of their class
+#'   (factor levels, a `POSIXct` time zone, or `difftime` units etc.).
+#'
 #' ## Zero-row inputs
 #'
 #' Performing an **ungrouped** summarisation always returns a one-row
@@ -546,36 +560,6 @@ assert_list_of_metric_dataframes_are_sensible <- function(
         ))
       }
     }
-
-    # Check that the attributes of each calculated value match the first
-    for (j in seq_along(metric_names)) {
-      first <- ls_metrics[[1L]][[j]]
-      current <- ls_metrics[[i]][[j]]
-
-      # Most metrics have no attributes or share the same attributes across
-      # groups. Only mismatches need the slower per-attribute compatibility check.
-      if (identical(attributes(first), attributes(current))) {
-        next
-      }
-
-      differing <- differing_metric_attributes(first, current)
-      if (length(differing)) {
-        stop(simpleError(
-          paste0(
-            "Metric `",
-            metric_names[[j]],
-            "` has incompatible attributes (",
-            toString(differing),
-            ") between ",
-            group_label(1L),
-            " and ",
-            group_label(i),
-            "."
-          ),
-          call = call
-        ))
-      }
-    }
   }
 
   invisible(NULL)
@@ -605,38 +589,36 @@ metric_type <- function(x) {
   paste0(paste(explicit_class, collapse = "/"), ":", storage_type, "")
 }
 
-differing_metric_attributes <- function(x, y) {
-  ignored <- "names"
-
-  # Unordered factors can combine levels. Ordered factor levels have
-  # already been checked for equality.
-  if (is.factor(x) && is.factor(y)) {
-    ignored <- c(ignored, "levels")
+unsupported_metric_metadata <- function(metric) {
+  metadata <- attributes(metric)
+  if (is.null(metadata)) {
+    return("")
   }
 
-  # Base row binding converts difftime units and preserves POSIXct instants.
-  # These exceptions apply only to the base classes because subclasses can
-  # give the same attributes different meanings.
-  if (identical(class(x), "difftime") && identical(class(y), "difftime")) {
-    ignored <- c(ignored, "units")
-  }
-  if (
-    identical(class(x), c("POSIXct", "POSIXt")) &&
-      identical(class(y), c("POSIXct", "POSIXt"))
+  metric_class <- metadata[["class"]]
+  allowed <- if (is.null(metric_class)) {
+    character()
+  } else if (
+    identical(metric_class, "factor") ||
+      identical(metric_class, c("ordered", "factor"))
   ) {
-    ignored <- c(ignored, "tzone")
+    c("class", "levels")
+  } else if (identical(metric_class, "Date")) {
+    "class"
+  } else if (identical(metric_class, c("POSIXct", "POSIXt"))) {
+    c("class", "tzone")
+  } else if (identical(metric_class, "difftime")) {
+    c("class", "units")
+  } else {
+    return(paste0("has unsupported class [", toString(metric_class), "]."))
   }
 
-  fields <- setdiff(union(names(attributes(x)), names(attributes(y))), ignored)
-  same <- vapply(
-    fields,
-    function(field) {
-      identical(attr(x, field, exact = TRUE), attr(y, field, exact = TRUE))
-    },
-    logical(1)
-  )
+  extra <- setdiff(names(metadata), c("names", allowed))
+  if (length(extra)) {
+    return(paste0("has unsupported attributes [", toString(extra), "]."))
+  }
 
-  fields[!same]
+  ""
 }
 
 assert_summarise_function_return_is_sensible <- function(
@@ -742,6 +724,25 @@ assert_summarise_function_return_is_sensible <- function(
   # Data-frame conversion can consume a metric named row.names as row
   # metadata. So this checks the callback's original names before that can happen.
   assert_no_duplicates_in_metric_names(xnames, call = call)
+
+  # Check that the object returned has metadata (attributes) that are
+  # supported by dfx::summarise
+  # Return values must be unclassed (no class attribute, e.g. plain vectors)
+  # or have a supported class attribute:
+  # - `factor`
+  # - `ordered`
+  # - `Date`
+  # - `POSIXct`
+  # - `difftime`
+  unsupported <- vapply(x, unsupported_metric_metadata, character(1))
+  invalid <- which(nzchar(unsupported))
+  if (length(invalid)) {
+    j <- invalid[[1L]]
+    stop(simpleError(
+      paste0("Metric `", xnames[[j]], "` ", unsupported[[j]]),
+      call = call
+    ))
+  }
 
   return(invisible(NULL))
 }

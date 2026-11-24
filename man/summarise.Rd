@@ -41,6 +41,24 @@ between groups, rather than casting. For example:
 \item \code{by} does not support grouping by list columns, nested data frames,
 matrices, or multidimensional arrays.
 }
+\subsection{Summarisation functions}{
+
+\code{fun} must return a nonempty named list of length-one atomic vectors.
+Each name should describe the metric being calculated.
+Metrics must be either unclassed or use one of the base R classes:
+\itemize{
+\item \code{factor}
+\item \code{ordered}
+\item \code{Date}
+\item \code{POSIXct}
+\item \code{difftime}
+}
+
+We throw an error when custom classes and attributes are present.
+Computed metrics may have names and the standard attributes of their class
+(factor levels, a \code{POSIXct} time zone, or \code{difftime} units etc.).
+}
+
 \subsection{Zero-row inputs}{
 
 Performing an \strong{ungrouped} summarisation always returns a one-row
