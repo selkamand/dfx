@@ -127,42 +127,103 @@ test_that("select maintains the original data types", {
 
 test_that("select with non-existent columns throws an error", {
   df <- data.frame(a = 1:5, b = 6:10)
-  expect_error(
-    select(df, c("a", "d")),
-    regexp = "select: Could not find column/s: \\[d\\]"
-  )
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    select(df, c("a", "d"))
+  })
+})
+
+test_that("select reports multiple non-existent columns", {
+  df <- data.frame(a = 1:5, b = 6:10)
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    select(df, c("d", "e"))
+  })
+})
+
+test_that("select quotes non-existent column names unambiguously", {
+  df <- data.frame(a = 1:5, b = 6:10)
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    select(df, c("NA", "a, b", "a\nb"))
+  })
 })
 
 test_that("select with duplicate columns throws an error", {
   df <- data.frame(a = 1:5, b = 6:10)
-  expect_error(
-    select(df, c("a", "a")),
-    regexp = "select: 'columns' argument must not contain duplicates"
-  )
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    select(df, c("a", "a"))
+  })
 })
 
 test_that("select with non-character columns argument throws an error", {
   df <- data.frame(a = 1:5, b = 6:10)
-  expect_error(
-    select(df, c(1, 2)),
-    regexp = "select: 'columns' argument must be a character vector"
-  )
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    select(df, c(1, 2))
+  })
 })
 
-test_that("select with columns not a vector throws an error", {
+test_that("select with list columns argument throws an error", {
   df <- data.frame(a = 1:5, b = 6:10)
-  expect_error(
-    select(df, list("a", "b")),
-    regexp = "select: 'columns' argument must be a character vector"
-  )
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    select(df, list("a", "b"))
+  })
+})
+
+test_that("select with matrix columns argument throws an error", {
+  df <- data.frame(a = 1:5, b = 6:10)
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    select(df, matrix(c("a", "b"), nrow = 1L))
+  })
+})
+
+test_that("select explains why attributed character columns are invalid", {
+  df <- data.frame(a = 1:5, b = 6:10)
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    select(df, structure("a", note = "extra attribute"))
+  })
+})
+
+test_that("select with factor columns argument throws an error", {
+  df <- data.frame(a = 1:5, b = 6:10)
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    select(df, factor(c("a", "b")))
+  })
+})
+
+test_that("select rejects missing column names", {
+  df <- data.frame(a = 1:5, b = 6:10)
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    select(df, c("a", NA_character_))
+  })
+})
+
+test_that("select rejects missing column names even when present in data", {
+  df <- data.frame(a = 1:5, b = 6:10)
+  names(df)[1L] <- NA_character_
+  call <- quote(select(df, NA_character_))
+  err <- tryCatch(select(df, NA_character_), error = identity)
+
+  expect_identical(conditionCall(err), call)
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    select(df, NA_character_)
+  })
+})
+
+test_that("select rejects empty column names even when present in data", {
+  df <- data.frame(a = 1:5, b = 6:10)
+  names(df)[1L] <- ""
+  call <- quote(select(df, ""))
+  err <- tryCatch(select(df, ""), error = identity)
+
+  expect_identical(conditionCall(err), call)
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    select(df, "")
+  })
 })
 
 test_that("select with data not a data.frame throws an error", {
   df <- matrix(1:10, nrow = 5)
-  expect_error(
-    select(df, c("a", "b")),
-    regexp = "select: 'data' must be a data.frame"
-  )
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    select(df, c("a", "b"))
+  })
 })
 
 test_that("select with empty columns vector returns empty data frame", {
@@ -227,25 +288,25 @@ test_that("select handles 'columns' vector with duplicate new names", {
 test_that("select throws an error when 'columns' has duplicate old names", {
   df <- data.frame(a = 1:3, b = 4:6)
   columns <- c(new_a = "a", new_b = "a")
-  expect_error(
-    select(df, columns),
-    regexp =  "select: 'columns' argument must not contain duplicates"
-  )
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    select(df, columns)
+  })
 })
 
-test_that("select throws an error correctly when 'columns' is an empty vector", {
+test_that("select with NULL columns throws an error", {
   df <- data.frame(a = 1:3, b = 4:6)
   columns <- c()
-  expect_error(select(df, columns), "'columns' argument must be a character vector, not a [NULL]", fixed=TRUE)
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    select(df, columns)
+  })
 })
 
 test_that("select handles 'columns' with names but empty values", {
   df <- data.frame(a = 1:3, b = 4:6)
   columns <- c(new_a = "")
-  expect_error(
-    select(df, columns),
-    regexp = "select: Could not find column/s: \\[\\]"
-  )
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    select(df, columns)
+  })
 })
 
 test_that("select maintains data types after renaming", {
@@ -271,10 +332,9 @@ test_that("select does not modify the original data frame when renaming", {
 test_that("select throws an error if specified columns do not exist (with names)", {
   df <- data.frame(a = 1:3, b = 4:6)
   columns <- c(new_a = "a", new_c = "c")
-  expect_error(
-    select(df, columns),
-    regexp = "select: Could not find column/s: \\[c\\]"
-  )
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    select(df, columns)
+  })
 })
 
 test_that("select works correctly with only unnamed elements in 'columns'", {
@@ -315,4 +375,3 @@ test_that("select handles 'columns' with all elements named", {
   expect_equal(result$new_y, df$y)
   expect_equal(result$new_z, df$z)
 })
-

@@ -30,3 +30,19 @@
       Error:
       ! `data` must be a data.frame, not an object of class [NULL]
 
+# assert_columns_sensible preserves the supplied public call
+
+    Code
+      assert_columns_sensible("missing", data, call = call)
+    Condition
+      Error in `relocate()`:
+      ! Could not find column in `data`: ["missing"]
+
+# assert_columns_sensible suppresses the error call when it is NULL
+
+    Code
+      assert_columns_sensible("missing", data, call = NULL)
+    Condition
+      Error:
+      ! Could not find column in `data`: ["missing"]
+

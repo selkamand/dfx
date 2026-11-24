@@ -89,35 +89,16 @@ rename <- function(data, namemap) {
 #'
 #' @export
 select <- function(data, columns) {
+  call <- sys.call()
+
   # Assertions
-  if (!is.data.frame(data)) {
-    stop("select: 'data' must be a data.frame")
-  }
+  assert_dataframe(data, call = call)
 
-  if (!is.vector(columns)) {
-    stop(
-      "select: 'columns' argument must be a character vector, not a [",
-      paste0(class(columns), collapse = "/"),
-      "]"
-    )
-  }
-
-  if (!is.character(columns)) {
-    stop("select: 'columns' argument must be a character vector")
-  }
-
-  if (anyDuplicated(columns) > 0) {
-    stop("select: 'columns' argument must not contain duplicates")
-  }
-
-  cols_not_found <- setdiff(columns, colnames(data))
-  if (length(cols_not_found) != 0) {
-    stop(
-      "select: Could not find column/s: [",
-      paste0(cols_not_found, collapse = ", "),
-      "]"
-    )
-  }
+  # Assert columns is a
+  # - character vector
+  # - unique
+  # - present as a column name of `data`
+  assert_columns_sensible(columns, data, call = call)
 
   # Both subset and rename dataframe if 'columns' vector is named
   if (!is.null(names(columns))) {
