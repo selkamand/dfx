@@ -118,3 +118,99 @@
       Error in `arrange()`:
       ! Column ["nested"] in `data` must be a vector, not an object of class [data.frame]
 
+# arrange rejects invalid locale types
+
+    Code
+      arrange(data, "value", locale = 1)
+    Condition
+      Error in `arrange()`:
+      ! `locale` must be NULL or a character string, not an object of class [numeric]
+
+---
+
+    Code
+      arrange(data, "value", locale = FALSE)
+    Condition
+      Error in `arrange()`:
+      ! `locale` must be NULL or a character string, not an object of class [logical]
+
+---
+
+    Code
+      arrange(data, "value", locale = list("C"))
+    Condition
+      Error in `arrange()`:
+      ! `locale` must be NULL or a character string, not an object of class [list]
+
+---
+
+    Code
+      arrange(data, "value", locale = factor("C"))
+    Condition
+      Error in `arrange()`:
+      ! `locale` must be NULL or a character string, not an object of class [factor]
+
+# arrange rejects invalid locale lengths and values
+
+    Code
+      arrange(data, "value", locale = character())
+    Condition
+      Error in `arrange()`:
+      ! `locale` must be NULL or "C"
+
+---
+
+    Code
+      arrange(data, "value", locale = c("C", "C"))
+    Condition
+      Error in `arrange()`:
+      ! `locale` must be NULL or "C"
+
+---
+
+    Code
+      arrange(data, "value", locale = NA_character_)
+    Condition
+      Error in `arrange()`:
+      ! `locale` must be NULL or "C"
+
+---
+
+    Code
+      arrange(data, "value", locale = "")
+    Condition
+      Error in `arrange()`:
+      ! `locale` must be NULL or "C"
+
+---
+
+    Code
+      arrange(data, "value", locale = "en")
+    Condition
+      Error in `arrange()`:
+      ! `locale` must be NULL or "C"
+
+---
+
+    Code
+      arrange(data, "value", locale = "en_US.UTF-8")
+    Condition
+      Error in `arrange()`:
+      ! `locale` must be NULL or "C"
+
+---
+
+    Code
+      arrange(data, "value", locale = matrix("C"))
+    Condition
+      Error in `arrange()`:
+      ! `locale` must be NULL or "C"
+
+# arrange validates locale even without sorting columns
+
+    Code
+      arrange(data.frame(), character(), locale = "en")
+    Condition
+      Error in `arrange()`:
+      ! `locale` must be NULL or "C"
+
