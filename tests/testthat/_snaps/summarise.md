@@ -476,6 +476,30 @@
       Error in `summarise()`:
       ! In group 1 [key=b]: Metric `distance` has unsupported class [distance].
 
+# summarise rejects a one-cell matrix as a scalar metric
+
+    Code
+      summarise(data, metrics)
+    Condition
+      Error in `summarise()`:
+      ! Metric `total` must be a length-one atomic vector without dimensions.
+
+---
+
+    Code
+      summarise(data, metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! In group 1 [key=a]: Metric `total` must be a length-one atomic vector without dimensions.
+
+---
+
+    Code
+      summarise(empty, metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! Metric `total` must be a length-one atomic vector without dimensions.
+
 # summarise detects duplicate row.names metrics before conversion
 
     Code
@@ -638,4 +662,124 @@
     Condition
       Error in `summarise()`:
       ! the names of metrics computed by `fun` must not match the name of grouping columns. Found [1] shared names: [key]
+
+# a valid metric cannot mask a list-valued metric
+
+    Code
+      summarise(data, metrics)
+    Condition
+      Error in `summarise()`:
+      ! `fun` returned an object of class: [list] when calculating [bad]. Expected an atomic vector.
+
+---
+
+    Code
+      summarise(data, metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! In group 1 [key=a]: `fun` returned an object of class: [list] when calculating [bad]. Expected an atomic vector.
+
+---
+
+    Code
+      summarise(data[FALSE, , drop = FALSE], metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! `fun` returned an object of class: [list] when calculating [bad]. Expected an atomic vector.
+
+# summarise rejects non-list non-atomic metrics
+
+    Code
+      summarise(data, metrics)
+    Condition
+      Error in `summarise()`:
+      ! `fun` returned an object of class: [list] when calculating [bad]. Expected an atomic vector.
+
+---
+
+    Code
+      summarise(data, metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! In group 1 [key=a]: `fun` returned an object of class: [list] when calculating [bad]. Expected an atomic vector.
+
+---
+
+    Code
+      summarise(data[FALSE, , drop = FALSE], metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! `fun` returned an object of class: [list] when calculating [bad]. Expected an atomic vector.
+
+# a supported grouping column cannot mask a list-valued column
+
+    Code
+      summarise(data, metrics, by = c("key", "bad"))
+    Condition
+      Error in `summarise()`:
+      ! `by` cannot include list-valued or data-frame columns.
+
+---
+
+    Code
+      summarise(data[FALSE, , drop = FALSE], metrics, by = c("key", "bad"))
+    Condition
+      Error in `summarise()`:
+      ! `by` cannot include list-valued or data-frame columns.
+
+# a supported grouping column cannot mask a nested data frame
+
+    Code
+      summarise(data, metrics, by = c("key", "bad"))
+    Condition
+      Error in `summarise()`:
+      ! `by` cannot include list-valued or data-frame columns.
+
+# summarise reports multiple duplicated metric names
+
+    Code
+      summarise(data, metrics)
+    Condition
+      Error in `summarise()`:
+      ! Each summary metric must have a unique name. The names "first","second" were returned more than once.
+
+---
+
+    Code
+      summarise(data, metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! In group 1 [key=a]: Each summary metric must have a unique name. The names "first","second" were returned more than once.
+
+---
+
+    Code
+      summarise(data[FALSE, , drop = FALSE], metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! Each summary metric must have a unique name. The names "first","second" were returned more than once.
+
+# summarise rejects a blank grouping name beside a valid name
+
+    Code
+      summarise(data, metrics, by = c("key", ""))
+    Condition
+      Error in `summarise()`:
+      ! `by` cannot contain empty or missing column names.
+
+# summarise reports all matrix-valued grouping columns
+
+    Code
+      summarise(data, metrics, by = c("key", "first", "second"))
+    Condition
+      Error in `summarise()`:
+      ! `by` cannot include matrix-valued columns: `first`, `second`
+
+# summarise reports all array-valued grouping columns
+
+    Code
+      summarise(data, metrics, by = c("key", "first", "second"))
+    Condition
+      Error in `summarise()`:
+      ! `by` cannot include array-valued columns with three or more dimensions: `first`, `second`
 

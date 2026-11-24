@@ -965,16 +965,23 @@ test_that("summarise rejects mixing a factor subclass and a plain factor", {
 
 test_that("summarise rejects a one-cell matrix as a scalar metric", {
   data <- data.frame(key = c("a", "b"))
-  empty <- data[integer(), , drop = FALSE]
-  # A one-cell matrix passes a length check. Data-frame conversion can then
-  # use its column name in place of the callback's metric name.
+  empty <- data[FALSE, , drop = FALSE]
+
+  # A one-cell matrix passes a length check, but conversion can replace
+  # the metric name with the matrix column name.
   metrics <- function(d) {
     list(total = matrix(1L, dimnames = list(NULL, "renamed")))
   }
 
-  expect_error(summarise(data, metrics), "scalar|vector|dimension")
-  expect_error(summarise(data, metrics, by = "key"), "scalar|vector|dimension")
-  expect_error(summarise(empty, metrics, by = "key"), "scalar|vector|dimension")
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, metrics)
+  })
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, metrics, by = "key")
+  })
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(empty, metrics, by = "key")
+  })
 })
 
 test_that("summarise detects duplicate row.names metrics before conversion", {
@@ -1511,24 +1518,40 @@ test_that("summarise rejects blank and missing data-frame metric names", {
     })
   })
   expect_snapshot(error = TRUE, cran = TRUE, {
-    summarise(data, function(d) {
-      setNames(data.frame(total = 1L), "")
-    }, by = "key")
+    summarise(
+      data,
+      function(d) {
+        setNames(data.frame(total = 1L), "")
+      },
+      by = "key"
+    )
   })
   expect_snapshot(error = TRUE, cran = TRUE, {
-    summarise(data, function(d) {
-      setNames(data.frame(total = 1L), NA_character_)
-    }, by = "key")
+    summarise(
+      data,
+      function(d) {
+        setNames(data.frame(total = 1L), NA_character_)
+      },
+      by = "key"
+    )
   })
   expect_snapshot(error = TRUE, cran = TRUE, {
-    summarise(data[FALSE, , drop = FALSE], function(d) {
-      setNames(data.frame(total = 1L), "")
-    }, by = "key")
+    summarise(
+      data[FALSE, , drop = FALSE],
+      function(d) {
+        setNames(data.frame(total = 1L), "")
+      },
+      by = "key"
+    )
   })
   expect_snapshot(error = TRUE, cran = TRUE, {
-    summarise(data[FALSE, , drop = FALSE], function(d) {
-      setNames(data.frame(total = 1L), NA_character_)
-    }, by = "key")
+    summarise(
+      data[FALSE, , drop = FALSE],
+      function(d) {
+        setNames(data.frame(total = 1L), NA_character_)
+      },
+      by = "key"
+    )
   })
 })
 
@@ -1572,3 +1595,112 @@ test_that("empty grouped summarise rejects data-frame metrics matching groups", 
     summarise(data, function(d) data.frame(key = 1L), by = "key")
   })
 })
+
+test_that("a valid metric cannot mask a list-valued metric", {
+  data <- data.frame(key = c("a", "b"))
+  metrics <- function(d) {
+    # Put the valid metric first to check that the error identifies bad.
+    list(good = 1L, bad = list(2L))
+  }
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, metrics)
+  })
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, metrics, by = "key")
+  })
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data[FALSE, , drop = FALSE], metrics, by = "key")
+  })
+})
+
+test_that("summarise rejects non-list non-atomic metrics", {
+  data <- data.frame(key = c("a", "b"))
+  metrics <- function(d) {
+    # A symbol has length one but is neither a list nor an atomic vector.
+    list(good = 1L, bad = quote(x))
+  }
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, metrics)
+  })
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, metrics, by = "key")
+  })
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data[FALSE, , drop = FALSE], metrics, by = "key")
+  })
+})
+
+test_that("a supported grouping column cannot mask a list-valued column", {
+  data <- data.frame(key = c("a", "b"))
+  data$bad <- list(1L, 2L)
+  metrics <- function(d) list(rows = nrow(d))
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, metrics, by = c("key", "bad"))
+  })
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data[FALSE, , drop = FALSE], metrics, by = c("key", "bad"))
+  })
+})
+
+test_that("a supported grouping column cannot mask a nested data frame", {
+  data <- data.frame(key = c("a", "b"))
+  data$bad <- data.frame(value = 1:2)
+  metrics <- function(d) list(rows = nrow(d))
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, metrics, by = c("key", "bad"))
+  })
+})
+
+test_that("summarise reports multiple duplicated metric names", {
+  data <- data.frame(key = c("a", "b"))
+  metrics <- function(d) {
+    setNames(list(1L, 2L, 3L, 4L), c("first", "first", "second", "second"))
+  }
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, metrics)
+  })
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, metrics, by = "key")
+  })
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data[FALSE, , drop = FALSE], metrics, by = "key")
+  })
+})
+
+test_that("summarise rejects a blank grouping name beside a valid name", {
+  # The blank column exists, so this must reach the blank-name validation.
+  data <- setNames(data.frame(first = 1:2, second = 3:4), c("key", ""))
+  metrics <- function(d) list(rows = nrow(d))
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, metrics, by = c("key", ""))
+  })
+})
+
+test_that("summarise reports all matrix-valued grouping columns", {
+  data <- data.frame(key = c("a", "b"))
+  data$first <- matrix(1:2, ncol = 1L)
+  data$second <- matrix(3:4, ncol = 1L)
+  metrics <- function(d) list(rows = nrow(d))
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, metrics, by = c("key", "first", "second"))
+  })
+})
+
+test_that("summarise reports all array-valued grouping columns", {
+  data <- data.frame(key = c("a", "b"))
+  data$first <- array(1:2, dim = c(2L, 1L, 1L))
+  data$second <- array(3:4, dim = c(2L, 1L, 1L))
+  metrics <- function(d) list(rows = nrow(d))
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, metrics, by = c("key", "first", "second"))
+  })
+})
+
