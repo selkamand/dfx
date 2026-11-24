@@ -1,0 +1,6 @@
+linters: linters_with_defaults(
+    object_length_linter = NULL,
+    line_length_linter = NULL,
+    backport_linter = backport_linter(r_version = "3.0.0")
+    )
+encoding: "UTF-8"
