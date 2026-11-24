@@ -1166,3 +1166,132 @@ test_that("summarise groups NA, NaN, and infinities separately", {
     )
   )
 })
+
+test_that("ungrouped summarise always returns automatic row names", {
+  inputs <- list(
+    nonempty = data.frame(
+      value = 1:3,
+      row.names = c("input-a", "input-b", "input-c")
+    ),
+    one_row = data.frame(value = 1L, row.names = "input-a"),
+    zero_rows = data.frame(value = integer()),
+    zero_columns = data.frame(row.names = c("input-a", "input-b")),
+    zero_rows_and_columns = data.frame()
+  )
+
+  callbacks <- list(
+    unnamed_scalars = function(d) {
+      list(rows = nrow(d), flag = TRUE)
+    },
+    named_scalars = function(d) {
+      # Inner names describe callback values, not rows of the summary.
+      list(
+        rows = setNames(nrow(d), "metric-row"),
+        flag = setNames(TRUE, "another-metric-row")
+      )
+    }
+  )
+
+  for (input_name in names(inputs)) {
+    data <- inputs[[input_name]]
+
+    for (callback_name in names(callbacks)) {
+      result <- summarise(data, callbacks[[callback_name]])
+      context <- paste(input_name, callback_name)
+
+      expect_identical(
+        result,
+        data.frame(rows = nrow(data), flag = TRUE),
+        info = context
+      )
+
+      # Negative values identify automatic row names; explicit "1" does not.
+      expect_identical(
+        .row_names_info(result, type = 1L),
+        -1L,
+        info = context
+      )
+    }
+  }
+})
+
+test_that("grouped summarise always returns automatic row names", {
+  fixtures <- list(
+    one_group = list(
+      data = data.frame(
+        key = c("a", "a"),
+        site = c("x", "x"),
+        row.names = c("input-a", "input-b")
+      ),
+      expected = data.frame(
+        key = "a",
+        site = "x",
+        rows = 2L,
+        flag = TRUE
+      )
+    ),
+    multiple_groups = list(
+      data = data.frame(
+        key = c("b", "a", "b"),
+        site = c("y", "x", "y"),
+        row.names = c("input-a", "input-b", "input-c")
+      ),
+      expected = data.frame(
+        key = c("b", "a"),
+        site = c("y", "x"),
+        rows = c(2L, 1L),
+        flag = c(TRUE, TRUE)
+      )
+    ),
+    zero_groups = list(
+      data = data.frame(key = character(), site = character()),
+      expected = data.frame(
+        key = character(),
+        site = character(),
+        rows = integer(),
+        flag = logical()
+      )
+    )
+  )
+
+  callbacks <- list(
+    unnamed_scalars = function(d) {
+      list(rows = nrow(d), flag = TRUE)
+    },
+    repeated_scalar_names = function(d) {
+      list(
+        rows = setNames(nrow(d), "metric-row"),
+        flag = setNames(TRUE, "metric-row")
+      )
+    },
+    different_scalar_names = function(d) {
+      label <- if (nrow(d)) d$key[[1L]] else "empty"
+      list(
+        rows = setNames(nrow(d), paste0("rows-", label)),
+        flag = setNames(TRUE, paste0("flag-", label))
+      )
+    }
+  )
+
+  for (fixture_name in names(fixtures)) {
+    fixture <- fixtures[[fixture_name]]
+
+    for (by in list("key", c("key", "site"))) {
+      expected <- fixture$expected[c(by, "rows", "flag")]
+
+      for (callback_name in names(callbacks)) {
+        result <- summarise(fixture$data, callbacks[[callback_name]], by = by)
+        context <- paste(fixture_name, paste(by, collapse = ","), callback_name)
+
+        expect_identical(result, expected, info = context)
+
+        # Zero-row frames use 0; nonempty frames use a negative row count.
+        expect_identical(
+          .row_names_info(result, type = 1L),
+          -nrow(expected),
+          info = context
+        )
+      }
+    }
+  }
+})

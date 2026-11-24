@@ -758,7 +758,10 @@ metrics_to_data_frame <- function(metrics) {
   # data.frame() arguments. Keep the attributes on each metric value.
   attributes(metrics) <- NULL
   result <- as.data.frame(metrics, check.names = FALSE)
-  names(result) <- metric_names
+  colnames(result) <- metric_names
+
+  # Ensure data.frame has no rownames.
+  rownames(result) <- NULL
 
   result
 }
