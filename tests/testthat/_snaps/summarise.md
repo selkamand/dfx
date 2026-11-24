@@ -547,3 +547,95 @@
       Error in `summarise()`:
       ! In group 1 [key=b]: `fun` must return at least one metric.
 
+# summarise rejects blank and missing data-frame metric names
+
+    Code
+      summarise(data, function(d) {
+        setNames(data.frame(total = 1L), "")
+      })
+    Condition
+      Error in `summarise()`:
+      ! `fun` must return a named list. 1/1 elements are unnamed.
+
+---
+
+    Code
+      summarise(data, function(d) {
+        setNames(data.frame(total = 1L), NA_character_)
+      })
+    Condition
+      Error in `summarise()`:
+      ! `fun` must return a named list. 1/1 elements are unnamed.
+
+---
+
+    Code
+      summarise(data, function(d) {
+        setNames(data.frame(total = 1L), "")
+      }, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! In group 1 [key=a]: `fun` must return a named list. 1/1 elements are unnamed.
+
+---
+
+    Code
+      summarise(data, function(d) {
+        setNames(data.frame(total = 1L), NA_character_)
+      }, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! In group 1 [key=a]: `fun` must return a named list. 1/1 elements are unnamed.
+
+---
+
+    Code
+      summarise(data[FALSE, , drop = FALSE], function(d) {
+        setNames(data.frame(total = 1L), "")
+      }, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! `fun` must return a named list. 1/1 elements are unnamed.
+
+---
+
+    Code
+      summarise(data[FALSE, , drop = FALSE], function(d) {
+        setNames(data.frame(total = 1L), NA_character_)
+      }, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! `fun` must return a named list. 1/1 elements are unnamed.
+
+# data-frame returns must have the same metric count across groups
+
+    Code
+      summarise(data, metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! `fun` must return the same number of metrics for every group. It returned 1 metric for group 1 [key=a] and 2 metrics for group 2 [key=b].
+
+---
+
+    Code
+      summarise(data[2:1, , drop = FALSE], metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! `fun` must return the same number of metrics for every group. It returned 2 metrics for group 1 [key=b] and 1 metric for group 2 [key=a].
+
+# data-frame returns must preserve metric order across groups
+
+    Code
+      summarise(data, metrics, by = "key")
+    Condition
+      Error in `summarise()`:
+      ! `fun` returns summary metrics in a different order between group 1 [key=a] and group 2 [key=b]. total!=rows & rows!=total.
+
+# empty grouped summarise rejects data-frame metrics matching groups
+
+    Code
+      summarise(data, function(d) data.frame(key = 1L), by = "key")
+    Condition
+      Error in `summarise()`:
+      ! the names of metrics computed by `fun` must not match the name of grouping columns. Found [1] shared names: [key]
+

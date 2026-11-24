@@ -1475,3 +1475,100 @@ test_that("data-frame returns must have compatible metrics across groups", {
     fixed = TRUE
   )
 })
+
+test_that("empty grouped summarise calls fun once with the complete input", {
+  data <- data.frame(
+    key = factor(character(), levels = c("a", "b")),
+    value = integer()
+  )
+  observed <- list()
+  metrics <- function(d) {
+    observed[[length(observed) + 1L]] <<- d
+    data.frame(rows = nrow(d), total = sum(d$value))
+  }
+
+  result <- summarise(data, metrics, by = "key")
+
+  # With no observed groups, one callback supplies the metric column types.
+  expect_identical(observed, list(data))
+  expect_identical(
+    result,
+    data.frame(key = data$key, rows = integer(), total = integer())
+  )
+})
+
+test_that("summarise rejects blank and missing data-frame metric names", {
+  data <- data.frame(key = c("a", "b"))
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, function(d) {
+      setNames(data.frame(total = 1L), "")
+    })
+  })
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, function(d) {
+      setNames(data.frame(total = 1L), NA_character_)
+    })
+  })
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, function(d) {
+      setNames(data.frame(total = 1L), "")
+    }, by = "key")
+  })
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, function(d) {
+      setNames(data.frame(total = 1L), NA_character_)
+    }, by = "key")
+  })
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data[FALSE, , drop = FALSE], function(d) {
+      setNames(data.frame(total = 1L), "")
+    }, by = "key")
+  })
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data[FALSE, , drop = FALSE], function(d) {
+      setNames(data.frame(total = 1L), NA_character_)
+    }, by = "key")
+  })
+})
+
+test_that("data-frame returns must have the same metric count across groups", {
+  data <- data.frame(key = c("a", "b"))
+  metrics <- function(d) {
+    if (d$key == "a") {
+      data.frame(total = 1L)
+    } else {
+      data.frame(total = 2L, rows = 1L)
+    }
+  }
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, metrics, by = "key")
+  })
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data[2:1, , drop = FALSE], metrics, by = "key")
+  })
+})
+
+test_that("data-frame returns must preserve metric order across groups", {
+  data <- data.frame(key = c("a", "b"))
+  metrics <- function(d) {
+    result <- data.frame(total = 1L, rows = 1L)
+    if (d$key == "b") {
+      result <- result[c("rows", "total")]
+    }
+    result
+  }
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, metrics, by = "key")
+  })
+})
+
+test_that("empty grouped summarise rejects data-frame metrics matching groups", {
+  data <- data.frame(key = character(), value = integer())
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    summarise(data, function(d) data.frame(key = 1L), by = "key")
+  })
+})
