@@ -30,6 +30,8 @@
 #'
 #' ##  Summarisation functions
 #' `fun` must return a nonempty named list of length-one atomic vectors.
+#' `fun` can alternatively return a single-row data frame (essentially a list in
+#' R anyway)
 #' Each name should describe the metric being calculated.
 #' Metrics must be either unclassed or use one of the base R classes:
 #' - `factor`

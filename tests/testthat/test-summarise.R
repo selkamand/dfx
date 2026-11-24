@@ -1295,3 +1295,183 @@ test_that("grouped summarise always returns automatic row names", {
     }
   }
 })
+
+test_that("summarise accepts one-row data frames and preserves metric types", {
+  data <- data.frame(key = c("b", "a", "b"), value = c(2L, 5L, 3L))
+  metrics <- function(d) {
+    data.frame(
+      rows = nrow(d),
+      `total value` = sum(d$value),
+      day = as.Date("2024-01-01"),
+      rating = ordered("high", levels = c("low", "high")),
+      row.names = "callback-row",
+      check.names = FALSE
+    )
+  }
+
+  expect_identical(
+    summarise(data, metrics),
+    data.frame(
+      rows = 3L,
+      `total value` = 10L,
+      day = as.Date("2024-01-01"),
+      rating = ordered("high", levels = c("low", "high")),
+      check.names = FALSE
+    )
+  )
+
+  expected <- data.frame(
+    key = c("b", "a"),
+    rows = c(2L, 1L),
+    `total value` = c(5L, 5L),
+    day = rep(as.Date("2024-01-01"), 2L),
+    rating = ordered(c("high", "high"), levels = c("low", "high")),
+    check.names = FALSE
+  )
+
+  expect_identical(summarise(data, metrics, by = "key"), expected)
+  expect_identical(
+    summarise(data[data$key == "b", , drop = FALSE], metrics, by = "key"),
+    expected[1L, , drop = FALSE]
+  )
+})
+
+test_that("summarise accepts one-row data-frame returns for empty inputs", {
+  data <- data.frame(key = character(), value = integer())
+  metrics <- function(d) {
+    data.frame(
+      rows = nrow(d),
+      total = sum(d$value),
+      row.names = "callback-row"
+    )
+  }
+
+  expect_identical(
+    summarise(data, metrics),
+    data.frame(rows = 0L, total = 0L)
+  )
+  expect_identical(
+    summarise(data, metrics, by = "key"),
+    data.frame(key = character(), rows = integer(), total = integer())
+  )
+})
+
+test_that("summarise allows list and data-frame returns across groups", {
+  data <- data.frame(key = c("a", "b"))
+  metrics <- function(d) {
+    if (d$key == "a") {
+      list(total = 1L)
+    } else {
+      data.frame(total = 2L)
+    }
+  }
+
+  expect_identical(
+    summarise(data, metrics, by = "key"),
+    data.frame(key = c("a", "b"), total = c(1L, 2L))
+  )
+  expect_identical(
+    summarise(data[2:1, , drop = FALSE], metrics, by = "key"),
+    data.frame(key = c("b", "a"), total = c(2L, 1L))
+  )
+})
+
+test_that("summarise validates metrics in data-frame returns in every mode", {
+  data <- data.frame(key = c("a", "b"))
+
+  duplicate_names <- data.frame(first = 1L, second = 2L)
+  names(duplicate_names) <- c("total", "total")
+
+  list_column <- data.frame(total = 1L)
+  list_column$total <- list(1L)
+
+  matrix_column <- data.frame(total = 1L)
+  matrix_column$total <- matrix(1L, nrow = 1L)
+
+  custom_class <- data.frame(total = 1L)
+  custom_class$total <- structure(1L, class = "custom_metric")
+
+  invalid <- list(
+    zero_rows = list(
+      value = data.frame(total = integer()),
+      message = "unexpected number of values"
+    ),
+    multiple_rows = list(
+      value = data.frame(total = 1:2),
+      message = "unexpected number of values"
+    ),
+    zero_columns = list(
+      value = data.frame(row.names = "callback-row"),
+      message = "at least one metric"
+    ),
+    duplicate_names = list(
+      value = duplicate_names,
+      message = "unique name"
+    ),
+    list_column = list(
+      value = list_column,
+      message = "Expected an atomic vector"
+    ),
+    matrix_column = list(
+      value = matrix_column,
+      message = "without dimensions"
+    ),
+    custom_class = list(
+      value = custom_class,
+      message = "unsupported class"
+    )
+  )
+
+  for (case_name in names(invalid)) {
+    case <- invalid[[case_name]]
+    metrics <- function(d) case$value
+
+    expect_error(
+      summarise(data, metrics),
+      case$message,
+      fixed = TRUE
+    )
+    expect_error(
+      summarise(data, metrics, by = "key"),
+      case$message,
+      fixed = TRUE
+    )
+    expect_error(
+      summarise(data[FALSE, , drop = FALSE], metrics, by = "key"),
+      case$message,
+      fixed = TRUE
+    )
+  }
+})
+
+test_that("data-frame returns must have compatible metrics across groups", {
+  data <- data.frame(key = c("a", "b"))
+
+  different_types <- function(d) {
+    data.frame(total = if (d$key == "a") 1L else 2)
+  }
+  different_names <- function(d) {
+    result <- data.frame(total = 1L)
+    if (d$key == "b") {
+      names(result) <- "average"
+    }
+    result
+  }
+
+  expect_error(
+    summarise(data, different_types, by = "key"),
+    "incompatible types",
+    fixed = TRUE
+  )
+  expect_error(
+    summarise(data, different_names, by = "key"),
+    "different order",
+    fixed = TRUE
+  )
+
+  expect_error(
+    summarise(data, function(d) data.frame(key = 1L), by = "key"),
+    "must not match",
+    fixed = TRUE
+  )
+})
