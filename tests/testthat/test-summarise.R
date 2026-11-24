@@ -458,7 +458,11 @@ test_that("summarise combines unordered factor metrics by label and unions level
 
   expect_identical(class(result$risk), "factor")
   expect_identical(as.character(result$risk), c("low", "high", "low"))
-  expect_setequal(levels(result$risk), c("low", "moderate", "high", "critical"))
+  # Keep the first group's levels, then append unseen levels in encounter order.
+  expect_identical(
+    levels(result$risk),
+    c("low", "moderate", "high", "critical")
+  )
 })
 
 test_that("summarise rejects a non-factor metric after a factor metric", {
@@ -1070,15 +1074,95 @@ test_that("summarise preserves names that overlap conversion internals", {
 })
 
 
-test_that("grouped summarise throws error if fun returns elmpty list", {
+test_that("grouped summarise throws error if fun returns empty list", {
   data <- data.frame(key = c("b", "a", "b"))
-  # Each observed group contributes a row even with zero metrics. Binding a
-  # zero-row metric frame to nonempty keys fails because the row counts differ.
+  # Each observed group contributes a row even with zero metrics. If fun
+  # returns an empty list then summarise should error.
   metrics <- function(d) setNames(list(), character())
 
   expect_snapshot(
     error = TRUE,
     cran = TRUE,
-    summarise(data, metrics)
+    summarise(data, metrics, by = "key")
+  )
+})
+
+
+test_that("summarise converts difftime metrics to the first group's units", {
+  data <- data.frame(key = c("a", "b"))
+  durations <- list(
+    as.difftime(1, units = "hours"),
+    as.difftime(30, units = "mins")
+  )
+  metrics <- function(d) {
+    list(duration = durations[[match(d$key, data$key)]])
+  }
+
+  expect_identical(
+    summarise(data, metrics, by = "key"),
+    data.frame(
+      key = c("a", "b"),
+      duration = as.difftime(c(1, 0.5), units = "hours")
+    )
+  )
+  expect_identical(
+    summarise(data[2:1, , drop = FALSE], metrics, by = "key"),
+    data.frame(
+      key = c("b", "a"),
+      duration = as.difftime(c(30, 60), units = "mins")
+    )
+  )
+})
+
+test_that("summarise preserves instants across different metric time zones", {
+  data <- data.frame(key = c("a", "b"))
+  times <- list(
+    as.POSIXct("2024-01-01 00:00:00", tz = "UTC"),
+    as.POSIXct("2024-01-01 00:00:00", tz = "Australia/Sydney")
+  )
+  metrics <- function(d) {
+    list(time = times[[match(d$key, data$key)]])
+  }
+
+  # Equal local clock readings in these zones represent different instants.
+  instants <- as.POSIXct("2024-01-01 00:00:00", tz = "UTC") +
+    c(0, -11 * 3600)
+
+  expect_identical(
+    summarise(data, metrics, by = "key"),
+    data.frame(key = c("a", "b"), time = instants)
+  )
+
+  reversed_instants <- instants[2:1]
+  attr(reversed_instants, "tzone") <- "Australia/Sydney"
+
+  expect_identical(
+    summarise(data[2:1, , drop = FALSE], metrics, by = "key"),
+    data.frame(key = c("b", "a"), time = reversed_instants)
+  )
+})
+
+test_that("summarise keeps nearby numeric grouping keys distinct", {
+  keys <- c(1, 1 + 1e-15)
+  data <- data.frame(key = keys[c(1L, 2L, 2L)])
+
+  # These distinct doubles can print identically at ordinary precision.
+  expect_identical(
+    summarise(data, function(d) list(rows = nrow(d)), by = "key"),
+    data.frame(key = keys, rows = c(1L, 2L))
+  )
+})
+
+test_that("summarise groups NA, NaN, and infinities separately", {
+  data <- data.frame(
+    key = c(NaN, NA_real_, Inf, -Inf, NaN, NA_real_, Inf)
+  )
+
+  expect_identical(
+    summarise(data, function(d) list(rows = nrow(d)), by = "key"),
+    data.frame(
+      key = c(NaN, NA_real_, Inf, -Inf),
+      rows = c(2L, 2L, 2L, 1L)
+    )
   )
 })

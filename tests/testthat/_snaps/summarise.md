@@ -539,11 +539,11 @@
       Error in `summarise()`:
       ! Metric `value` has unsupported attributes [unit].
 
-# grouped summarise throws error if fun returns elmpty list
+# grouped summarise throws error if fun returns empty list
 
     Code
-      summarise(data, metrics)
+      summarise(data, metrics, by = "key")
     Condition
       Error in `summarise()`:
-      ! `fun` must return at least one metric.
+      ! In group 1 [key=b]: `fun` must return at least one metric.
 
