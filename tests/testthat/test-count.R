@@ -262,3 +262,18 @@ test_that("count counts mixed non-character column types together", {
 #
 #   expect_equal(out, expected, ignore_attr = TRUE)
 # })
+
+test_that("count warns about row-wise evaluation and counts by columns", {
+  data <- structure(
+    data.frame(team = c("a", "a", "b"), id = c(1L, 1L, 1L)),
+    class = c("rowwise_df", "data.frame")
+  )
+
+  expect_warning(
+    result <- count(data, columns = "id"),
+    "dfx ignores the row-wise evaluation mode",
+    fixed = TRUE
+  )
+  expect_identical(result$id, 1L)
+  expect_equal(result$n, 3)
+})

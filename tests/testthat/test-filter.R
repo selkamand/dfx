@@ -586,3 +586,17 @@ test_that("grouped filter errors identify multiple grouping values", {
     )
   })
 })
+
+test_that("filter warns about row-wise evaluation and honours by", {
+  data <- structure(
+    data.frame(team = c("a", "a", "b"), id = 1:3),
+    class = c("rowwise_df", "data.frame")
+  )
+
+  expect_warning(
+    result <- filter(data, function(group) nrow(group) == 2L, by = "team"),
+    "dfx ignores the row-wise evaluation mode",
+    fixed = TRUE
+  )
+  expect_identical(result$id, 1:2)
+})

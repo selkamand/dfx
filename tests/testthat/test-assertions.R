@@ -97,3 +97,17 @@ test_that("assert_columns_sensible suppresses the error call when it is NULL", {
     assert_columns_sensible("missing", data, call = NULL)
   })
 })
+
+test_that("assert_dataframe warns about row-wise evaluation only when enabled", {
+  data <- data.frame(id = 1L)
+  rowwise_data <- structure(data, class = c("rowwise_df", "data.frame"))
+  call <- quote(distinct(rowwise_data))
+
+  expect_warning(assert_dataframe(rowwise_data, call = call), NA)
+  expect_warning(assert_dataframe(data, call = call, warn_rowwise = TRUE), NA)
+  expect_warning(
+    assert_dataframe(rowwise_data, call = call, warn_rowwise = TRUE),
+    "dfx ignores the row-wise evaluation mode set by `dplyr::rowwise()`",
+    fixed = TRUE
+  )
+})

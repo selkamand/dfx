@@ -1,7 +1,12 @@
 # The set of assertions used in many different dfx functions
 # Used to ensure error messages are consistent across functions.
 
-assert_dataframe <- function(data, call, warn_grouped = FALSE) {
+assert_dataframe <- function(
+  data,
+  call,
+  warn_grouped = FALSE,
+  warn_rowwise = FALSE
+) {
   if (!is.data.frame(data)) {
     stop(simpleError(
       message = paste0(
@@ -34,6 +39,9 @@ assert_dataframe <- function(data, call, warn_grouped = FALSE) {
   if (warn_grouped) {
     warn_if_grouped(data, call = call)
   }
+  if (warn_rowwise) {
+    warn_if_rowwise(data, call = call)
+  }
 
   invisible(NULL)
 }
@@ -45,6 +53,15 @@ warn_if_grouped <- function(data, call) {
         "dfx ignores grouping added by `dplyr::group_by()`. ",
         "For functions that support grouping, use the `by` argument."
       ),
+      call = call
+    ))
+  }
+}
+
+warn_if_rowwise <- function(data, call) {
+  if (inherits(data, "rowwise_df")) {
+    warning(simpleWarning(
+      "dfx ignores the row-wise evaluation mode set by `dplyr::rowwise()`",
       call = call
     ))
   }

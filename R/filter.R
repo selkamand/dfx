@@ -85,7 +85,12 @@ filter <- function(data, fun, by = NULL) {
   # `error in filter()` not `error in internal_helper()`
   call <- sys.call()
 
-  assert_dataframe(data, call = call, warn_grouped = TRUE)
+  assert_dataframe(
+    data,
+    call = call,
+    warn_grouped = TRUE,
+    warn_rowwise = TRUE
+  )
 
   # Assert `fun` is a function
   if (!is.function(fun)) {

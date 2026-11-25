@@ -20,7 +20,12 @@ distinct <- function(data, columns = NULL, keep_all = FALSE) {
   call <- sys.call()
 
   # Assertions
-  assert_dataframe(data, call = call, warn_grouped = TRUE)
+  assert_dataframe(
+    data,
+    call = call,
+    warn_grouped = TRUE,
+    warn_rowwise = TRUE
+  )
 
   # Assert keep_all is a flag
   if (!is.logical(keep_all)) {

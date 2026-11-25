@@ -199,3 +199,17 @@ test_that("distinct compares a matrix key and an ordinary key together", {
 
   expect_identical(distinct(data, columns = c("group", "key")), expected)
 })
+
+test_that("distinct warns about ignoring dplyr row-wise evaluation", {
+  data <- structure(
+    data.frame(team = c("a", "b"), id = c(1L, 1L)),
+    class = c("rowwise_df", "data.frame")
+  )
+
+  expect_warning(
+    result <- distinct(data, columns = "id"),
+    "^dfx ignores the row-wise evaluation mode set by `dplyr::rowwise\\(\\)`$"
+  )
+  expect_identical(names(result), "id")
+  expect_identical(result$id, 1L)
+})
