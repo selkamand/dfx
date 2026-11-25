@@ -48,7 +48,7 @@
 #' @export
 arrange <- function(data, columns, locale = "C") {
   call <- sys.call()
-  assert_dataframe(data, call = call)
+  assert_dataframe(data, call = call, warn_grouped = TRUE)
   assert_columns_sensible(columns, data, call = call)
 
   if (anyNA(names(columns)) || any(!names(columns) %in% c("", "..DeSc.."))) {

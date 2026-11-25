@@ -94,7 +94,7 @@ summarise <- function(data, fun, by = NULL) {
   # `error in summarise()` not `error in internal_helper()`
   call <- sys.call()
 
-  assert_dataframe(data, call = call)
+  assert_dataframe(data, call = call, warn_grouped = TRUE)
 
   # Assert `fun` is a function
   if (!is.function(fun)) {

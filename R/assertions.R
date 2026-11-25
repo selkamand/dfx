@@ -1,7 +1,7 @@
 # The set of assertions used in many different dfx functions
 # Used to ensure error messages are consistent across functions.
 
-assert_dataframe <- function(data, call) {
+assert_dataframe <- function(data, call, warn_grouped = FALSE) {
   if (!is.data.frame(data)) {
     stop(simpleError(
       message = paste0(
@@ -13,6 +13,7 @@ assert_dataframe <- function(data, call) {
     ))
   }
 
+  # Error if input is a data.table.
   # Callers use data[columns] for column selection. A data.table interprets
   # that expression as a row subset or join.
   if (inherits(data, "data.table")) {
@@ -26,7 +27,27 @@ assert_dataframe <- function(data, call) {
     ))
   }
 
+  # If input is a data frame that has been grouped by dplyr::group_by()
+  # warn the caller that this 'grouped' stat will be ignored.
+  # This warning is optional since some functions (like `select`) would
+  # never be extected to respect group structure anyway
+  if (warn_grouped) {
+    warn_if_grouped(data, call = call)
+  }
+
   invisible(NULL)
+}
+
+warn_if_grouped <- function(data, call) {
+  if (inherits(data, "grouped_df")) {
+    warning(simpleWarning(
+      paste0(
+        "dfx ignores grouping added by `dplyr::group_by()`. ",
+        "For functions that support grouping, use the `by` argument."
+      ),
+      call = call
+    ))
+  }
 }
 
 

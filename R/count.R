@@ -43,6 +43,7 @@ count <- function(data, columns, sort = FALSE, name = "n", drop = TRUE) {
   if (!is.data.frame(data)) {
     stop("'data' must be a data.frame")
   }
+  warn_if_grouped(data, call = sys.call())
 
   if (!is.vector(columns)) {
     stop(

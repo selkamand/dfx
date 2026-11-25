@@ -164,14 +164,21 @@ test_that("distinct rejects duplicate entries in columns", {
   })
 })
 
-# test_that("distinct rejects grouped data frames", {
-#   # The class alone exercises the guard without adding a dplyr test dependency.
-#   data <- structure(
-#     data.frame(team = "a", id = 1L),
-#     class = c("grouped_df", "data.frame")
-#   )
-#
-#   expect_snapshot(error = TRUE, cran = TRUE, {
-#     distinct(data, columns = "id")
-#   })
-# })
+test_that("distinct warns and deduplicates across dplyr groups", {
+  # The class exercises the grouping check without a dplyr test dependency.
+  data <- structure(
+    data.frame(team = c("a", "b"), id = c(1L, 1L)),
+    class = c("grouped_df", "data.frame")
+  )
+
+  expect_warning(
+    result <- distinct(data, columns = "id"),
+    paste0(
+      "dfx ignores grouping added by `dplyr::group_by()`. ",
+      "For functions that support grouping, use the `by` argument."
+    ),
+    fixed = TRUE
+  )
+  expect_identical(names(result), "id")
+  expect_identical(result$id, 1L)
+})
