@@ -524,6 +524,28 @@ test_that("arrange rejects invalid locale lengths and values", {
   })
 })
 
+test_that("arrange accepts a named locale for ascending sorts", {
+  # Arrange does NOT use the names for anything.
+  # This just confirms they don't cause any errors
+  data <- data.frame(value = c("a", "Z", "A", "a", NA_character_), id = 1:5)
+
+  expect_identical(
+    arrange(data, "value", locale = c(chosen = "C")),
+    data[c(3, 2, 1, 4, 5), , drop = FALSE]
+  )
+})
+
+test_that("arrange accepts a named locale for descending sorts", {
+  # Arrange does NOT use the names for anything.
+  # This just confirms they don't cause any errors
+  data <- data.frame(value = c("a", "Z", "A", "a", NA_character_), id = 1:5)
+
+  expect_identical(
+    arrange(data, desc("value"), locale = c(chosen = "C")),
+    data[c(1, 4, 2, 3, 5), , drop = FALSE]
+  )
+})
+
 test_that("arrange validates locale even without sorting columns", {
   expect_snapshot(error = TRUE, cran = TRUE, {
     arrange(data.frame(), character(), locale = "en")
