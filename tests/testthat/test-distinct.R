@@ -164,8 +164,7 @@ test_that("distinct rejects duplicate entries in columns", {
   })
 })
 
-test_that("distinct warns and deduplicates across dplyr groups", {
-  # The class exercises the grouping check without a dplyr test dependency.
+test_that("distinct warns about ignoring dplyr groups", {
   data <- structure(
     data.frame(team = c("a", "b"), id = c(1L, 1L)),
     class = c("grouped_df", "data.frame")
