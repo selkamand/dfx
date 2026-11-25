@@ -90,14 +90,11 @@
 #' @export
 #' @seealso [summarise_vector_by()]
 summarise <- function(data, fun, by = NULL) {
-  # Assert `data` is data.frame
-  if (!is.data.frame(data)) {
-    stop(
-      "`data` must be a data.frame, not an object of class [",
-      toString(class(data)),
-      "]"
-    )
-  }
+  # Save calling environment so errors thrown in internal helpers show
+  # `error in summarise()` not `error in internal_helper()`
+  call <- sys.call()
+
+  assert_dataframe(data, call = call)
 
   # Assert `fun` is a function
   if (!is.function(fun)) {
@@ -122,10 +119,6 @@ summarise <- function(data, fun, by = NULL) {
       func_arg_count(fun, dots = "count_as_0")
     )
   }
-
-  # Save calling environment so errors thrown in internal helpers show
-  # `error in summarise()` not `error in internal_helper()`
-  call <- sys.call()
 
   # Simple case: `by` is null so we just apply the function to whole data.frame
   if (is.null(by)) {

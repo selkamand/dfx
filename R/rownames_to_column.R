@@ -21,20 +21,7 @@
 #'
 #' @export
 rownames_to_column <- function(data, column) {
-  if (!is.data.frame(data)) {
-    stop(
-      "`data` must be a data.frame, not an object of class [",
-      toString(class(data)),
-      "]"
-    )
-  }
-
-  # data.table's `[` treats a bare numeric vector as row indices, so the
-  # column reordering at the end would subset rows and leave the new column
-  # in the wrong position.
-  if (inherits(data, "data.table")) {
-    stop("`data.table` objects are not supported by `rownames_to_column()`")
-  }
+  assert_dataframe(data, call = sys.call())
 
   if (!is.character(column)) {
     stop(
@@ -60,15 +47,10 @@ rownames_to_column <- function(data, column) {
     )
   }
 
-  # `[[<-` and `[.data.frame` make duplicate names unique ("x", "x" -> "x", "x.1"),
-  # so snapshot the originals and restore them after the reorder.
-  original_names <- names(data)
-
   data[[column]] <- row.names(data)
 
   # Reorder by position to put the new column first.
   data <- data[c(ncol(data), seq_len(ncol(data) - 1L))]
-  names(data) <- c(column, original_names)
 
   # Reset row names so the values live only in the new column.
   row.names(data) <- NULL

@@ -1,3 +1,11 @@
+# rownames_to_column rejects duplicate column names
+
+    Code
+      rownames_to_column(data, "id")
+    Condition
+      Error in `rownames_to_column()`:
+      ! `data` must not have duplicate column names
+
 # rownames_to_column rejects NULL data
 
     Code
@@ -36,7 +44,7 @@
       rownames_to_column(data, "id")
     Condition
       Error in `rownames_to_column()`:
-      ! `data.table` objects are not supported by `rownames_to_column()`
+      ! `data` must not be a data.table
 
 # rownames_to_column rejects an integer column name
 
