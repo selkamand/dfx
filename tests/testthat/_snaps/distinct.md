@@ -38,3 +38,11 @@
       Error in `distinct()`:
       ! `columns` must not contain duplicates
 
+# distinct rejects a numeric keep_all flag
+
+    Code
+      distinct(data, keep_all = 1)
+    Condition
+      Error in `distinct()`:
+      ! `keep_all` must be either TRUE or FALSE, not an object of class: [numeric]
+

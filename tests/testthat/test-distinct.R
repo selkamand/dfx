@@ -213,3 +213,11 @@ test_that("distinct warns about ignoring dplyr row-wise evaluation", {
   expect_identical(names(result), "id")
   expect_identical(result$id, 1L)
 })
+
+test_that("distinct rejects a numeric keep_all flag", {
+  data <- data.frame(id = 1L)
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    distinct(data, keep_all = 1)
+  })
+})
