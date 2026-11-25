@@ -147,3 +147,31 @@ test_that("distinct rejects an empty column selection", {
     distinct(data, columns = character(0))
   })
 })
+
+test_that("distinct rejects duplicate input column names", {
+  data <- setNames(data.frame(a = 1L, b = 10L), c("id", "id"))
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    distinct(data)
+  })
+})
+
+test_that("distinct rejects duplicate entries in columns", {
+  data <- data.frame(id = c(2L, 2L, 1L))
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    distinct(data, columns = c("id", "id"))
+  })
+})
+
+# test_that("distinct rejects grouped data frames", {
+#   # The class alone exercises the guard without adding a dplyr test dependency.
+#   data <- structure(
+#     data.frame(team = "a", id = 1L),
+#     class = c("grouped_df", "data.frame")
+#   )
+#
+#   expect_snapshot(error = TRUE, cran = TRUE, {
+#     distinct(data, columns = "id")
+#   })
+# })

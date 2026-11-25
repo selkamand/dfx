@@ -22,3 +22,19 @@
       Error in `distinct()`:
       ! `columns` must contain at least one column name. Use `columns = NULL` to use all columns.
 
+# distinct rejects duplicate input column names
+
+    Code
+      distinct(data)
+    Condition
+      Error in `distinct()`:
+      ! `data` must not have duplicate column names
+
+# distinct rejects duplicate entries in columns
+
+    Code
+      distinct(data, columns = c("id", "id"))
+    Condition
+      Error in `distinct()`:
+      ! `columns` must not contain duplicates
+
