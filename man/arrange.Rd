@@ -13,14 +13,13 @@ arrange(data, columns, locale = "C")
 Wrap a column name in \code{\link[=desc]{desc()}} to sort that column in descending order.}
 
 \item{locale}{Either \code{"C"} (the default) for C ordering of character columns,
-or \code{NULL} to use the session's current collation. Support for additional locale names may be added in a future
-version.}
+or \code{NULL} to use the session's current collation.}
 }
 \value{
 A data frame with rows sorted by \code{columns}.
 }
 \description{
-Order rows of a data frame by values of the selected columns.
+Order rows of a data frame by values selected columns.
 }
 \details{
 Missing values sort last in both directions. Rows tied on all selected
@@ -29,7 +28,8 @@ unchanged.
 
 Sorting columns must be vectors, including factors, \code{Date}, \code{POSIXct}, and
 \code{POSIXlt} columns. Ordinary list columns, matrices, and nested data frames
-are not supported.
+are not supported. Character sort columns must not contain strings marked
+with \code{"bytes"} encoding.
 
 For custom numeric S3 classes, dfx uses base R ordering via \code{xtfrm()}.
 dplyr uses the vctrs ordering proxy. A class that defines different
@@ -45,8 +45,7 @@ Session collation settings are never changed. Factors retain their level
 order.
 
 Names in \code{columns} must be empty or the reserved \code{"..DeSc.."} marker set by
-\code{\link[=desc]{desc()}}. Naming or removing names from a flagged element changes the marker,
-so combine column names with \code{c("group", desc("value"))}.
+\code{\link[=desc]{desc()}} which tells arrange to invert the sort order.
 }
 \examples{
 arrange(iris, c("Species", "Sepal.Length"))

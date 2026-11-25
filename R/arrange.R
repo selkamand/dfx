@@ -1,13 +1,12 @@
 #' Arrange rows by column values
 #'
-#' Order rows of a data frame by values of the selected columns.
+#' Order rows of a data frame by values selected columns.
 #'
 #' @param data A data frame to sort.
 #' @param columns A character vector of column names, in order of priority.
 #'   Wrap a column name in [desc()] to sort that column in descending order.
 #' @param locale Either `"C"` (the default) for C ordering of character columns,
-#'   or `NULL` to use the session's current collation. Support for additional locale names may be added in a future
-#'   version.
+#'   or `NULL` to use the session's current collation.
 #'
 #' @return A data frame with rows sorted by `columns`.
 #'
@@ -18,7 +17,8 @@
 #'
 #' Sorting columns must be vectors, including factors, `Date`, `POSIXct`, and
 #' `POSIXlt` columns. Ordinary list columns, matrices, and nested data frames
-#' are not supported.
+#' are not supported. Character sort columns must not contain strings marked
+#' with `"bytes"` encoding.
 #'
 #' For custom numeric S3 classes, dfx uses base R ordering via `xtfrm()`.
 #' dplyr uses the vctrs ordering proxy. A class that defines different
@@ -34,8 +34,7 @@
 #' order.
 #'
 #' Names in `columns` must be empty or the reserved `"..DeSc.."` marker set by
-#' [desc()]. Naming or removing names from a flagged element changes the marker,
-#' so combine column names with `c("group", desc("value"))`.
+#' [desc()] which tells arrange to invert the sort order.
 #'
 #' @examples
 #' arrange(iris, c("Species", "Sepal.Length"))
@@ -99,6 +98,17 @@ arrange <- function(data, columns, locale = "C") {
     if (is.raw(keys[[i]])) {
       # Base order() and xtfrm() need an integer key to sort raw bytes.
       keys[[i]] <- as.integer(keys[[i]])
+    }
+
+    if (is.character(keys[[i]]) && any(Encoding(keys[[i]]) == "bytes")) {
+      stop(simpleError(
+        paste0(
+          "Column [",
+          encodeString(columns[[i]], quote = '"'),
+          '] in `data` must not contain strings with "bytes" encoding'
+        ),
+        call = call
+      ))
     }
 
     if (!is.null(locale) && is.character(keys[[i]])) {

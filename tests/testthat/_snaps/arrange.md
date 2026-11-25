@@ -118,6 +118,102 @@
       Error in `arrange()`:
       ! Column ["nested"] in `data` must be a vector, not an object of class [data.frame]
 
+# arrange rejects bytes-marked sort keys under C
+
+    Code
+      arrange(data, "value")
+    Condition
+      Error in `arrange()`:
+      ! Column ["value"] in `data` must not contain strings with "bytes" encoding
+
+---
+
+    Code
+      arrange(data, desc("value"), locale = "C")
+    Condition
+      Error in `arrange()`:
+      ! Column ["value"] in `data` must not contain strings with "bytes" encoding
+
+---
+
+    Code
+      arrange(data, "value", locale = NULL)
+    Condition
+      Error in `arrange()`:
+      ! Column ["value"] in `data` must not contain strings with "bytes" encoding
+
+---
+
+    Code
+      arrange(data, desc("value"), locale = NULL)
+    Condition
+      Error in `arrange()`:
+      ! Column ["value"] in `data` must not contain strings with "bytes" encoding
+
+---
+
+    Code
+      arrange(data, c("secondary", "value"), locale = "C")
+    Condition
+      Error in `arrange()`:
+      ! Column ["value"] in `data` must not contain strings with "bytes" encoding
+
+---
+
+    Code
+      arrange(data, c("secondary", desc("value")), locale = NULL)
+    Condition
+      Error in `arrange()`:
+      ! Column ["value"] in `data` must not contain strings with "bytes" encoding
+
+# arrange rejects bytes-marked sort keys under en_US.UTF-8
+
+    Code
+      arrange(data, "value")
+    Condition
+      Error in `arrange()`:
+      ! Column ["value"] in `data` must not contain strings with "bytes" encoding
+
+---
+
+    Code
+      arrange(data, desc("value"), locale = "C")
+    Condition
+      Error in `arrange()`:
+      ! Column ["value"] in `data` must not contain strings with "bytes" encoding
+
+---
+
+    Code
+      arrange(data, "value", locale = NULL)
+    Condition
+      Error in `arrange()`:
+      ! Column ["value"] in `data` must not contain strings with "bytes" encoding
+
+---
+
+    Code
+      arrange(data, desc("value"), locale = NULL)
+    Condition
+      Error in `arrange()`:
+      ! Column ["value"] in `data` must not contain strings with "bytes" encoding
+
+---
+
+    Code
+      arrange(data, c("secondary", "value"), locale = "C")
+    Condition
+      Error in `arrange()`:
+      ! Column ["value"] in `data` must not contain strings with "bytes" encoding
+
+---
+
+    Code
+      arrange(data, c("secondary", desc("value")), locale = NULL)
+    Condition
+      Error in `arrange()`:
+      ! Column ["value"] in `data` must not contain strings with "bytes" encoding
+
 # arrange rejects invalid locale types
 
     Code
