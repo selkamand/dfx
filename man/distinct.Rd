@@ -10,7 +10,7 @@ distinct(data, columns = NULL, keep_all = FALSE)
 \item{data}{A data frame.}
 
 \item{columns}{Names of columns to base uniqueness on. By default all columns
-will be used.}
+will be used. Zero length vectors are not accepted.}
 
 \item{keep_all}{Keep all columns}
 }

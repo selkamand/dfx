@@ -14,3 +14,11 @@
       Error in `distinct()`:
       ! Could not find column in `data`: ["unknown"]
 
+# distinct rejects an empty column selection
+
+    Code
+      distinct(data, columns = character(0))
+    Condition
+      Error in `distinct()`:
+      ! `columns` must contain at least one column name. Use `columns = NULL` to use all columns.
+

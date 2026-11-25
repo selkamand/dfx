@@ -139,3 +139,11 @@ test_that("distinct keeps the first row of a zero-column data frame", {
   expect_identical(distinct(data), expected)
   expect_identical(distinct(data, keep_all = TRUE), expected)
 })
+
+test_that("distinct rejects an empty column selection", {
+  data <- data.frame(id = c(2L, 2L, 1L))
+
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    distinct(data, columns = character(0))
+  })
+})

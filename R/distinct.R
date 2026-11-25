@@ -5,7 +5,7 @@
 #'
 #' @param data A data frame.
 #' @param columns Names of columns to base uniqueness on. By default all columns
-#' will be used.
+#' will be used. Zero length vectors are not accepted.
 #' @param keep_all Keep all columns
 #'
 #' @return
@@ -44,6 +44,17 @@ distinct <- function(data, columns = NULL, keep_all = FALSE) {
   # If columns is non-null strictly assert their contents
   if (!is.null(columns)) {
     assert_columns_sensible(columns, data, call = call)
+
+    # Add a special check that `columns` contains at least one column name
+    # Since when a user supplies columns=character(0) it not 100% clear what
+    # they want. The error message asks them to explicitly set columns = NULL
+    # if trying to use all columns to identify dups.
+    if (length(columns) == 0L) {
+      stop(simpleError(
+        "`columns` must contain at least one column name. Use `columns = NULL` to use all columns.",
+        call = call
+      ))
+    }
   } else {
     # Otherwise we'll calculate unique-ness based on all columns
     # by setting columns to a numeric vector [1 -> ncol(data)]
