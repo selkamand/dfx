@@ -61,8 +61,17 @@ distinct <- function(data, columns = NULL, keep_all = FALSE) {
     columns <- seq_len(ncol(data))
   }
 
-  # Identify duplicate rows
-  duped <- duplicated(data[columns])
+  keys <- data[columns]
+
+  # Add some special logic to deal with matrix-columns.
+  # Compare each matrix row as one key value, ignoring dimension names.
+  matrix_keys <- vapply(keys, is.matrix, logical(1))
+  keys[matrix_keys] <- lapply(keys[matrix_keys], function(key) {
+    lapply(seq_len(nrow(key)), function(row) unname(key[row, ]))
+  })
+
+  # Identify duplicates
+  duped <- duplicated(keys)
 
   # If data frame has no cols (only rows) then treat every row after the first
   # one as a duplicate. This overrides the above `duped` variable.

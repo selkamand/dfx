@@ -181,3 +181,21 @@ test_that("distinct warns about ignoring dplyr groups", {
   expect_identical(names(result), "id")
   expect_identical(result$id, 1L)
 })
+
+test_that("distinct compares whole matrix rows and preserves the matrix column", {
+  data <- data.frame(
+    key = I(cbind(c(1L, 1L, 1L, 2L), c(3L, 3L, 4L, 3L)))
+  )
+  expected <- data[c(1L, 3L, 4L), , drop = FALSE]
+  rownames(expected) <- NULL
+
+  expect_identical(distinct(data), expected)
+})
+
+test_that("distinct compares a matrix key and an ordinary key together", {
+  key <- rbind(first = c(1L, 3L), duplicate = c(1L, 3L), other = c(1L, 3L))
+  data <- data.frame(group = c("a", "a", "b"), key = I(key))
+  expected <- data[c(1L, 3L), , drop = FALSE]
+
+  expect_identical(distinct(data, columns = c("group", "key")), expected)
+})
