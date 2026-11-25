@@ -85,6 +85,49 @@ test_that("arrange puts missing values last in both directions", {
   )
 })
 
+test_that("arrange keeps NA and NaN tied and last in ascending sorts", {
+  data <- data.frame(value = c(NaN, NA_real_, 2, 1, NaN, NA_real_), id = 1:6)
+
+  expect_identical(
+    arrange(data, "value"),
+    data[c(4, 3, 1, 2, 5, 6), , drop = FALSE]
+  )
+})
+
+test_that("arrange keeps NA and NaN tied and last in descending sorts", {
+  data <- data.frame(value = c(NaN, NA_real_, 2, 1, NaN, NA_real_), id = 1:6)
+
+  expect_identical(
+    arrange(data, desc("value")),
+    data[c(3, 4, 1, 2, 5, 6), , drop = FALSE]
+  )
+})
+
+test_that("arrange uses secondary columns to break ties between NA and NaN", {
+  data <- data.frame(
+    value = c(NaN, NA_real_, 2, 1, NaN, NA_real_),
+    secondary = c(2, 1, 0, 0, 1, 2),
+    id = 1:6
+  )
+
+  expect_identical(
+    arrange(data, c("value", "secondary")),
+    data[c(4, 3, 2, 5, 1, 6), , drop = FALSE]
+  )
+  expect_identical(
+    arrange(data, c(desc("value"), "secondary")),
+    data[c(3, 4, 2, 5, 1, 6), , drop = FALSE]
+  )
+  expect_identical(
+    arrange(data, c("value", desc("secondary"))),
+    data[c(4, 3, 1, 6, 2, 5), , drop = FALSE]
+  )
+  expect_identical(
+    arrange(data, c(desc("value"), desc("secondary"))),
+    data[c(3, 4, 1, 6, 2, 5), , drop = FALSE]
+  )
+})
+
 test_that("arrange preserves dimensions and handles empty inputs", {
   data <- data.frame(value = c(2L, 1L))
 
@@ -182,6 +225,8 @@ test_that("arrange defaults to C ordering for character columns", {
   expect_identical(arrange(data, desc("value"), locale = "C"), descending)
 })
 
+# Restore the locale before reporting expectations so LC_CTYPE = "C" cannot
+# turn the progress reporter's Unicode spinner into escaped character codes.
 for (system_locale in c("C", "en_US.UTF-8", "sv_SE.UTF-8")) {
   test_that(paste("arrange respects locale choices under", system_locale), {
     skip_if_not_installed("withr")
@@ -193,34 +238,40 @@ for (system_locale in c("C", "en_US.UTF-8", "sv_SE.UTF-8")) {
     skip_if(!available, paste("System locale unavailable:", system_locale))
 
     locale_before <- vapply(names(requested), Sys.getlocale, character(1))
-    withr::with_locale(requested, {
+    results <- withr::with_locale(requested, {
       latin1 <- iconv("\u00e4", from = "UTF-8", to = "latin1")
       data <- data.frame(
         value = c("a", "Z", "\u00e4", "A", "", latin1, NA_character_),
         id = 1:7
       )
 
-      expect_identical(
-        arrange(data, "value"),
-        data[c(5, 4, 2, 1, 3, 6, 7), , drop = FALSE]
-      )
-      expect_identical(
-        arrange(data, desc("value")),
-        data[c(3, 6, 1, 2, 4, 5, 7), , drop = FALSE]
-      )
-      expect_identical(
-        arrange(data, "value", locale = NULL),
-        data[order(data$value), , drop = FALSE]
-      )
-      expect_identical(
-        arrange(data, desc("value"), locale = NULL),
-        data[order(-xtfrm(data$value)), , drop = FALSE]
-      )
-      expect_identical(
-        vapply(names(requested), Sys.getlocale, character(1)),
-        requested
+      list(
+        ascending = arrange(data, "value"),
+        ascending_expected = data[c(5, 4, 2, 1, 3, 6, 7), , drop = FALSE],
+        descending = arrange(data, desc("value")),
+        descending_expected = data[c(3, 6, 1, 2, 4, 5, 7), , drop = FALSE],
+        session_ascending = arrange(data, "value", locale = NULL),
+        session_ascending_expected = data[order(data$value), , drop = FALSE],
+        session_descending = arrange(data, desc("value"), locale = NULL),
+        session_descending_expected = data[
+          order(-xtfrm(data$value)),
+          ,
+          drop = FALSE
+        ],
+        locale_after = vapply(names(requested), Sys.getlocale, character(1))
       )
     })
+    expect_identical(results$ascending, results$ascending_expected)
+    expect_identical(results$descending, results$descending_expected)
+    expect_identical(
+      results$session_ascending,
+      results$session_ascending_expected
+    )
+    expect_identical(
+      results$session_descending,
+      results$session_descending_expected
+    )
+    expect_identical(results$locale_after, requested)
     expect_identical(
       vapply(names(requested), Sys.getlocale, character(1)),
       locale_before
@@ -238,6 +289,126 @@ test_that("arrange uses consistent C ordering across character encodings", {
   expect_identical(arrange(data, desc("value")), data)
   expect_identical(data, original)
 })
+
+for (system_locale in c("C", "en_US.UTF-8")) {
+  test_that(
+    paste("arrange records invalid native text ordering under", system_locale),
+    {
+      requested <- c(LC_CTYPE = system_locale)
+      available <- suppressWarnings(withr::with_locale(
+        requested,
+        identical(Sys.getlocale("LC_CTYPE"), system_locale)
+      ))
+      skip_if(!available, paste("System locale unavailable:", system_locale))
+
+      results <- withr::with_locale(requested, {
+        invalid <- rawToChar(as.raw(255))
+        Encoding(invalid) <- "unknown"
+        data <- data.frame(
+          value = c(invalid, "<ff>", "z", NA_character_),
+          secondary = c(2L, 1L, 0L, 0L),
+          id = 1:4
+        )
+        original <- data
+
+        list(
+          ascending = arrange(data, "value", locale = "C")$id,
+          descending = arrange(data, desc("value"), locale = "C")$id,
+          ascending_secondary = arrange(
+            data,
+            c("value", "secondary"),
+            locale = "C"
+          )$id,
+          descending_secondary = arrange(
+            data,
+            c(desc("value"), "secondary"),
+            locale = "C"
+          )$id,
+          data = data,
+          original = original
+        )
+      })
+
+      # Match dplyr's native-text conversion: with LC_CTYPE = "C",
+      # native 0xff becomes "<ff>" and ties the literal text.
+      if (system_locale == "C") {
+        ascending <- c(1L, 2L, 3L, 4L)
+        descending <- c(3L, 1L, 2L, 4L)
+        ascending_secondary <- c(2L, 1L, 3L, 4L)
+        descending_secondary <- c(3L, 2L, 1L, 4L)
+      } else {
+        ascending <- c(2L, 3L, 1L, 4L)
+        descending <- c(1L, 3L, 2L, 4L)
+        ascending_secondary <- ascending
+        descending_secondary <- descending
+      }
+
+      expect_identical(results$ascending, ascending)
+      expect_identical(results$descending, descending)
+      expect_identical(results$ascending_secondary, ascending_secondary)
+      expect_identical(results$descending_secondary, descending_secondary)
+      expect_identical(results$data, results$original)
+    }
+  )
+
+  test_that(
+    paste("arrange rejects bytes-marked sort keys under", system_locale),
+    {
+      requested <- c(LC_CTYPE = system_locale)
+      available <- suppressWarnings(withr::with_locale(
+        requested,
+        identical(Sys.getlocale("LC_CTYPE"), system_locale)
+      ))
+      skip_if(!available, paste("System locale unavailable:", system_locale))
+
+      byte <- rawToChar(as.raw(255))
+      Encoding(byte) <- "bytes"
+      data <- data.frame(
+        value = c(byte, "<ff>", "z", byte, NA_character_),
+        secondary = c(2L, 1L, 0L, 1L, 0L),
+        id = 1:5
+      )
+      original <- data
+
+      expect_snapshot(error = TRUE, cran = TRUE, {
+        withr::with_locale(requested, {
+          arrange(data, "value")
+        })
+      })
+      expect_snapshot(error = TRUE, cran = TRUE, {
+        withr::with_locale(requested, {
+          arrange(data, desc("value"), locale = "C")
+        })
+      })
+      expect_snapshot(error = TRUE, cran = TRUE, {
+        withr::with_locale(requested, {
+          arrange(data, "value", locale = NULL)
+        })
+      })
+      expect_snapshot(error = TRUE, cran = TRUE, {
+        withr::with_locale(requested, {
+          arrange(data, desc("value"), locale = NULL)
+        })
+      })
+      expect_snapshot(error = TRUE, cran = TRUE, {
+        withr::with_locale(requested, {
+          arrange(data, c("secondary", "value"), locale = "C")
+        })
+      })
+      expect_snapshot(error = TRUE, cran = TRUE, {
+        withr::with_locale(requested, {
+          arrange(data, c("secondary", desc("value")), locale = NULL)
+        })
+      })
+      expect_identical(withr::with_locale(requested, arrange(data, "id")), data)
+      expect_identical(
+        withr::with_locale(requested, arrange(data, character())),
+        data
+      )
+      expect_identical(data, original)
+    }
+  )
+}
 
 test_that("arrange applies C ordering to character keys in either position", {
   data <- data.frame(
