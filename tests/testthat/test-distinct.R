@@ -131,3 +131,11 @@ test_that("distinct preserves custom row names on retained rows", {
 
   expect_identical(distinct(data), expected)
 })
+
+test_that("distinct keeps the first row of a zero-column data frame", {
+  data <- data.frame(row.names = c("first", "second", "third"))
+  expected <- data[1L, , drop = FALSE]
+
+  expect_identical(distinct(data), expected)
+  expect_identical(distinct(data, keep_all = TRUE), expected)
+})

@@ -53,6 +53,14 @@ distinct <- function(data, columns = NULL, keep_all = FALSE) {
   # Identify duplicate rows
   duped <- duplicated(data[columns])
 
+  # If data frame has no cols (only rows) then treat every row after the first
+  # one as a duplicate. This overrides the above `duped` variable.
+  # If we do NOT override duped in this special-case then  dfx::distinct of a
+  # 0-col data frame returns a 0-row data frame (even if it had multiple)
+  if (ncol(data) == 0) {
+    duped <- seq_len(nrow(data)) > 1L
+  }
+
   # Return unique rows and:
   # - all columns if `keep_all = TRUE`
   # - or just the columns uniqueness is based on if `keep_all = FALSE`
