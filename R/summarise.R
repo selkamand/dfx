@@ -94,7 +94,12 @@ summarise <- function(data, fun, by = NULL) {
   # `error in summarise()` not `error in internal_helper()`
   call <- sys.call()
 
-  assert_dataframe(data, call = call, warn_grouped = TRUE)
+  assert_dataframe(
+    data,
+    call = call,
+    warn_grouped = TRUE,
+    warn_rowwise = TRUE
+  )
 
   # Assert `fun` is a function
   if (!is.function(fun)) {
@@ -120,52 +125,8 @@ summarise <- function(data, fun, by = NULL) {
     )
   }
 
-  # Simple case: `by` is null so we just apply the function to whole data.frame
   if (is.null(by)) {
-    # Apply function to whole dataset, catching and adding error message
-    # when fun fails using a tryCatch
-    ls_result <- tryCatch(
-      fun(data),
-      error = function(err) {
-        stop(simpleError(
-          message = paste0(
-            "`fun` threw an error when applied to the data: ",
-            conditionMessage(err)
-          ),
-          call = call
-        ))
-      }
-    )
-
-    # assert resulting list is sensible (a named list with one entry per metric)
-    assert_summarise_function_return_is_sensible(
-      ls_result,
-      expected_rows = 1,
-      call = call
-    )
-
-    # Why do we expect 1 row even if input data.frame has zero rows? (see above
-    # assertion is set for expected_rows = 1)
-    #
-    # There are 3 main reasons:
-    #
-    # 1) Some summary functions make sense for an empty data.frame. For example
-    #    a count of row numbers (dplyr::n()) or factor levels is useful even
-    #    when the entire data.frame is empty.
-    # 2) It matches how dplyr::summarise works.
-    # 3) Upstream filters will often create a zero-row data.frame that gets fed
-    #    into a summarise function. Forcing the summarise contract to always
-    #    produces the same set of columns makes downstream code easier to reason
-    #    about and simplify attempts to chain filter -> summarise.
-
-    # Combine rows into data.frame
-    df_metrics <- metrics_to_data_frame(ls_result)
-
-    # Check all columns are unique
-    # (& `fun` doesn't return two metrics with the same name)
-    assert_no_duplicates_in_metric_names(colnames(df_metrics), call = call)
-
-    return(df_metrics)
+    return(summarise_ungrouped(data, fun, call = call))
   }
 
   # Deal with the more complex case:
@@ -188,7 +149,7 @@ summarise <- function(data, fun, by = NULL) {
   # This introduces a constraint on summary functions. They must work even
   # when input is length-0.
   if (nrow(data) == 0L) {
-    df_metrics <- summarise(data, fun)
+    df_metrics <- summarise_ungrouped(data, fun, call = call)
     assert_metric_names_do_not_overlap_groups(
       names(df_metrics),
       by,
@@ -328,6 +289,53 @@ summarise <- function(data, fun, by = NULL) {
 
   # Add grouping column information before metric columns
   return(cbind(df_group_keys, df_collated_summary))
+}
+
+summarise_ungrouped <- function(data, fun, call) {
+  # Apply function to whole dataset, catching and adding error message
+  # when fun fails using a tryCatch
+  ls_result <- tryCatch(
+    fun(data),
+    error = function(err) {
+      stop(simpleError(
+        message = paste0(
+          "`fun` threw an error when applied to the data: ",
+          conditionMessage(err)
+        ),
+        call = call
+      ))
+    }
+  )
+
+  # assert resulting list is sensible (a named list with one entry per metric)
+  assert_summarise_function_return_is_sensible(
+    ls_result,
+    expected_rows = 1,
+    call = call
+  )
+
+  # Why do we expect 1 row even if input data.frame has zero rows? (see above
+  # assertion is set for expected_rows = 1)
+  #
+  # There are 3 main reasons:
+  #
+  # 1) Some summary functions make sense for an empty data.frame. For example
+  #    a count of row numbers (dplyr::n()) or factor levels is useful even
+  #    when the entire data.frame is empty.
+  # 2) It matches how dplyr::summarise works.
+  # 3) Upstream filters will often create a zero-row data.frame that gets fed
+  #    into a summarise function. Forcing the summarise contract to always
+  #    produces the same set of columns makes downstream code easier to reason
+  #    about and simplify attempts to chain filter -> summarise.
+
+  # Combine rows into data.frame
+  df_metrics <- metrics_to_data_frame(ls_result)
+
+  # Check all columns are unique
+  # (& `fun` doesn't return two metrics with the same name)
+  assert_no_duplicates_in_metric_names(colnames(df_metrics), call = call)
+
+  return(df_metrics)
 }
 
 restore_missing_factor_codes <- function(summary, group_metrics) {

@@ -1704,3 +1704,31 @@ test_that("summarise reports all array-valued grouping columns", {
   })
 })
 
+
+test_that("summarise warns about row-wise evaluation and honours by", {
+  data <- structure(
+    data.frame(team = c("a", "a", "b")),
+    class = c("rowwise_df", "data.frame")
+  )
+
+  expect_warning(
+    result <- summarise(data, function(group) list(n = nrow(group)), by = "team"),
+    "dfx ignores the row-wise evaluation mode",
+    fixed = TRUE
+  )
+  expect_identical(result, data.frame(team = c("a", "b"), n = c(2L, 1L)))
+})
+
+test_that("summarise warns once for an empty rowwise input grouped by a key", {
+  data <- structure(
+    data.frame(team = character()),
+    class = c("rowwise_df", "data.frame")
+  )
+
+  expect_warning(
+    result <- summarise(data, function(group) list(n = nrow(group)), by = "team"),
+    "dfx ignores the row-wise evaluation mode",
+    fixed = TRUE
+  )
+  expect_identical(result, data.frame(team = character(), n = integer()))
+})
