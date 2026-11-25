@@ -38,6 +38,37 @@ test_that("arrange sorts character, factor, and temporal values descending", {
   }
 })
 
+test_that("arrange preserves POSIXlt columns when ordering timestamps", {
+  instants <- as.POSIXct(
+    c("2024-11-03 06:30:00", "2024-11-03 05:30:00"),
+    tz = "UTC"
+  )
+
+  for (zone in c("UTC", "America/New_York")) {
+    data <- data.frame(id = 1:6, tie = c(1, 2, 1, 1, 1, 1))
+    # Assign after construction so data.frame() cannot coerce POSIXlt to POSIXct.
+    # In New York, these instants span both occurrences of 01:30 at DST fallback.
+    data$time <- as.POSIXlt(instants[c(1, 2, NA, 2, 1, 2)], tz = zone)
+    expect_s3_class(data$time, "POSIXlt")
+
+    expect_identical(arrange(data, "time"), data[c(2, 4, 6, 1, 5, 3), ])
+    expect_identical(arrange(data, desc("time")), data[c(1, 5, 2, 4, 6, 3), ])
+    expect_identical(
+      arrange(data, c("time", "tie")),
+      data[c(4, 6, 2, 1, 5, 3), ]
+    )
+    expect_identical(
+      arrange(data, c(desc("time"), "tie")),
+      data[c(1, 5, 4, 6, 2, 3), ]
+    )
+    expect_identical(arrange(data[FALSE, ], "time"), data[FALSE, ])
+    expect_identical(arrange(data[FALSE, ], desc("time")), data[FALSE, ])
+    missing <- data[c(3, 3), ]
+    expect_identical(arrange(missing, "time"), missing)
+    expect_identical(arrange(missing, desc("time")), missing)
+  }
+})
+
 test_that("arrange puts missing values last in both directions", {
   data <- data.frame(value = c(NA, 2, 1, NA, 2), id = 1:5)
 

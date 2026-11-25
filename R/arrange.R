@@ -16,8 +16,9 @@
 #' columns keep their original order. An empty character vector leaves `data`
 #' unchanged.
 #'
-#' Sorting columns must be vectors, including factors, dates, and date-times.
-#' List columns, matrices, and nested data frames are not supported.
+#' Sorting columns must be vectors, including factors, `Date`, `POSIXct`, and
+#' `POSIXlt` columns. Ordinary list columns, matrices, and nested data frames
+#' are not supported.
 #'
 #' For custom numeric S3 classes, dfx uses base R ordering via `xtfrm()`.
 #' dplyr uses the vctrs ordering proxy. A class that defines different
@@ -25,9 +26,12 @@
 #'
 #' Character columns use C ordering by default, which can differ from the
 #' session's collation, particularly for mixed-case text. Use `locale = NULL`
-#' to retain the session-dependent. Unlike
-#' `dplyr::arrange()`, `NULL` selects the current collation rather than C ordering.
-#' Session collation settings are never changed. Factors retain their level order.
+#' to retain the session-dependent ordering.
+#'
+#' Unlike `dplyr::arrange()`, `NULL` selects the current collation rather than
+#' C ordering.
+#' Session collation settings are never changed. Factors retain their level
+#' order.
 #'
 #' Names in `columns` must be empty or the reserved `"..DeSc.."` marker set by
 #' [desc()]. Naming or removing names from a flagged element changes the marker,
@@ -71,7 +75,15 @@ arrange <- function(data, columns, locale = "C") {
   # Remove column names so none can match order()'s control arguments.
   keys <- unname(data[columns])
   for (i in seq_along(keys)) {
-    if (is.list(keys[[i]]) || !is.null(dim(keys[[i]]))) {
+    if (
+      # Error if columns we want to arrange by are of a type we don't support.
+      # We do NOT support:
+      # - list columns (EXCEPT for POSIXlt objects since they work fine with
+      #   base R ordering)
+      #   - Multidimensional datastructures (matrices / 3D arrays / etc)
+      (is.list(keys[[i]]) && !inherits(keys[[i]], "POSIXlt")) ||
+        !is.null(dim(keys[[i]]))
+    ) {
       stop(
         "Column [",
         encodeString(columns[[i]], quote = '"'),

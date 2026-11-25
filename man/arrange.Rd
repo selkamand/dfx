@@ -7,7 +7,7 @@
 arrange(data, columns, locale = "C")
 }
 \arguments{
-\item{data}{A data frame.}
+\item{data}{A data frame to sort.}
 
 \item{columns}{A character vector of column names, in order of priority.
 Wrap a column name in \code{\link[=desc]{desc()}} to sort that column in descending order.}
@@ -27,8 +27,9 @@ Missing values sort last in both directions. Rows tied on all selected
 columns keep their original order. An empty character vector leaves \code{data}
 unchanged.
 
-Sorting columns must be vectors, including factors, dates, and date-times.
-List columns, matrices, and nested data frames are not supported.
+Sorting columns must be vectors, including factors, \code{Date}, \code{POSIXct}, and
+\code{POSIXlt} columns. Ordinary list columns, matrices, and nested data frames
+are not supported.
 
 For custom numeric S3 classes, dfx uses base R ordering via \code{xtfrm()}.
 dplyr uses the vctrs ordering proxy. A class that defines different
@@ -36,9 +37,12 @@ orderings through these mechanisms can produce different row orders.
 
 Character columns use C ordering by default, which can differ from the
 session's collation, particularly for mixed-case text. Use \code{locale = NULL}
-to retain the session-dependent. Unlike
-\code{dplyr::arrange()}, \code{NULL} selects the current collation rather than C ordering.
-Session collation settings are never changed. Factors retain their level order.
+to retain the session-dependent ordering.
+
+Unlike \code{dplyr::arrange()}, \code{NULL} selects the current collation rather than
+C ordering.
+Session collation settings are never changed. Factors retain their level
+order.
 
 Names in \code{columns} must be empty or the reserved \code{"..DeSc.."} marker set by
 \code{\link[=desc]{desc()}}. Naming or removing names from a flagged element changes the marker,
