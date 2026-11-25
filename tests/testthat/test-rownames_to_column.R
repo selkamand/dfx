@@ -27,34 +27,11 @@ test_that("rownames_to_column adds row names as the first column", {
   expect_identical(data, original)
 })
 
-test_that("rownames_to_column preserves duplicate column names", {
-  data <- data.frame(value = 1:2, label = c("a", "b"))
-  names(data) <- c("x", "x")
-  row.names(data) <- c("row-a", "row-b")
-  original <- data
-
-  result <- rownames_to_column(data, "id")
-
-  expect_identical(names(result), c("id", "x", "x"))
-  expect_identical(result[[1L]], c("row-a", "row-b"))
-  expect_identical(result[[2L]], original[[1L]])
-  expect_identical(result[[3L]], original[[2L]])
-  expect_identical(row.names(result), c("1", "2"))
-  expect_identical(data, original)
-})
-
-test_that("rownames_to_column preserves duplicates with an auto-uniquified new name", {
-  data <- data.frame(value = 1:2, label = c("a", "b"))
-  names(data) <- c("x", "x")
-  original <- data
-
-  result <- rownames_to_column(data, "x.1")
-
-  expect_identical(names(result), c("x.1", "x", "x"))
-  expect_identical(result[[1L]], c("1", "2"))
-  expect_identical(result[[2L]], original[[1L]])
-  expect_identical(result[[3L]], original[[2L]])
-  expect_identical(data, original)
+test_that("rownames_to_column rejects duplicate column names", {
+  data <- data.frame(x = 1:2, x = 3:4, check.names = FALSE)
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    rownames_to_column(data, "id")
+  })
 })
 
 test_that("rownames_to_column uses automatic row names as values", {

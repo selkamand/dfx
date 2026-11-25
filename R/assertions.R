@@ -1,7 +1,6 @@
 # The set of assertions used in many different dfx functions
 # Used to ensure error messages are consistent across functions.
 
-# Assert data is a data.frame
 assert_dataframe <- function(data, call) {
   if (!is.data.frame(data)) {
     stop(simpleError(
@@ -10,6 +9,19 @@ assert_dataframe <- function(data, call) {
         toString(class(data)),
         "]"
       ),
+      call = call
+    ))
+  }
+
+  # Callers use data[columns] for column selection. A data.table interprets
+  # that expression as a row subset or join.
+  if (inherits(data, "data.table")) {
+    stop(simpleError("`data` must not be a data.table", call = call))
+  }
+
+  if (anyDuplicated(names(data)) > 0L) {
+    stop(simpleError(
+      "`data` must not have duplicate column names",
       call = call
     ))
   }
