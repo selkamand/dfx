@@ -6,8 +6,8 @@
 #' @param columns A character vector of column names, in order of priority.
 #'   Wrap a column name in [desc()] to sort that column in descending order.
 #' @param locale Either `"C"` (the default) for C ordering of character columns,
-#'   or `NULL` to use the session's current collation. Other locale names are not
-#'   supported.
+#'   or `NULL` to use the session's current collation. Support for additional locale names may be added in a future
+#'   version.
 #'
 #' @return A data frame with rows sorted by `columns`.
 #'
@@ -19,9 +19,13 @@
 #' Sorting columns must be vectors, including factors, dates, and date-times.
 #' List columns, matrices, and nested data frames are not supported.
 #'
+#' For custom numeric S3 classes, dfx uses base R ordering via `xtfrm()`.
+#' dplyr uses the vctrs ordering proxy. A class that defines different
+#' orderings through these mechanisms can produce different row orders.
+#'
 #' Character columns use C ordering by default, which can differ from the
 #' session's collation, particularly for mixed-case text. Use `locale = NULL`
-#' to retain the session-dependent behavior of earlier versions. Unlike
+#' to retain the session-dependent. Unlike
 #' `dplyr::arrange()`, `NULL` selects the current collation rather than C ordering.
 #' Session collation settings are never changed. Factors retain their level order.
 #'
@@ -75,6 +79,14 @@ arrange <- function(data, columns, locale = "C") {
         toString(class(keys[[i]])),
         "]"
       )
+    }
+
+    # For raw byte vectors we probably want to sort by unsigned byte value
+    # instead of throwing an error when passed to order() or xtfrm().
+    # We can accomplish this by calling as.integer on the raw vec
+    if (is.raw(keys[[i]])) {
+      # Base order() and xtfrm() need an integer key to sort raw bytes.
+      keys[[i]] <- as.integer(keys[[i]])
     }
 
     if (!is.null(locale) && is.character(keys[[i]])) {

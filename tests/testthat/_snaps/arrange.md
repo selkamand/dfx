@@ -214,3 +214,11 @@
       Error in `arrange()`:
       ! `locale` must be NULL or "C"
 
+# arrange rejects duplicate data names even when sorting another column
+
+    Code
+      arrange(data, "id")
+    Condition
+      Error in `arrange()`:
+      ! `data` must not have duplicate column names
+

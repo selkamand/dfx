@@ -9,7 +9,8 @@
 #'
 #' @details
 #' Unlike `dplyr::desc()`, this function marks a column name rather than
-#' transforming a vector of values. Repeated calls keep the descending flag.
+#' transforming a vector of values. `desc(desc("x"))` and `desc("x")` both sort
+#' column `x` in descending order.
 #' Preserve the name when combining it with other columns: naming the result or
 #' removing its name changes the sorting instruction.
 #'

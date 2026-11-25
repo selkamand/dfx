@@ -18,7 +18,8 @@ Mark a column name for descending sorting in \code{\link[=arrange]{arrange()}}.
 }
 \details{
 Unlike \code{dplyr::desc()}, this function marks a column name rather than
-transforming a vector of values. Repeated calls keep the descending flag.
+transforming a vector of values. \code{desc(desc("x"))} and \code{desc("x")} both sort
+column \code{x} in descending order.
 Preserve the name when combining it with other columns: naming the result or
 removing its name changes the sorting instruction.
 }

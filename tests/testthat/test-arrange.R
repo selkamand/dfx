@@ -353,3 +353,20 @@ test_that("arrange leaves session collation unchanged on success and failure", {
     expect_identical(icuGetCollate(), icu_before)
   }
 })
+
+test_that("arrange rejects duplicate data names even when sorting another column", {
+  data <- data.frame(id = 1:2, x = 1:2, x = 2:1, check.names = FALSE)
+  expect_snapshot(error = TRUE, cran = TRUE, {
+    arrange(data, "id")
+  })
+})
+
+test_that("arrange sorts raw bytes by their unsigned value", {
+  data <- data.frame(id = 1:5, byte = as.raw(c(255, 0, 128, 127, 128)))
+  expect_identical(arrange(data, "byte")$id, c(2L, 4L, 3L, 5L, 1L))
+})
+
+test_that("arrange sorts raw bytes in descending order", {
+  data <- data.frame(id = 1:5, byte = as.raw(c(255, 0, 128, 127, 128)))
+  expect_identical(arrange(data, desc("byte"))$id, c(1L, 3L, 5L, 4L, 2L))
+})
