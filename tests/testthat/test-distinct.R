@@ -214,6 +214,43 @@ test_that("distinct warns about ignoring dplyr row-wise evaluation", {
   expect_identical(result$id, 1L)
 })
 
+test_that("distinct compares packed data frame keys by values regardless of row names", {
+  data <- data.frame(site = c("a", "a", "a"))
+  data$key <- data.frame(
+    id = c(1L, 1L, 2L),
+    batch = c("b", "b", "b"),
+    row.names = c("r1", "r2", "r3")
+  )
+  expected <- data[c(1L, 3L), , drop = FALSE]
+  rownames(expected) <- NULL
+
+  expect_identical(distinct(data, columns = c("site", "key")), expected)
+})
+
+test_that("distinct compares whole first-dimension slices of array keys", {
+  key <- array(
+    c(1L, 1L, 1L, 2L, 2L, 2L, 3L, 3L, 3L, 4L, 4L, 5L),
+    dim = c(3L, 2L, 2L),
+    dimnames = list(c("first", "duplicate", "different"), c("a", "b"), c("x", "y"))
+  )
+  data <- data.frame(site = c("a", "a", "a"))
+  data$key <- key
+  expected <- data.frame(site = c("a", "a"))
+  expected$key <- key[c(1L, 3L), , , drop = FALSE]
+
+  expect_identical(distinct(data, columns = c("site", "key")), expected)
+})
+
+test_that("distinct preserves array columns outside the keys with keep_all", {
+  payload <- array(seq_len(6L), dim = c(3L, 1L, 2L))
+  data <- data.frame(id = c(1L, 1L, 2L))
+  data$payload <- payload
+  expected <- data.frame(id = c(1L, 2L))
+  expected$payload <- payload[c(1L, 3L), , , drop = FALSE]
+
+  expect_identical(distinct(data, columns = "id", keep_all = TRUE), expected)
+})
+
 test_that("distinct rejects a numeric keep_all flag", {
   data <- data.frame(id = 1L)
 
