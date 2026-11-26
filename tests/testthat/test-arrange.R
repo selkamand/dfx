@@ -1,3 +1,15 @@
+test_that("arrange moves whole array slices with their rows", {
+  data <- data.frame(id = c(2L, 3L, 1L))
+  data$payload <- array(
+    1:6, c(3L, 1L, 2L), dimnames = list(letters[1:3], "x", c("a", "b"))
+  )
+
+  result <- arrange(data, "id")
+
+  expect_identical(result$id, 1:3)
+  expect_identical(result$payload, data$payload[c(3L, 1L, 2L), , , drop = FALSE])
+})
+
 test_that("arrange sorts by column priority with independent directions", {
   data <- data.frame(
     group = c("b", "a", "a", "b", "a"),

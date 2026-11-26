@@ -1,3 +1,20 @@
+test_that("grouped summarise passes intact array slices to its callback", {
+  data <- data.frame(group = c("a", "b", "a"))
+  data$payload <- array(
+    1:6, c(3L, 1L, 2L), dimnames = list(letters[1:3], "x", c("a", "b"))
+  )
+  expected <- list(
+    a = data$payload[c(1L, 3L), , , drop = FALSE],
+    b = data$payload[2L, , , drop = FALSE]
+  )
+
+  result <- summarise(data, function(d) {
+    list(intact = identical(d$payload, expected[[d$group[[1L]]]]))
+  }, by = "group")
+
+  expect_identical(result, data.frame(group = c("a", "b"), intact = c(TRUE, TRUE)))
+})
+
 test_that("summarise happy path works (ungrouped)", {
   dfx_summary <- summarise(mtcars, function(d) {
     list(mean_mpg = round(mean(d$mpg), digits = 0), max_cyl = max(d$cyl))

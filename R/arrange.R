@@ -126,5 +126,5 @@ arrange <- function(data, columns, locale = "C") {
   }
 
   orders <- do.call(order, keys)
-  data[orders, , drop = FALSE]
+  slice_rows(data, orders)
 }

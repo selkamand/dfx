@@ -44,7 +44,7 @@ keep_rows <- function(data, keep) {
     )
   }
 
-  data[keep, , drop = FALSE]
+  slice_rows(data, keep)
 }
 
 #' Filter rows using a data frame predicate
@@ -165,5 +165,5 @@ filter <- function(data, fun, by = NULL) {
     )
   }
 
-  data[bool_vector, , drop = FALSE]
+  slice_rows(data, bool_vector)
 }

@@ -196,7 +196,7 @@ summarise <- function(data, fun, by = NULL) {
     rows <- unname(groups[[i]])
 
     # Grab just the rows in current group
-    group_data <- data[rows, , drop = FALSE]
+    group_data <- slice_rows(data, rows)
 
     # Apply function to the group, error-ing if function throws an error
     ls_result_group <- tryCatch(

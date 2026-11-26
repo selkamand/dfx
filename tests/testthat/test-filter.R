@@ -6,6 +6,38 @@ make_filter_data <- function() {
   )
 }
 
+test_that("filter and keep_rows preserve array columns when applying a mask", {
+  data <- data.frame(id = 1:3)
+  data$payload <- array(
+    1:6, c(3L, 1L, 2L), dimnames = list(letters[1:3], "x", c("a", "b"))
+  )
+  keep <- c(TRUE, FALSE, TRUE)
+  expected <- data$payload[keep, , , drop = FALSE]
+
+  expect_identical(filter(data, function(d) d$id != 2L)$payload, expected)
+  expect_identical(keep_rows(data, keep)$payload, expected)
+  expect_identical(
+    keep_rows(data, rep(FALSE, 3L))$payload,
+    data$payload[integer(), , , drop = FALSE]
+  )
+})
+
+test_that("grouped filter passes intact nested arrays to its predicate", {
+  data <- data.frame(group = c("a", "b", "a"))
+  data$packed <- data.frame(id = 1:3)
+  data$packed$payload <- array(
+    1:6, c(3L, 1L, 2L), dimnames = list(letters[1:3], "x", c("a", "b"))
+  )
+  expected <- data$packed$payload[c(1L, 3L), , , drop = FALSE]
+
+  result <- filter(data, function(d) {
+    identical(d$packed$payload, expected)
+  }, by = "group")
+
+  expect_identical(result$group, c("a", "a"))
+  expect_identical(result$packed$payload, expected)
+})
+
 test_that("filter calls its predicate once with the whole data frame", {
   data <- make_filter_data()
   original <- data

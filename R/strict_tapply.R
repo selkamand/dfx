@@ -24,7 +24,7 @@ tapply_for_dataframe_filter <- function(data, fun, by) {
   # For each group of rows, apply the function to decide whether they should be kept
   for (rows in groups) {
     decision <- tryCatch(
-      fun(data[rows, , drop = FALSE]),
+      fun(slice_rows(data, rows)),
       error = function(err) {
         group_label <- format_filter_group_label(data, by, rows[[1L]])
         stop(simpleError(
